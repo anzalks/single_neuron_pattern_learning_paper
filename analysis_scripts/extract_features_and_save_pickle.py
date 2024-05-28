@@ -8,6 +8,10 @@ import pickle
 from tqdm import tqdm
 import numpy as np
 import warnings
+import time
+from pathlib import Path
+import argparse
+
 
 class Args: pass
 args_ = Args()
@@ -51,7 +55,7 @@ def extract_cell_features_all_trials(cells_df, outdir):
                     time_point = int(pps.split("_")[-1])+1
                 else:
                     continue
-                pat_grp = p_status.groupby(by='frame_id')
+                pat_grp = pp_status.groupby(by='frame_id')
                 for pat, patg in pat_grp:
                     if ("no_frame" in pat)or("inR" in pat):
                         continue
@@ -109,7 +113,7 @@ def extract_cell_features_all_trials(cells_df, outdir):
     pd_cell_list =pd.concat(pd.DataFrame([i],columns=clist_header) for i in tqdm(cell_list))
     pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"]!="post_5"]
     outpath = f"{outdir}/pd_all_cells_all_trials"
-    write_pkl(pd_all_cells_all_trials,outpath)
+    
     return pd_cell_list
 
 
@@ -257,7 +261,7 @@ def extract_cell_inR_features(cells_df,outdir):
     cell_ir_list_header = ["cell_ID","pre_post_status","frame_status",
                            "trial_number","sag","inR","trace"]
     pd_cell_list_inR =pd.concat(pd.DataFrame([i],columns=cell_ir_list_header) for i in tqdm(cell_list_inR))
-    pd_cell_list_inR = pd_cell_list_inR[pd_cell_list_inR["pre_post_status"]!="post_5"]
+    pd_cell_list_inR_all_trials = pd_cell_list_inR[pd_cell_list_inR["pre_post_status"]!="post_5"]
     outpath = f"{outdir}/all_cells_inR"
     write_pkl(pd_cell_list_inR_all_trials,outpath)
     return pd_cell_list_inR
@@ -426,16 +430,16 @@ def main():
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
     statpath = Path(args.cellstat_path)
-    globoutdir = Path(outdir_path)
-    
+    globoutdir = Path(args.outdir_path)
+    globoutdir= globoutdir/'pickle_files_from_analysis'
     globoutdir.mkdir(exist_ok=True, parents=True)
     
     cell_stats =pd.read_hdf(str(statpath))
-    all_data_with_training_df = pd.read_hdf(str(pklpath))
+    all_data_with_training_df = read_pkl(str(pklpath))
     
     extract_cell_inR_features(all_data_with_training_df,globoutdir)
     extract_cell_features_all_trials(all_data_with_training_df,globoutdir)
-    extract_cell_features_mean(all_data_with_training_df,globoutdir)
+    pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df,globoutdir)
     cell_group_classifier(pd_all_cells_mean,globoutdir)
     cell_classifier_with_fnorm(pd_all_cells_mean,globoutdir)
 
