@@ -155,9 +155,9 @@ def plot_figure_1(pickle_file_path,image_file_path,
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     fig.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.2, 0.2),
+               bbox_to_anchor =(0.215, 0.2),
                ncol = 2,title="Voltage trace",
-               loc='upper center')#,loc='lower center'    
+               loc='upper center',frameon=False)#,loc='lower center'    
     
 
     plt.tight_layout()
