@@ -35,6 +35,14 @@ def substract_baseline(trace,sampling_rate, bl_period_in_ms):
     bl_trace = trace-bl
     return bl_trace
 
+def baseline_data_extractor(cells_df,outdir):
+    pre_only_df = cells_df[(cells_df["pre_post_status"]=="pre")&(cells_df["frame_status"]=="pattern")]
+    outpath = f"{outdir}/baseline_traces_all_cells"
+    write_pkl(pre_only_df,outpath)
+    print(f"all traces 'pre' written to pickle file: {outpath}")
+    return pre_only_df
+
+
 def extract_cell_features_all_trials(cells_df, outdir):
     cell_grp = cells_df.groupby(by="cell_ID")
     cell_list = []
@@ -113,7 +121,8 @@ def extract_cell_features_all_trials(cells_df, outdir):
     pd_cell_list =pd.concat(pd.DataFrame([i],columns=clist_header) for i in tqdm(cell_list))
     pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"]!="post_5"]
     outpath = f"{outdir}/pd_all_cells_all_trials"
-    
+    write_pkl(pd_cell_list,outpath)
+    print(f"all cells all trails features extracted, file: {outpath}")
     return pd_cell_list
 
 
@@ -218,6 +227,7 @@ def extract_cell_features_mean(all_data_with_training_df, outdir):
     pd_all_cells_mean =pd.concat(pd.DataFrame([i],columns=ctype_header) for i in tqdm(cell_type_list))
     outpath = f"{outdir}/pd_all_cells_mean"
     write_pkl(pd_all_cells_mean,"pd_all_cells_mean")
+    print(f"all cells mean of features saved file {outpath}")
     return pd_all_cells_mean
 
 #all_cell_trace_alone = all_cell_trace_alone[all_cell_trace_alone["cell_ID"]!="2022_12_12_cell_5"]
@@ -264,6 +274,7 @@ def extract_cell_inR_features(cells_df,outdir):
     pd_cell_list_inR_all_trials = pd_cell_list_inR[pd_cell_list_inR["pre_post_status"]!="post_5"]
     outpath = f"{outdir}/all_cells_inR"
     write_pkl(pd_cell_list_inR_all_trials,outpath)
+    print(f"inR features all trials all cells saved, file:{outpath}")
     return pd_cell_list_inR
 
 def cell_group_classifier(pd_all_cells_mean,outdir):
@@ -329,6 +340,7 @@ def cell_group_classifier(pd_all_cells_mean,outdir):
     all_cells_dic = {"ap_cells": ap_cells_df,"an_cells":an_cells_df}#,"ssp_cells":ssp_cells_df,"ssn_cells":ssn_cells_df}
     outpath = f"{outdir}/all_cells_classified_dict"
     write_pkl(all_cells_dic,outpath)
+    print(f"all cells classified in dict form, file: {outpath}")
     return all_cells,ap_cells_df,an_cells_df,all_cells_dic
 
 def cell_classifier_with_fnorm(pd_all_cells_mean,outdir):
@@ -405,6 +417,7 @@ def cell_classifier_with_fnorm(pd_all_cells_mean,outdir):
     all_cells_dic_fnorm = {"ap_cells": ap_cells_df_fnorm,"an_cells":an_cells_df_fnorm}#,"ssp_cells":ssp_cells_df,"ssn_cells":ssn_cells_df}
     outpath = f"{outdir}/all_cells_fnorm_classifeied_dict"
     write_pkl(all_cells_dic_fnorm,outpath)
+    print(f"fnrom all cell classified, file {outpath}")
     return all_cells_fnorm,ap_cells_df_fnorm,an_cells_df_fnorm,all_cells_dic_fnorm
 
 
@@ -437,6 +450,7 @@ def main():
     cell_stats =pd.read_hdf(str(statpath))
     all_data_with_training_df = read_pkl(str(pklpath))
     
+    baseline_data_extractor(all_data_with_training_df,globoutdir)
     extract_cell_inR_features(all_data_with_training_df,globoutdir)
     extract_cell_features_all_trials(all_data_with_training_df,globoutdir)
     pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df,globoutdir)
