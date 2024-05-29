@@ -1,5 +1,5 @@
 __author__           = "Anzal KS"
-__copyright__        = "Copyright 2022-, Anzal KS"
+__copyright__        = "Copyright 2024-, Anzal KS"
 __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
