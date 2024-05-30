@@ -75,7 +75,7 @@ def plot_figure_1(pickle_file_path,image_file_path,
     
     ax_img1.imshow(proj_img, cmap='gray')
     pos1 = ax_img1.get_position()  # Get the original position
-    new_pos1 = [pos.x0, pos.y0-0.275, pos.width * 0.8, pos.height * 0.8]
+    new_pos1 = [pos1.x0, pos1.y0-0.275, pos1.width * 0.8, pos1.height * 0.8]
     # Shrink the plot
     ax_img1.set_position(new_pos1)
     ax_img1.axis('off')
