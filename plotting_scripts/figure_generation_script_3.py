@@ -67,6 +67,8 @@ def norm_values(cell_list,val_to_plot):
     return cell_list
                  
 def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,plt_color):
+    
+    
     if pattern_number == "pattern_0":
         pat_type = "trained"
     elif pattern_number == "pattern_1":
@@ -90,11 +92,10 @@ def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,p
             #print(f"pat = &&&&&&&{pat}%%%%%%%%%%%%%")
             g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
                             order=order,ax=axs_slp,color=bpf.CB_color_cycle[2],
-                            alpha=0.6,size=5, label='cell response')#alpha=0.8,
+                            alpha=0.6,size=5)#alpha=0.8,
             sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
                           errorbar="se",order=order,capsize=0.1,ax=axs_slp,
-                          color=plt_color, linestyles='dotted',scale = 0.8,
-                         label="average cell response")
+                          color=plt_color, linestyles='dotted',scale = 0.8)
             #palette="pastel",hue="cell_ID")
 
             #g.legend_.remove()
@@ -161,43 +162,13 @@ def plot_field_normalised_feature_multi_patterns(cell_list,val_to_plot,
 #["cell_ID","frame_status","pre_post_status","frame_id","min_trace","max_trace","abs_area","pos_area",
 #"neg_area","onset_time","max_field","min_field","slope","intercept","min_trace_t","max_trace_t","max_field_t","min_field_t","mean_trace","mean_field","mean_ttl","mean_rmp"]
 
-def inR_sag_plot(inR_all_Cells_df,fig,axs):
-    deselect_list = ['post_4','post_5']
-    inR_all_Cells_df =inR_all_Cells_df[~inR_all_Cells_df["pre_post_status"].isin(deselect_list)] 
-    order = np.array(('pre','post_0', 'post_1', 'post_2', 'post_3'),dtype=object)
-
-    sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="inR",capsize=0.2,errorbar=('sd'),order=order,color="k", label="inR")
-    sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",capsize=0.2,errorbar=('sd'),order=order,label="sag")
-    sns.stripplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",order=order,alpha=0.2)
-
-    pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="pre"]["sag"]
-    post_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="post_3"]["sag"]
-    pre= spst.wilcoxon(pre_trace,post_trace,zero_method="wilcox", correction=True)
-    pvalList=pre.pvalue
-    print(pvalList)
-    anotp_list=("pre","post_3")
-    annotator = Annotator(axs,[anotp_list],data=inR_all_Cells_df, x="pre_post_status",y="sag",order=order)
-    #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
-    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-    annotator.annotate()
 
 
-    #sns.move_legend(axs, "upper left", bbox_to_anchor=(1, 1))
-    #axs.set_ylim(-10,250)
-    axs.set_xticklabels(time_points)
-    sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
-    axs.set_ylabel("MOhms")
-    axs.set_xlabel("time points")
-    inr_pos = axs.get_position()
-    new_inr_pos = [inr_pos.x0, inr_pos.y0-0.04, inr_pos.width,
-                   inr_pos.height]
-    axs.set_position(new_inr_pos)
-    axs.text(-0.1,1.1,'D',transform=axs.transAxes,    
-                  fontsize=16, fontweight='bold', ha='center', va='center')            
+
+
 
 def plot_figure_2(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
-                  inR_all_Cells_df,
                   illustration_path,
                   outdir,cell_to_plot=cell_to_plot):
     deselect_list = ["no_frame","inR","point"]
@@ -207,15 +178,14 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     sc_data = pd.read_pickle(cell_categorised_pickle_file)
     sc_data_df = pd.concat([sc_data["ap_cells"],
                             sc_data["an_cells"]]).reset_index(drop=True)
-    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
+    print(f"sc data : {sc_data_df['cell_ID'].unique()}")
     illustration = pillow.Image.open(illustration_path).convert('L')
     # Define the width and height ratios
-    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
-    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
-                     0.5, 0.5, 0.5, 0.5, 0.2]       # Adjust these values as needed
+    width_ratios = [1, 1, 1, 1, 1, 1, 1]  # Adjust these values as needed
+    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5]       # Adjust these values as needed
 
     fig = plt.figure(figsize=(8,18))
-    gs = GridSpec(11, 7,width_ratios=width_ratios,
+    gs = GridSpec(10, 7,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.2, hspace=0.3)
@@ -353,10 +323,6 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                                                  fig,axs_slp1,axs_slp2,
                                                  axs_slp3)
 
-
-    axs_inr = fig.add_subplot(gs[9:,0:])
-    inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     fig.legend(by_label.values(), by_label.keys(), 
@@ -366,7 +332,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_2.png"
+    outpath = f"{outdir}/figure_3.png"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
@@ -376,7 +342,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
 
 def main():
     # Argument parser.
-    description = '''Generates figure 1'''
+    description = '''Generates figure 3'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str
@@ -387,12 +353,6 @@ def main():
                         , help = 'path to pickle file with cell sorted'
                         'exrracted data'
                        )
-    parser.add_argument('--inR-path', '-r'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with inR data'
-                       )
-
-
     parser.add_argument('--illustration-path', '-i'
                         , required = False,default ='./', type=str
                         , help = 'path to the image file in png format'
@@ -406,13 +366,12 @@ def main():
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
     scpath = Path(args.sortedcell_path)
-    inR_path = Path(args.inR_path)
     illustration_path = Path(args.illustration_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_2'
+    globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_2(pklpath,scpath,inR_path,illustration_path,globoutdir)
+    plot_figure_2(pklpath,scpath,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
