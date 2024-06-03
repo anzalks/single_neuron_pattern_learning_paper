@@ -45,14 +45,140 @@ selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
 class Args: pass
 args_ = Args()
 
+#plot_order = df.sort_values(by='Amount', ascending=False).ID.values
+def norm_values(cell_list,val_to_plot):
+    cell_list = cell_list.copy()
+    cell_list = cell_list.copy()
+    print(f"cell list inside func : {cell_list}")
+    cell_grp=cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p,pat in pat_grp:
+            if "pattern" not in p:
+                continue
+            else:
+                #print(f"c:{c}, p:{p}")
+                pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")]["min_field"]))
+                pp_grp = pat.groupby(by="pre_post_status")
+                for pr, pp in pp_grp:
+                    norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)]["min_field"]))
+                    norm_val = (norm_val/pre_val)*100
+                    cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
+    return cell_list
+                 
+def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,plt_color):
+    
+    
+    if pattern_number == "pattern_0":
+        pat_type = "trained"
+    elif pattern_number == "pattern_1":
+        pat_type = "overlapping"
+    else:
+        pat_type = "untrained"
+    #y_lim=(-50,300)
+    y_lim = (-50,500)
+    pat_num=int(pattern_number.split("_")[-1])
+    num_cells= len(cell_list["cell_ID"].unique())
+    #cell_type =get_variable_name(cell_list)
+    pfd = cell_list.groupby(by="frame_id")
+    for c, pat in pfd:
+        if c != pattern_number:
+            continue
+
+        else:
+            #pat = pat[(pat["pre_post_status"]!="post_5")]#&(pat["pre_post_status"]!="post_4")]#&(cell["pre_post_status"]!="post_3")]
+            #order = np.array(('pre','post_0','post_1','post_2','post_3','post_4'),dtype=object)
+            order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
+            #print(f"pat = &&&&&&&{pat}%%%%%%%%%%%%%")
+            g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
+                            order=order,ax=axs_slp,color=bpf.CB_color_cycle[2],
+                            alpha=0.6,size=5)#alpha=0.8,
+            sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
+                          errorbar="se",order=order,capsize=0.1,ax=axs_slp,
+                          color=plt_color, linestyles='dotted',scale = 0.8)
+            #palette="pastel",hue="cell_ID")
+
+            #g.legend_.remove()
+            g.set_title(None)
+            #"""
+            pvalList = []
+            anotp_list = []
+            for i in order[1:]:
+                posti ="post{i}"
+                #non parametric, paired and small sample size, hence used Wilcoxon signed-rank test
+                #Wilcoxon signed-rank test
+                posti= spst.wilcoxon(pat[pat["pre_post_status"]=='pre'][f"{val_to_plot}"],pat[pat["pre_post_status"]==i][f"{val_to_plot}"],
+                                     zero_method="wilcox", correction=True)
+                pvalList.append(posti.pvalue)
+                anotp_list.append(("pre",i))
+            annotator = Annotator(axs_slp,anotp_list,data=pat, 
+                                  x="pre_post_status",
+                                  y=f"{val_to_plot}",
+                                  order=order,
+                                 fontsize=8)
+            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
+            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+            #annotator.annotate()
+
+            #"""
+            axs_slp.axhline(100, ls=':',color="k", alpha=0.4)
+            if pat_num==0:
+                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
+                            left=False, bottom=False, offset=None, trim=False)
+                axs_slp.set_ylabel("% change in\nEPSP amplitude")
+                axs_slp.set_xlabel(None)
+                #axs[pat_num].set_yticks([])
+            elif pat_num==1:
+                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
+                            left=False, bottom=False, offset=None, trim=False)
+                axs_slp.set_ylabel(None)
+                axs_slp.set_xlabel("time points")
+            elif pat_num==2:
+                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
+                            left=False, bottom=False, offset=None, trim=False)
+                axs_slp.set_xlabel(None)
+                axs_slp.set_ylabel(None)
+            else:
+                continue
+            g.set(ylim=y_lim)
+            g.set_xticklabels(time_points,rotation=30)
+            
+        
+            
+def plot_field_normalised_feature_multi_patterns(cell_list,val_to_plot,
+                                                fig,axs1,axs2,axs3):
+    cell_list= norm_values(cell_list,val_to_plot)
+    plot_cell_type_features(cell_list,"pattern_0",fig, axs1,val_to_plot,
+                            bpf.CB_color_cycle[5])
+    plot_cell_type_features(cell_list,"pattern_1",fig, axs2,val_to_plot,
+                            bpf.CB_color_cycle[1])
+    plot_cell_type_features(cell_list,"pattern_2",fig, axs3,val_to_plot,
+                            bpf.CB_color_cycle[0])
+    #handles, labels = axs[2].get_legend_handddles_labels()
+    #fig.legend(handles, labels, bbox_to_anchor =(0.5, -0.01),ncol = 5,title="cell Nos",loc='upper center')#,loc='lower center'
+
+    
+
+#["cell_ID","frame_status","pre_post_status","frame_id","min_trace","max_trace","abs_area","pos_area",
+#"neg_area","onset_time","max_field","min_field","slope","intercept","min_trace_t","max_trace_t","max_field_t","min_field_t","mean_trace","mean_field","mean_ttl","mean_rmp"]
+
+
+
+
+
 
 def plot_figure_2(extracted_feature_pickle_file_path,
+                  cell_categorised_pickle_file,
                   illustration_path,
                   outdir,cell_to_plot=cell_to_plot):
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
     single_cell_df = feature_extracted_data.copy()
     single_cell_df = single_cell_df[(single_cell_df["cell_ID"]==cell_to_plot)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
+    sc_data = pd.read_pickle(cell_categorised_pickle_file)
+    sc_data_df = pd.concat([sc_data["ap_cells"],
+                            sc_data["an_cells"]]).reset_index(drop=True)
+    print(f"sc data : {sc_data_df['cell_ID'].unique()}")
     illustration = pillow.Image.open(illustration_path).convert('L')
     # Define the width and height ratios
     width_ratios = [1, 1, 1, 1, 1, 1, 1]  # Adjust these values as needed
@@ -68,7 +194,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     ax_img.imshow(illustration, cmap='gray')
 
     ax_img.axis('off')
-    ax_img.text(0.05,1.15,'A',transform=ax_img.transAxes,    
+    ax_img.text(-0.07,1.15,'A',transform=ax_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
 
 
@@ -97,6 +223,10 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                     axs_trace.set_ylabel(None)
                 if pat_num ==0:
                     axs_trace.set_title("pre")
+                    axs_trace.text(-1.8,1.3,'B',transform=axs_trace.transAxes,    
+                                fontsize=16, fontweight='bold', ha='center', va='center')            
+            
+
                 else:
                     axs_trace.set_title(None)
             else:
@@ -137,6 +267,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
             axs_pat = fig.add_subplot(gs[pr_no+3,0])  #plt.subplot2grid((3,4),(0,p_no))
             pat_fr = bpf.create_grid_image(0,2)
             axs_pat.imshow(pat_fr)
+
         elif pr_no==1:
             axs_pat = fig.add_subplot(gs[pr_no+3,0])  #plt.subplot2grid((3,4),(0,p_no))
             pat_fr = bpf.create_grid_image(4,2)
@@ -154,6 +285,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
         axs_pat.axis('off')
         #axs_pat.set_title(pattern)
     
+    
     #plot pattern projections 
     pattern_list = ["trained\npattern","Overlapping\npattern",
                     "Non-overlapping\npattern"]
@@ -169,7 +301,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
             proj = bpf.create_grid_image(17,2)
         axs_proj.imshow(proj)
         proj_pos = axs_proj.get_position()
-        new_proj_pos = [proj_pos.x0+0.05, proj_pos.y0, proj_pos.width,
+        new_proj_pos = [proj_pos.x0+0.05, proj_pos.y0-0.04, proj_pos.width,
                         proj_pos.height]
         axs_proj.set_position(new_proj_pos)
         axs_proj.axis('off')
@@ -179,10 +311,16 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     feature_extracted_data =feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
     cell_grp = feature_extracted_data.groupby(by="cell_ID")
     axs_slp1 = fig.add_subplot(gs[7:9,0:2])
+    axs_slp1.set_ylabel("slope (mV/ms)")
+    axs_slp1.text(-0.3,1.3,'C',transform=axs_slp1.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')            
     axs_slp2 = fig.add_subplot(gs[7:9,2:4])
+    axs_slp2.set_yticklabels([])
     axs_slp3 = fig.add_subplot(gs[7:9,4:6])
-    
-
+    axs_slp3.set_yticklabels([])
+    plot_field_normalised_feature_multi_patterns(sc_data_df,"max_trace",
+                                                 fig,axs_slp1,axs_slp2,
+                                                 axs_slp3)
 
 
 
@@ -218,6 +356,11 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
+    parser.add_argument('--sortedcell-path', '-s'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data'
+                       )
     parser.add_argument('--illustration-path', '-i'
                         , required = False,default ='./', type=str
                         , help = 'path to the image file in png format'
@@ -230,12 +373,13 @@ def main():
     #    parser.parse_args(namespace=args_)
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
+    scpath = Path(args.sortedcell_path)
     illustration_path = Path(args.illustration_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_2'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_2(pklpath,illustration_path,globoutdir)
+    plot_figure_2(pklpath,scpath,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

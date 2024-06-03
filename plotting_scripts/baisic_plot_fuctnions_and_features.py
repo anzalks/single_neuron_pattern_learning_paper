@@ -40,7 +40,7 @@ def convert_pvalue_to_asterisks(pvalue):
 
 def set_plot_properties():
     plt.rcParams['figure.figsize'] = [10, 6]
-    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.size'] = 8
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['axes.titlesize'] = 14
     plt.rcParams['axes.labelsize'] = 12
