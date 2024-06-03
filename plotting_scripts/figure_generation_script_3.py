@@ -34,9 +34,9 @@ bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
-cell_to_plot = "2022_12_21_cell_1" 
-
-time_to_plot = 0.15 # in s 
+learner_cell = "2022_12_21_cell_1" 
+non_learner_cell = "2023_01_10_cell_1"
+time_to_plot = 0.250 # in s 
 
 time_points = ["pre","0 mins", "10 mins", "20 mins","30 mins" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
@@ -45,290 +45,208 @@ selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
 class Args: pass
 args_ = Args()
 
-#plot_order = df.sort_values(by='Amount', ascending=False).ID.values
-def norm_values(cell_list,val_to_plot):
-    cell_list = cell_list.copy()
-    cell_list = cell_list.copy()
-    print(f"cell list inside func : {cell_list}")
-    cell_grp=cell_list.groupby(by="cell_ID")
-    for c, cell in cell_grp:
-        pat_grp = cell.groupby(by="frame_id")
-        for p,pat in pat_grp:
-            if "pattern" not in p:
-                continue
-            else:
-                #print(f"c:{c}, p:{p}")
-                pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")]["min_field"]))
-                pp_grp = pat.groupby(by="pre_post_status")
-                for pr, pp in pp_grp:
-                    norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)]["min_field"]))
-                    norm_val = (norm_val/pre_val)*100
-                    cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
-    return cell_list
-                 
-def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,plt_color):
-    
-    
-    if pattern_number == "pattern_0":
-        pat_type = "trained"
-    elif pattern_number == "pattern_1":
-        pat_type = "overlapping"
-    else:
-        pat_type = "untrained"
-    #y_lim=(-50,300)
-    y_lim = (-50,500)
-    pat_num=int(pattern_number.split("_")[-1])
-    num_cells= len(cell_list["cell_ID"].unique())
-    #cell_type =get_variable_name(cell_list)
-    pfd = cell_list.groupby(by="frame_id")
-    for c, pat in pfd:
-        if c != pattern_number:
+def plot_cell_category_trace(fig,learner_status,gs,cell_df):
+    sampling_rate = 20000 # for patterns
+    sc_pat_grp = cell_df.groupby(by="frame_id")
+    for pat, pat_data in sc_pat_grp:
+        if "pattern" not in pat:
             continue
-
         else:
-            #pat = pat[(pat["pre_post_status"]!="post_5")]#&(pat["pre_post_status"]!="post_4")]#&(cell["pre_post_status"]!="post_3")]
-            #order = np.array(('pre','post_0','post_1','post_2','post_3','post_4'),dtype=object)
-            order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
-            #print(f"pat = &&&&&&&{pat}%%%%%%%%%%%%%")
-            g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
-                            order=order,ax=axs_slp,color=bpf.CB_color_cycle[2],
-                            alpha=0.6,size=5)#alpha=0.8,
-            sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
-                          errorbar="se",order=order,capsize=0.1,ax=axs_slp,
-                          color=plt_color, linestyles='dotted',scale = 0.8)
-            #palette="pastel",hue="cell_ID")
-
-            #g.legend_.remove()
-            g.set_title(None)
-            #"""
-            pvalList = []
-            anotp_list = []
-            for i in order[1:]:
-                posti ="post{i}"
-                #non parametric, paired and small sample size, hence used Wilcoxon signed-rank test
-                #Wilcoxon signed-rank test
-                posti= spst.wilcoxon(pat[pat["pre_post_status"]=='pre'][f"{val_to_plot}"],pat[pat["pre_post_status"]==i][f"{val_to_plot}"],
-                                     zero_method="wilcox", correction=True)
-                pvalList.append(posti.pvalue)
-                anotp_list.append(("pre",i))
-            annotator = Annotator(axs_slp,anotp_list,data=pat, 
-                                  x="pre_post_status",
-                                  y=f"{val_to_plot}",
-                                  order=order,
-                                 fontsize=8)
-            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
-            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
-            #annotator.annotate()
-
-            #"""
-            axs_slp.axhline(100, ls=':',color="k", alpha=0.4)
-            if pat_num==0:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
-                axs_slp.set_ylabel("% change in\nEPSP amplitude")
-                axs_slp.set_xlabel(None)
-                #axs[pat_num].set_yticks([])
+            pat_num = int(pat.split('_')[-1])
+            pre_trace  =pat_data[pat_data["pre_post_status"]=="pre"]["mean_trace"][0]
+            post_trace =pat_data[pat_data["pre_post_status"]=="post_3"]["mean_trace"][0]
+            print(f"pre_trace = {pre_trace}")
+            pps_grp = pat_data.groupby(by="pre_post_status")
+            print(f"pat num : {pat_num}, {pat}")
+            if learner_status=="learner":
+                axs = fig.add_subplot(gs[pat_num,4:6])
+            else:
+                axs = fig.add_subplot(gs[pat_num,6:8])
+            post_trace = bpf.substract_baseline(post_trace)
+            post_trace = post_trace[:int(sampling_rate*time_to_plot)]
+            pre_trace = bpf.substract_baseline(pre_trace)
+            pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
+            time = np.linspace(0,time_to_plot,len(post_trace))*1000
+            axs.plot(time,pre_trace, color=bpf.pre_color,
+                           label="pre training trace")
+            axs.plot(time,post_trace,
+                           color=bpf.post_late,
+                           label="post training trace")
+            #color=bpf.colorFader(bpf.post_color,
+            #                     bpf.post_late,
+            #                     (idx/len(pps_grp))))
+            if pat_num ==0:
+                axs.set_xlabel(None)
+                axs.set_ylabel(None)
+                axs.set_xticklabels([])
             elif pat_num==1:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
-                axs_slp.set_ylabel(None)
-                axs_slp.set_xlabel("time points")
+                axs.set_xlabel(None)
+                axs.set_xticklabels([])
+                axs.set_ylabel("cell response (mV)")
             elif pat_num==2:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
-                axs_slp.set_xlabel(None)
-                axs_slp.set_ylabel(None)
+                axs.set_xlabel("time (ms)")
+                axs.set_ylabel(None)
             else:
                 continue
-            g.set(ylim=y_lim)
-            g.set_xticklabels(time_points,rotation=30)
-            
-        
-            
-def plot_field_normalised_feature_multi_patterns(cell_list,val_to_plot,
-                                                fig,axs1,axs2,axs3):
-    cell_list= norm_values(cell_list,val_to_plot)
-    plot_cell_type_features(cell_list,"pattern_0",fig, axs1,val_to_plot,
-                            bpf.CB_color_cycle[5])
-    plot_cell_type_features(cell_list,"pattern_1",fig, axs2,val_to_plot,
-                            bpf.CB_color_cycle[1])
-    plot_cell_type_features(cell_list,"pattern_2",fig, axs3,val_to_plot,
-                            bpf.CB_color_cycle[0])
-    #handles, labels = axs[2].get_legend_handddles_labels()
-    #fig.legend(handles, labels, bbox_to_anchor =(0.5, -0.01),ncol = 5,title="cell Nos",loc='upper center')#,loc='lower center'
+            if learner_status!='learner':
+                axs.set_yticklabels([])
+                axs.set_ylabel(None)
+            axs.set_ylim(-5,6)
+            axs.spines[['right', 'top']].set_visible(False)
 
+def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
+                            pot_cells_df,dep_cells_df):
+    num_pot_cells =f"no. of learners = {len(pot_cells_df['cell_ID'].unique())}"
+    num_dep_cells =f"no. of non-learners = {len(dep_cells_df['cell_ID'].unique())}"
+    cell_stat_with_category=[]
+    for cell in cell_stats.iterrows():
+        if cell[0] in list(pot_cells_df["cell_ID"]):
+            cell_type =f"learners"
+            #keys in cell stats: ['InputR_cell_mean', 'inR_cut', 'rmp_ratio', 'rmp_cut_off', 'cell_status', 'inR_chancge', 'inR_cell', 'rmp_median']
+            rmp=cell[1]["cell_stats"]["rmp_median"]
+            inpR=cell[1]["cell_stats"]["InputR_cell_mean"]
+        elif cell[0] in list(dep_cells_df["cell_ID"]):
+            cell_type =f"non-learners"
+            #keys in cell stats: ['InputR_cell_mean', 'inR_cut', 'rmp_ratio', 'rmp_cut_off', 'cell_status', 'inR_chancge', 'inR_cell', 'rmp_median']
+            rmp=cell[1]["cell_stats"]["rmp_median"]
+            inpR=cell[1]["cell_stats"]["InputR_cell_mean"]
+        else:
+            cell_type = "feable response"
+            rmp=cell[1]["cell_stats"]["rmp_median"]
+            inpR=cell[1]["cell_stats"]["InputR_cell_mean"]
+        cell_stat_with_category.append([cell[0],cell_type,rmp,inpR])
+    c_cat_header=["cell_ID","cell_type","rmp","inpR"]
+    cell_stat_with_category =pd.concat(pd.DataFrame([i],columns=c_cat_header) for i in cell_stat_with_category)
+    cell_stat_with_category= cell_stat_with_category[cell_stat_with_category["cell_type"]!="feable response"]
+    print(f"cell stats with category:{cell_stat_with_category}")
+    g1=sns.stripplot(data=cell_stat_with_category,x="cell_type",y="rmp",ax=axs_inr, hue="cell_type",
+                       palette="colorblind",alpha=0.6,size=8)
+    sns.pointplot(data=cell_stat_with_category, x="cell_type",y=f"rmp",errorbar="se",
+                  capsize=0.15,ax=axs_inr,hue="cell_type", linestyles='')
+    #non parametric, unpaired, unequal sample size observations hence used kruskal
+    stat_testg1= spst.kruskal(cell_stat_with_category[(cell_stat_with_category["cell_type"]=="learners")]["rmp"],
+                             cell_stat_with_category[cell_stat_with_category["cell_type"]=="non-learners"]["rmp"],
+                             nan_policy='omit')
+    pvalLg1= stat_testg1.pvalue
+
+    g2=sns.stripplot(data=cell_stat_with_category,x="cell_type",y="inpR",ax=axs_rmp,hue="cell_type",
+                      palette="colorblind", alpha=0.6,size=8)
+    sns.pointplot(data=cell_stat_with_category, x="cell_type",y=f"inpR",errorbar="se",
+                  capsize=0.15,ax=axs_rmp,hue="cell_type", linestyles='')
+    stat_testg2= spst.kruskal(cell_stat_with_category[(cell_stat_with_category["cell_type"]=="learners")]["inpR"],
+                             cell_stat_with_category[cell_stat_with_category["cell_type"]=="non-learners"]["inpR"],
+                             nan_policy='omit')
+    pvalLg2= stat_testg2.pvalue
+    annotator1 = Annotator(axs_inr, [("learners","non-learners")],data=cell_stat_with_category, x="cell_type",y="rmp")
+    annotator1.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg1)])
+    annotator1.annotate()
+    annotator2 = Annotator(axs_rmp, [("learners","non-learners")],data=cell_stat_with_category, x="cell_type",y="inpR")
+    annotator2.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg2)])
+    annotator2.annotate()
     
-
-#["cell_ID","frame_status","pre_post_status","frame_id","min_trace","max_trace","abs_area","pos_area",
-#"neg_area","onset_time","max_field","min_field","slope","intercept","min_trace_t","max_trace_t","max_field_t","min_field_t","mean_trace","mean_field","mean_ttl","mean_rmp"]
-
-
-
-
+    axs_inr.text(-0.5,1.4,'C',transform=axs_inr.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')    
+    g1.set(xlim=(-1,2))
+    g1.set(ylim=(-75,-60))
+    g2.set(xlim=(-1,2))
+    g2.set(ylim=(50,200))
+    g1.set_title("Resting membrane\npotential")
+    g2.set_title("Input\nresistance")
+    g1.set_xticklabels(g1.get_xticklabels(), rotation=30)
+    g2.set_xticklabels(g2.get_xticklabels(), rotation=30)
+    g1.set_ylabel("Resting membrane\npotential(mV)")
+    g2.set_ylabel("Input Resistance\n(MOhms)")
+    g1.set_xlabel(None)
+    g2.set_xlabel(None)
+    handles, labels = axs_rmp.get_legend_handles_labels()
+    g1.legend_.remove()
+    g2.legend_.remove()
+    sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
 
 def plot_figure_2(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
+                  cell_stats_pickle_file,
                   illustration_path,
-                  outdir,cell_to_plot=cell_to_plot):
+                  outdir,learner_cell=learner_cell,
+                  non_learner_cell=non_learner_cell):
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
+    cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
+    print(f"cell stat df : {cell_stats_df}")
     single_cell_df = feature_extracted_data.copy()
-    single_cell_df = single_cell_df[(single_cell_df["cell_ID"]==cell_to_plot)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
-    sc_data = pd.read_pickle(cell_categorised_pickle_file)
-    sc_data_df = pd.concat([sc_data["ap_cells"],
-                            sc_data["an_cells"]]).reset_index(drop=True)
+    learner_cell_df = single_cell_df.copy()
+    non_learner_cell_df = single_cell_df.copy()
+    learner_cell_df = single_cell_df[(single_cell_df["cell_ID"]==learner_cell)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
+    non_learner_cell_df = single_cell_df[(single_cell_df["cell_ID"]==non_learner_cell)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
+    sc_data_dict = pd.read_pickle(cell_categorised_pickle_file)
+    sc_data_df = pd.concat([sc_data_dict["ap_cells"],
+                            sc_data_dict["an_cells"]]).reset_index(drop=True)
     print(f"sc data : {sc_data_df['cell_ID'].unique()}")
-    illustration = pillow.Image.open(illustration_path).convert('L')
+    illustration = pillow.Image.open(illustration_path)
     # Define the width and height ratios
-    width_ratios = [1, 1, 1, 1, 1, 1, 1]  # Adjust these values as needed
+    width_ratios = [1, 1, 1, 1, 1, 1, 1,1]  # Adjust these values as needed
     height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5]       # Adjust these values as needed
 
     fig = plt.figure(figsize=(8,18))
-    gs = GridSpec(10, 7,width_ratios=width_ratios,
+    gs = GridSpec(10, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.2, hspace=0.3)
     #place illustration
-    ax_img = fig.add_subplot(gs[:3, :6])
-    ax_img.imshow(illustration, cmap='gray')
+    ax_img = fig.add_subplot(gs[0:2, 0:2])
+    ax_img.imshow(illustration)
 
     ax_img.axis('off')
-    ax_img.text(-0.07,1.15,'A',transform=ax_img.transAxes,    
+    ax_img.text(0.1,2.2,'A',transform=ax_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
 
 
-    #plot trace at different time points
-    single_cell_df = single_cell_df[~single_cell_df["frame_status"].isin(deselect_list)]
-    sampling_rate = 20000 # for patterns
-    sc_pat_grp = single_cell_df.groupby(by="frame_id")
-    for pat, pat_data in sc_pat_grp:
-        pat_num = int(pat.split('_')[-1])
-        pre_trace  =pat_data[pat_data["pre_post_status"]=="pre"]["mean_trace"][0]
-        print(f"pre_trace = {pre_trace}")
-        pps_grp = pat_data.groupby(by="pre_post_status")
-        for idx, pps_data in enumerate(pps_grp):
-            if pps_data[0]=="pre":
-                axs_trace = fig.add_subplot(gs[3+pat_num,1])
-                trace = pps_data[-1]["mean_trace"][0]
-                trace = bpf.substract_baseline(trace)
-                trace = trace[:int(sampling_rate*time_to_plot)]
-                pre_trace = bpf.substract_baseline(pre_trace)
-                pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
-                time = np.linspace(0,time_to_plot,len(trace))*1000
-                axs_trace.plot(time,pre_trace, color=bpf.pre_color)
-                if pat_num==1:
-                    axs_trace.set_ylabel("membrane potential(mV)")
-                else:
-                    axs_trace.set_ylabel(None)
-                if pat_num ==0:
-                    axs_trace.set_title("pre")
-                    axs_trace.text(-1.8,1.3,'B',transform=axs_trace.transAxes,    
-                                fontsize=16, fontweight='bold', ha='center', va='center')            
-            
+    #plot EPSP classification for learner & non-learner
+    learner_cell_df = learner_cell_df[~learner_cell_df["frame_status"].isin(deselect_list)]
 
-                else:
-                    axs_trace.set_title(None)
-            else:
-                axs_trace = fig.add_subplot(gs[3+pat_num,idx+2])
-                trace = pps_data[-1]["mean_trace"][0]
-                trace = bpf.substract_baseline(trace)
-                trace = trace[:int(sampling_rate*time_to_plot)]
-                pre_trace = bpf.substract_baseline(pre_trace)
-                pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
-                time = np.linspace(0,time_to_plot,len(trace))*1000
-                axs_trace.plot(time,pre_trace, color=bpf.pre_color,
-                              alpha=0.6,label="pre training trace")
-                axs_trace.plot(time,trace,
-                               color=bpf.post_late,
-                               label="post training trace")
-                               #color=bpf.colorFader(bpf.post_color,
-                               #                     bpf.post_late,
-                               #                     (idx/len(pps_grp))))
-                axs_trace.set_ylabel(None)
-                axs_trace.set_yticklabels([])
-                if pat_num==0:
-                    axs_trace.set_title(time_points[idx+1])
-                else:
-                    axs_trace.set_title(None)
-            if (pat_num==2)and(idx==1):
-                axs_trace.set_xlabel("time (ms)")
-            elif pat_num ==2:
-                axs_trace.set_xlabel(None)
-            else:
-                axs_trace.set_xlabel(None)
-                axs_trace.set_xticklabels([])
-            axs_trace.set_ylim(-2,6)
-            axs_trace.spines[['right', 'top']].set_visible(False)
+
+    plot_cell_category_trace(fig,"learner",gs, learner_cell_df)
+    plot_cell_category_trace(fig,"non_learner",gs, non_learner_cell_df)   
         
     pattern_list = ["trained\npattern","Overlapping\npattern",
                     "Non-overlapping\npattern"]
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
-            axs_pat = fig.add_subplot(gs[pr_no+3,0])  #plt.subplot2grid((3,4),(0,p_no))
+            axs_pat = fig.add_subplot(gs[pr_no,2:3])  #plt.subplot2grid((3,4),(0,p_no))
             pat_fr = bpf.create_grid_image(0,2)
             axs_pat.imshow(pat_fr)
-
+            axs_pat.text(0.1,2.5,'B',transform=axs_pat.transAxes,    
+                        fontsize=16, fontweight='bold', ha='center', va='center')
         elif pr_no==1:
-            axs_pat = fig.add_subplot(gs[pr_no+3,0])  #plt.subplot2grid((3,4),(0,p_no))
+            axs_pat = fig.add_subplot(gs[pr_no,2:3])  #plt.subplot2grid((3,4),(0,p_no))
             pat_fr = bpf.create_grid_image(4,2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
-            axs_pat = fig.add_subplot(gs[pr_no+3,0])  #plt.subplot2grid((3,4),(0,p_no))
+            axs_pat = fig.add_subplot(gs[pr_no,2:3])  #plt.subplot2grid((3,4),(0,p_no))
             pat_fr = bpf.create_grid_image(17,2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
-        pat_pos = axs_pat.get_position()
-        new_pat_pos = [pat_pos.x0-0.07, pat_pos.y0, pat_pos.width,
-                        pat_pos.height]
-        axs_pat.set_position(new_pat_pos)
+        #pat_pos = axs_pat.get_position()
+        #new_pat_pos = [pat_pos.x0-0.07, pat_pos.y0, pat_pos.width,
+        #                pat_pos.height]
+        #axs_pat.set_position(new_pat_pos)
         axs_pat.axis('off')
         #axs_pat.set_title(pattern)
-    
-    
-    #plot pattern projections 
-    pattern_list = ["trained\npattern","Overlapping\npattern",
-                    "Non-overlapping\npattern"]
-    for p_no, pattern in enumerate(pattern_list):
-        if p_no==0:
-            axs_proj = fig.add_subplot(gs[6,0])  #plt.subplot2grid((3,4),(0,p_no))
-            proj = bpf.create_grid_image(0,2)
-        elif p_no==1:
-            axs_proj = fig.add_subplot(gs[6,2])  #plt.subplot2grid((3,4),(0,p_no))
-            proj = bpf.create_grid_image(4,2)
-        else:
-            axs_proj = fig.add_subplot(gs[6,4])  #plt.subplot2grid((3,4),(0,p_no))
-            proj = bpf.create_grid_image(17,2)
-        axs_proj.imshow(proj)
-        proj_pos = axs_proj.get_position()
-        new_proj_pos = [proj_pos.x0+0.05, proj_pos.y0-0.04, proj_pos.width,
-                        proj_pos.height]
-        axs_proj.set_position(new_proj_pos)
-        axs_proj.axis('off')
-        axs_proj.set_title(pattern)
+    axs_inr = fig.add_subplot(gs[4:6,3:5])
+    axs_rmp = fig.add_subplot(gs[4:6,6:8])
+    compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
+                            sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
 
-    #plot amplitudes over time
-    feature_extracted_data =feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
-    cell_grp = feature_extracted_data.groupby(by="cell_ID")
-    axs_slp1 = fig.add_subplot(gs[7:9,0:2])
-    axs_slp1.set_ylabel("slope (mV/ms)")
-    axs_slp1.text(-0.3,1.3,'C',transform=axs_slp1.transAxes,    
-                   fontsize=16, fontweight='bold', ha='center', va='center')            
-    axs_slp2 = fig.add_subplot(gs[7:9,2:4])
-    axs_slp2.set_yticklabels([])
-    axs_slp3 = fig.add_subplot(gs[7:9,4:6])
-    axs_slp3.set_yticklabels([])
-    plot_field_normalised_feature_multi_patterns(sc_data_df,"max_trace",
-                                                 fig,axs_slp1,axs_slp2,
-                                                 axs_slp3)
 
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    fig.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.5, 0.175),
-               ncol = 6,title="Legend",
-               loc='upper center')#,frameon=False)#,loc='lower center'    
+
+    #handles, labels = plt.gca().get_legend_handles_labels()
+    #by_label = dict(zip(labels, handles))
+    #fig.legend(by_label.values(), by_label.keys(), 
+    #           bbox_to_anchor =(0.5, 0.175),
+    #           ncol = 6,title="Legend",
+    #           loc='upper center')#,frameon=False)#,loc='lower center'    
     #
 
     plt.tight_layout()
@@ -353,6 +271,11 @@ def main():
                         , help = 'path to pickle file with cell sorted'
                         'exrracted data'
                        )
+    parser.add_argument('--cellstat-path', '-c'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data'
+                       )
     parser.add_argument('--illustration-path', '-i'
                         , required = False,default ='./', type=str
                         , help = 'path to the image file in png format'
@@ -367,11 +290,12 @@ def main():
     pklpath = Path(args.pikl_path)
     scpath = Path(args.sortedcell_path)
     illustration_path = Path(args.illustration_path)
+    cell_stat_path = Path(args.cellstat_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_2(pklpath,scpath,illustration_path,globoutdir)
+    plot_figure_2(pklpath,scpath,cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
