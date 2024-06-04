@@ -38,7 +38,7 @@ cell_to_plot = "2022_12_21_cell_1"
 
 time_to_plot = 0.15 # in s 
 
-time_points = ["pre","0 mins", "10 mins", "20 mins","30 mins" ]
+time_points = ["pre","0", "10", "20","30" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
                         #'post_4','post_5']
 
@@ -131,7 +131,7 @@ def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,p
                 sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
                             left=False, bottom=False, offset=None, trim=False)
                 axs_slp.set_ylabel(None)
-                axs_slp.set_xlabel("time points")
+                axs_slp.set_xlabel("time points (mins)")
             elif pat_num==2:
                 sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
                             left=False, bottom=False, offset=None, trim=False)
@@ -141,6 +141,7 @@ def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,p
                 continue
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=30)
+            g.legend_.remove()
             
         
             
@@ -180,14 +181,14 @@ def inR_sag_plot(inR_all_Cells_df,fig,axs):
     #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
     annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
-
+    axs.legend_.remove()
 
     #sns.move_legend(axs, "upper left", bbox_to_anchor=(1, 1))
     #axs.set_ylim(-10,250)
     axs.set_xticklabels(time_points)
     sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
     axs.set_ylabel("MOhms")
-    axs.set_xlabel("time points")
+    axs.set_xlabel("time points (mins)")
     inr_pos = axs.get_position()
     new_inr_pos = [inr_pos.x0, inr_pos.y0-0.04, inr_pos.width,
                    inr_pos.height]
@@ -208,7 +209,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     sc_data_df = pd.concat([sc_data["ap_cells"],
                             sc_data["an_cells"]]).reset_index(drop=True)
     inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
-    illustration = pillow.Image.open(illustration_path).convert('L')
+    illustration = pillow.Image.open(illustration_path)
     # Define the width and height ratios
     width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
     height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
@@ -357,12 +358,12 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     axs_inr = fig.add_subplot(gs[9:,0:])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
 
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    fig.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.5, 0.175),
-               ncol = 6,title="Legend",
-               loc='upper center')#,frameon=False)#,loc='lower center'    
+    #handles, labels = plt.gca().get_legend_handles_labels()
+    #by_label = dict(zip(labels, handles))
+    #fig.legend(by_label.values(), by_label.keys(), 
+    #           bbox_to_anchor =(0.5, 0.175),
+    #           ncol = 6,title="Legend",
+    #           loc='upper center')#,frameon=False)#,loc='lower center'    
     #
 
     plt.tight_layout()

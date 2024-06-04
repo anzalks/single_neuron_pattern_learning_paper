@@ -38,7 +38,7 @@ learner_cell = "2022_12_21_cell_1"
 non_learner_cell = "2023_01_10_cell_1"
 time_to_plot = 0.250 # in s 
 
-time_points = ["pre","0", "10", "20","30" ]
+time_points = ["pre","0 mins", "10 mins", "20 mins","30 mins" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
                         #'post_4','post_5']
 cell_dist=[8,10,4]
@@ -85,7 +85,7 @@ def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
     axs.set_title(cell_type)
     axs.spines[['right', 'top']].set_visible(False)
     axs.set_ylabel("CDF of cell numbers")
-    axs.set_xlabel("% change in response\nto patterns")
+    axs.set_xlabel("% change in response to patterns")
     ax_pos = axs.get_position()
     new_ax_pos = [ax_pos.x0, ax_pos.y0+0.05, ax_pos.width,
                    ax_pos.height]
@@ -174,6 +174,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
                 sns.despine(fig=None, ax=axs, top=True, right=True, 
                             left=False, bottom=False, offset=None, trim=False)
                 axs.set_ylabel(None)
+                axs.set_xlabel("time points")
             elif pat_num==2:
                 sns.despine(fig=None, ax=axs, top=True, right=True, 
                             left=False, bottom=False, offset=None, trim=False)
@@ -183,7 +184,6 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
                 continue
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=30)
-            g.set_xlabel("time points (mins)")
             g.legend_.remove()
     axs.set_title("Cell distribution")
     ax_pos = axs.get_position()
@@ -334,7 +334,7 @@ def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
     sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
 
-def plot_figure_3(extracted_feature_pickle_file_path,
+def plot_figure_4(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
                   illustration_path,
@@ -413,7 +413,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     #plot CDF for cells
-    axs_cdf1 = fig.add_subplot(gs[7:8,0:3])
+    axs_cdf1 = fig.add_subplot(gs[7:8,1:4])
     axs_cdf2 = fig.add_subplot(gs[7:8,5:8])
     plot_cell_distribution_plasticity(sc_data_dict["ap_cells"],
                                       fig,axs_cdf1,"learners")
@@ -462,10 +462,6 @@ def main():
                         , help = 'path to pickle file with cell sorted'
                         'exrracted data'
                        )
-    parser.add_argument('--illustration-path', '-i'
-                        , required = False,default ='./', type=str
-                        , help = 'path to the image file in png format'
-                       )
 
     parser.add_argument('--outdir-path','-o'
                         ,required = False, default ='./', type=str
@@ -478,10 +474,10 @@ def main():
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_3'
+    globoutdir= globoutdir/'Figure_4'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_3(pklpath,scpath,cell_stat_path,illustration_path,globoutdir)
+    plot_figure_4(pklpath,scpath,cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
