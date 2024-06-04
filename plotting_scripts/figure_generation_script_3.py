@@ -4,7 +4,7 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 1 of pattern learning paper.
+Generates the figure 3 of pattern learning paper.
 Takes in the pickle file that stores all the experimental data.
 Takes in the image files with slice and pipettes showing recordin location and
 the fluroscence on CA3.
@@ -41,9 +41,170 @@ time_to_plot = 0.250 # in s
 time_points = ["pre","0 mins", "10 mins", "20 mins","30 mins" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
                         #'post_4','post_5']
+cell_dist=[8,10,4]
+cell_dist_key = ["leaners","non\nlearners","cells\nnot\ncosidered"]
 
 class Args: pass
 args_ = Args()
+
+def plot_pie_cell_dis(fig,axs,cell_dist,cell_dist_key):
+    palette_color = sns.color_palette('colorblind')
+    axs.pie(cell_dist,labels=cell_dist_key,
+            colors=palette_color,startangle=220,
+            labeldistance=1,autopct='%.0f%%')
+    axs.text(-0.1,1.2,'D',transform=axs.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    ax_pos = axs.get_position()
+    new_ax_pos = [ax_pos.x0-0.07, ax_pos.y0, ax_pos.width,
+                   ax_pos.height]
+    axs.set_position(new_ax_pos)
+
+
+def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
+                                      fig,axs,cell_type):
+    pd_cell_data_mean_pat_grp = pd_cell_data_mean_cell_grp.groupby(by='frame_status')
+    axs.axvline(100,linestyle=":", color='k')
+    axs.axhline(0.5,linestyle="--", color='r', label ="CDF =0.5")
+    for f, frms in pd_cell_data_mean_pat_grp:
+        if f == "point":
+            continue
+        else:
+            pat_0_vals= frms[(frms["frame_id"]=="pattern_0")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
+            sns.kdeplot(data = pat_0_vals, cumulative = True,
+                        label = "trained pattern", ax=axs,
+                        color=bpf.CB_color_cycle[5],linewidth=3)
+            pat_1_vals= frms[(frms["frame_id"]=="pattern_1")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
+            sns.kdeplot(data = pat_1_vals, cumulative = True,
+                        label="overlapping pattern", ax=axs,
+                        color=bpf.CB_color_cycle[1],linewidth=3)
+            pat_2_vals= frms[(frms["frame_id"]=="pattern_2")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
+            sns.kdeplot(data = pat_2_vals, cumulative = True, 
+                        label="non-overlapping pattern", ax=axs,
+                        color=bpf.CB_color_cycle[0],linewidth=3)
+    axs.set_xlim(-50,350)
+    axs.set_title(cell_type)
+    axs.spines[['right', 'top']].set_visible(False)
+    axs.set_ylabel("CDF of cell numbers")
+    axs.set_xlabel("% change in response to patterns")
+    ax_pos = axs.get_position()
+    new_ax_pos = [ax_pos.x0, ax_pos.y0+0.05, ax_pos.width,
+                   ax_pos.height]
+    axs.set_position(new_ax_pos)
+
+
+    if cell_type=="learners":
+        axs.text(-0.1,1.4,'F',transform=axs.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    else:
+        pass
+    #axs.xaxis.set_tick_params(labelsize=14,width=1.5,length=5)
+    #axs.yaxis.set_tick_params(labelsize=14,width=1.5,length=5)
+def norm_values(cell_list,val_to_plot):
+    cell_list = cell_list.copy()
+    cell_list = cell_list.copy()
+    print(f"cell list inside func : {cell_list}")
+    cell_grp=cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p,pat in pat_grp:
+            if "pattern" not in p:
+                continue
+            else:
+                #print(f"c:{c}, p:{p}")
+                pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")]["min_field"]))
+                pp_grp = pat.groupby(by="pre_post_status")
+                for pr, pp in pp_grp:
+                    norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)]["min_field"]))
+                    norm_val = (norm_val/pre_val)*100
+                    cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
+    return cell_list
+   
+def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
+                  resp_color):
+    y_lim = (-50,500)
+    pat_num=int(pattern_number.split("_")[-1])
+    num_cells= len(catcell_dist["cell_ID"].unique())
+    pfd = catcell_dist.groupby(by="frame_id")
+    for c, pat in pfd:
+        if c != pattern_number:
+            continue
+        else:
+            #pat = pat[(pat["pre_post_status"]!="post_5")]#&(pat["pre_post_status"]!="post_4")]#&(cell["pre_post_status"]!="post_3")]
+            #order = np.array(('pre','post_0','post_1','post_2','post_3','post_4'),dtype=object)
+            order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
+            #print(f"pat = &&&&&&&{pat}%%%%%%%%%%%%%")
+            g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
+                            order=order,ax=axs,color=resp_color,
+                            alpha=0.6,size=3, label='cell response')#alpha=0.8,
+            sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
+                          errorbar="se",order=order,capsize=0.08,ax=axs,
+                          color=plt_color, linestyles='dotted',scale = 0.5,
+                         label="average cell response")
+            #palette="pastel",hue="cell_ID")
+            #g.legend_.remove()
+            g.set_title(None)
+            #"""
+            pvalList = []
+            anotp_list = []
+            for i in order[1:]:
+                posti ="post{i}"
+                #non parametric, paired and small sample size, hence used Wilcoxon signed-rank test
+                #Wilcoxon signed-rank test
+                posti= spst.wilcoxon(pat[pat["pre_post_status"]=='pre'][f"{val_to_plot}"],pat[pat["pre_post_status"]==i][f"{val_to_plot}"],
+                                     zero_method="wilcox", correction=True)
+                pvalList.append(posti.pvalue)
+                anotp_list.append(("pre",i))
+            annotator = Annotator(axs,anotp_list,data=pat, 
+                                  x="pre_post_status",
+                                  y=f"{val_to_plot}",
+                                  order=order,
+                                 fontsize=8)
+            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
+            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+            #annotator.annotate()
+            #"""
+            axs.axhline(100, ls=':',color="k", alpha=0.4)
+            if pat_num==0:
+                sns.despine(fig=None, ax=axs, top=True, right=True, 
+                            left=False, bottom=False, offset=None, trim=False)
+                axs.set_ylabel("% change in\nEPSP amplitude")
+                axs.set_xlabel(None)
+                #axs[pat_num].set_yticks([])
+            elif pat_num==1:
+                sns.despine(fig=None, ax=axs, top=True, right=True, 
+                            left=False, bottom=False, offset=None, trim=False)
+                axs.set_ylabel(None)
+                axs.set_xlabel("time points")
+            elif pat_num==2:
+                sns.despine(fig=None, ax=axs, top=True, right=True, 
+                            left=False, bottom=False, offset=None, trim=False)
+                axs.set_xlabel(None)
+                axs.set_ylabel(None)
+            else:
+                continue
+            g.set(ylim=y_lim)
+            g.set_xticklabels(time_points,rotation=30)
+            g.legend_.remove()
+    axs.set_title("Cell distribution")
+    ax_pos = axs.get_position()
+    new_ax_pos = [ax_pos.x0-0.02, ax_pos.y0, ax_pos.width,
+                  ax_pos.height]
+    axs.set_position(new_ax_pos)
+    axs.text(-0.5,1.4,'C',transform=axs.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')    
+
+
+
+
+def plot_cell_category_classified_EPSP_peaks(pot_cells_df,dep_cells_df,
+                                             val_to_plot,fig,axs):
+    pot_cell_list= norm_values(pot_cells_df,val_to_plot)
+    dep_cell_list= norm_values(dep_cells_df,val_to_plot)
+    plot_cell_dist(pot_cell_list,val_to_plot,fig,axs,"pattern_0",
+                   bpf.CB_color_cycle[0],bpf.CB_color_cycle[0])
+    plot_cell_dist(dep_cell_list,val_to_plot,fig,axs,"pattern_0",
+                   bpf.CB_color_cycle[1],bpf.CB_color_cycle[1])
+
 
 def plot_cell_category_trace(fig,learner_status,gs,cell_df):
     sampling_rate = 20000 # for patterns
@@ -89,8 +250,17 @@ def plot_cell_category_trace(fig,learner_status,gs,cell_df):
             else:
                 continue
             if learner_status!='learner':
+                if pat_num==0:
+                    axs.set_title("non-learners")
+                else:
+                    axs.set_title(None)
                 axs.set_yticklabels([])
                 axs.set_ylabel(None)
+            else:
+                if pat_num==0:
+                    axs.set_title("learners")
+                else:
+                    axs.set_title(None)
             axs.set_ylim(-5,6)
             axs.spines[['right', 'top']].set_visible(False)
 
@@ -144,7 +314,7 @@ def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
     annotator2.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg2)])
     annotator2.annotate()
     
-    axs_inr.text(-0.5,1.4,'C',transform=axs_inr.transAxes,    
+    axs_inr.text(-0.5,1.2,'E',transform=axs_inr.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')    
     g1.set(xlim=(-1,2))
     g1.set(ylim=(-75,-60))
@@ -164,7 +334,7 @@ def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
     sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
 
-def plot_figure_2(extracted_feature_pickle_file_path,
+def plot_figure_3(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
                   illustration_path,
@@ -185,8 +355,8 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     print(f"sc data : {sc_data_df['cell_ID'].unique()}")
     illustration = pillow.Image.open(illustration_path)
     # Define the width and height ratios
-    width_ratios = [1, 1, 1, 1, 1, 1, 1,1]  # Adjust these values as needed
-    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5]       # Adjust these values as needed
+    width_ratios = [1, 1, 1, 1, 1, 0.8, 0.8,1]  # Adjust these values as needed
+    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5]       # Adjust these values as needed
 
     fig = plt.figure(figsize=(8,18))
     gs = GridSpec(10, 8,width_ratios=width_ratios,
@@ -198,7 +368,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     ax_img.imshow(illustration)
 
     ax_img.axis('off')
-    ax_img.text(0.1,2.2,'A',transform=ax_img.transAxes,    
+    ax_img.text(-0.2,2.15,'A',transform=ax_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
 
 
@@ -233,12 +403,28 @@ def plot_figure_2(extracted_feature_pickle_file_path,
         #                pat_pos.height]
         #axs_pat.set_position(new_pat_pos)
         axs_pat.axis('off')
-        #axs_pat.set_title(pattern)
+        axs_pat.set_title(pattern,fontsize=10)
+    #plot pie chart of the distribution
+    axs_pie = fig.add_subplot(gs[4:6,0:2])
+    plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
+    #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
     axs_rmp = fig.add_subplot(gs[4:6,6:8])
     compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
-
+    #plot CDF for cells
+    axs_cdf1 = fig.add_subplot(gs[7:8,1:4])
+    axs_cdf2 = fig.add_subplot(gs[7:8,5:8])
+    plot_cell_distribution_plasticity(sc_data_dict["ap_cells"],
+                                      fig,axs_cdf1,"learners")
+    plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
+                                      fig,axs_cdf2,"non-learners")
+    #plot distribution epsp for learners and non-leaners
+    axs_dist1 = fig.add_subplot(gs[2:3,0:2])
+    plot_cell_category_classified_EPSP_peaks(sc_data_dict["ap_cells"],
+                                             sc_data_dict["an_cells"],
+                                             "max_trace",fig,axs_dist1,
+                                             )
 
 
     #handles, labels = plt.gca().get_legend_handles_labels()
@@ -295,7 +481,7 @@ def main():
     globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_2(pklpath,scpath,cell_stat_path,illustration_path,globoutdir)
+    plot_figure_3(pklpath,scpath,cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

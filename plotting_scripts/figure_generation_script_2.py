@@ -4,7 +4,7 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 1 of pattern learning paper.
+Generates the figure 2 of pattern learning paper.
 Takes in the pickle file that stores all the experimental data.
 Takes in the image files with slice and pipettes showing recordin location and
 the fluroscence on CA3.
