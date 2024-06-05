@@ -113,7 +113,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
             axslist[ax_no].set_xticklabels(["pre","0", "10", "20","30", "40"])
             #axs[ax_no].axhline(125, color='r', linestyle=':', alpha=0.6,linewidth=3)
             ax_pos = axslist[ax_no].get_position()
-            new_ax_pos = [ax_pos.x0+0.07, ax_pos.y0, ax_pos.width,
+            new_ax_pos = [ax_pos.x0+0.07, ax_pos.y0-0.02, ax_pos.width,
                           ax_pos.height]
             axslist[ax_no].set_position(new_ax_pos)
 
@@ -123,28 +123,32 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
             g.legend_.remove()
             if cell_type=="learners":
                 g.set_xlabel(None)
-                g.set_xticklabels([])
+                #g.set_xticklabels([])
                 if pat_num=="pattern_0":
-                    g.set_ylabel(None)
+                    g.set_ylabel("field response\n%change")
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
+                if pat_num=="pattern_1":
+                    g.set_title(cell_type)
+                    g.set_xlabel("time points (mins)")
+                else:
+                    g.set_title(None)
             else:
                 if pat_num=="pattern_1":
                     g.set_xlabel("time points (mins)")
+                    g.set_title(cell_type)
                 else:
+                    g.set_title(None)
                     g.set_xlabel(None)
                 if pat_num=="pattern_0":
-                    g.set_ylabel("field\n   response %change")
+                    g.set_ylabel("field response\n%change")
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
             g.set_ylim(0,300)
         else:
             pass
-
-
-
 
 
 def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, fig, axs):
@@ -312,9 +316,9 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_ex_fl3 = fig.add_subplot(gs[5:6,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
                                       "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
-    axs_in_fl1 = fig.add_subplot(gs[6:7,0:2])
-    axs_in_fl2 = fig.add_subplot(gs[6:7,2:4])
-    axs_in_fl3 = fig.add_subplot(gs[6:7,4:6])
+    axs_in_fl1 = fig.add_subplot(gs[7:8,0:2])
+    axs_in_fl2 = fig.add_subplot(gs[7:8,2:4])
+    axs_in_fl3 = fig.add_subplot(gs[7:8,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
     #handles, labels = plt.gca().get_legend_handles_labels()
