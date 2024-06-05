@@ -277,6 +277,11 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_pat_6 = fig.add_subplot(gs[0:1,6:7])
     plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0)
     plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,0,0)
+    axs_pat_1.text(-0.5,1.4,'A',transform=axs_pat_1.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_pat_4.text(-0.5,1.4,'B',transform=axs_pat_4.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')
+
 
     #plot distribution epsp for learners and leaners
     axs_ex_pat1 = fig.add_subplot(gs[1:3,0:1])
@@ -297,6 +302,10 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_pat_fl2 = fig.add_subplot(gs[4:5,2:4])
     axs_pat_fl3 = fig.add_subplot(gs[4:5,4:6])
     plot_patterns(axs_pat_fl1,axs_pat_fl2,axs_pat_fl3,0.07,0)
+    axs_pat_fl1.text(-0.5,1.4,'C',transform=axs_pat_fl1.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')
+
+
 
     axs_ex_fl1 = fig.add_subplot(gs[5:6,0:2])
     axs_ex_fl2 = fig.add_subplot(gs[5:6,2:4])
