@@ -180,7 +180,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
                 axs.set_xlabel(None)
                 axs.set_ylabel(None)
             else:
-                continue
+                pass 
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=30)
             g.set_xlabel("time points (mins)")
@@ -248,7 +248,7 @@ def plot_cell_category_trace(fig,learner_status,gs,cell_df):
                 axs.set_xlabel("time (ms)")
                 axs.set_ylabel(None)
             else:
-                continue
+                pass 
             if learner_status!='learner':
                 if pat_num==0:
                     axs.set_title("non-learners")

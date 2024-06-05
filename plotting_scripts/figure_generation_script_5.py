@@ -4,7 +4,7 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 3 of pattern learning paper.
+Generates the figure 5 of pattern learning paper.
 Takes in the pickle file that stores all the experimental data.
 Takes in the image files with slice and pipettes showing recordin location and
 the fluroscence on CA3.
@@ -41,8 +41,6 @@ time_to_plot = 0.250 # in s
 time_points = ["pre","0", "10", "20","30" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
                         #'post_4','post_5']
-cell_dist=[8,10,4]
-cell_dist_key = ["leaners","non\nlearners","cells\nnot\ncosidered"]
 
 class Args: pass
 args_ = Args()
@@ -117,7 +115,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
                             left=False, bottom=False, offset=None, trim=False)
                 axs.set_ylabel(None)
                 axs.set_yticklabels([])
-                if cell_type=="dep_cells":
+                if cell_type=="all_cells":
                     axs.set_xlabel(x_label)
                 else:
                     axs.set_xlabel(None)
@@ -132,7 +130,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=0)
             g.legend_.remove()
-            if cell_type!="dep_cells":
+            if cell_type!="all_cells":
                 axs.set_xticklabels([])
             else:
                 pass 
@@ -152,12 +150,17 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
     if cell_type=="pot_cells":
         strp_color = bpf.CB_color_cycle[0]
         line_color = bpf.CB_color_cycle[5]
-        y_lim = (-25,800)
+        y_lim = (-50,1200)
         x_label = None
     elif cell_type=="dep_cells":
         strp_color = bpf.CB_color_cycle[1]
         line_color = bpf.CB_color_cycle[5]
-        y_lim = (-200,500)
+        y_lim = (-50,1200)
+        x_label = None
+    elif cell_type=="all_cells":
+        strp_color = bpf.CB_color_cycle[2]
+        line_color = bpf.CB_color_cycle[5]
+        y_lim = (-50,1300)
         x_label = "time points (mins)"
     else:
         print("uncagerised cell")
@@ -190,14 +193,14 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3):
         else:
             print("exception in pattern number")
         pat_pos = axs_pat.get_position()
-        new_pat_pos = [pat_pos.x0, pat_pos.y0-0.1, pat_pos.width,
+        new_pat_pos = [pat_pos.x0, pat_pos.y0, pat_pos.width,
                         pat_pos.height]
         axs_pat.set_position(new_pat_pos)
         axs_pat.axis('off')
         axs_pat.set_title(pattern,fontsize=10)
 
 
-def plot_figure_4(extracted_feature_pickle_file_path,
+def plot_figure_5(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
                   outdir,learner_cell=learner_cell,
@@ -216,12 +219,17 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                             sc_data_dict["an_cells"]]).reset_index(drop=True)
     print(f"sc data : {sc_data_df['cell_ID'].unique()}")
     # Define the width and height ratios
-    height_ratios = [1, 1, 1, 1, 1, 1, 1,1]  # Adjust these values as needed
+    height_ratios = [1, 1, 1, 1, 1, 
+                     1, 1, 1, 1, 1, 
+                     1, 1, 1, 1, 1,
+                     1, 1]# Adjust these values as needed
+    
     width_ratios = [1, 1, 1, 1, 1, 
-                    1, 1, 1, 1, 1, 1, 1]# Adjust these values as needed
+                    1, 1, 1, 1, 1, 
+                    1, 1, ]# Adjust these values as needed
 
-    fig = plt.figure(figsize=(12,8))
-    gs = GridSpec(8, 12,width_ratios=width_ratios,
+    fig = plt.figure(figsize=(12,9))
+    gs = GridSpec(17, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.1, hspace=0.3)
@@ -235,22 +243,34 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3)
 
     #plot distribution epsp for learners and non-leaners
-    axs_ex_pat1 = fig.add_subplot(gs[2:5,0:3])
-    axs_ex_pat2 = fig.add_subplot(gs[2:5,4:7])
-    axs_ex_pat3 = fig.add_subplot(gs[2:5,8:11])
+    axs_ex_pat1 = fig.add_subplot(gs[1:6,0:3])
+    axs_ex_pat2 = fig.add_subplot(gs[1:6,4:7])
+    axs_ex_pat3 = fig.add_subplot(gs[1:6,8:11])
     plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
-                                                "max_trace",fig,axs_ex_pat1,
+                                                "min_trace",fig,axs_ex_pat1,
                                                 axs_ex_pat2,axs_ex_pat3,
                                                 "pot_cells"
                                                )
-    axs_in_pat1 = fig.add_subplot(gs[6:10,0:3])
-    axs_in_pat2 = fig.add_subplot(gs[6:10,4:7])
-    axs_in_pat3 = fig.add_subplot(gs[6:10,8:11])
+    axs_in_pat1 = fig.add_subplot(gs[6:11,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[6:11,4:7])
+    axs_in_pat3 = fig.add_subplot(gs[6:11,8:11])
     plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
-                                                "max_trace",fig,axs_in_pat1,
+                                                "min_trace",fig,axs_in_pat1,
                                                 axs_in_pat2,axs_in_pat3,
                                                 "dep_cells"
                                                )
+    axs_in_pat1 = fig.add_subplot(gs[11:16,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[11:16,4:7])
+    axs_in_pat3 = fig.add_subplot(gs[11:16,8:11])
+
+    plot_cell_category_classified_EPSP_features(sc_data_df,
+                                                "min_trace",fig,axs_in_pat1,
+                                                axs_in_pat2,axs_in_pat3,
+                                                "all_cells"
+                                               )
+
+
+
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
@@ -261,7 +281,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_4.png"
+    outpath = f"{outdir}/figure_5.png"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
@@ -271,7 +291,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
 
 def main():
     # Argument parser.
-    description = '''Generates figure 3'''
+    description = '''Generates figure 5'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str
@@ -303,10 +323,10 @@ def main():
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_4'
+    globoutdir= globoutdir/'Figure_5'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_4(pklpath,scpath,cell_stat_path,globoutdir)
+    plot_figure_5(pklpath,scpath,cell_stat_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

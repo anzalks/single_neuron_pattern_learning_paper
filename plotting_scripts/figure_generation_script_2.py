@@ -138,7 +138,7 @@ def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,p
                 axs_slp.set_xlabel(None)
                 axs_slp.set_ylabel(None)
             else:
-                continue
+                pass 
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=30)
             g.legend_.remove()
