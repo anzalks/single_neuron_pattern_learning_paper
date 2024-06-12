@@ -291,7 +291,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_ex_pat1 = fig.add_subplot(gs[1:3,0:1])
     axs_ex_pat2 = fig.add_subplot(gs[1:3,1:2])
     axs_ex_pat3 = fig.add_subplot(gs[1:3,2:3])
-    plot_field_response_pairs(sc_data_dict["an_cells"],"min_field","post_3",
+    plot_field_response_pairs(sc_data_dict["ap_cells"],"min_field","post_3",
                               "learners","no norm",
                               fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
     

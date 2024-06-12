@@ -290,7 +290,7 @@ def cell_group_classifier(pd_all_cells_mean,outdir):
         cell["min_field %"] = cell["min_field"]
         pre_res_cutoff = cell[(cell["frame_id"]=="pattern_0")&(cell["pre_post_status"]=="pre")]["max_trace"][0]
         print(f"cutoff amplitude(0.5mv):{pre_res_cutoff}")
-        if ((pre_res_cutoff<0.5) and pre_res_cutoff<10):
+        if ((pre_res_cutoff<0.5) and (pre_res_cutoff<10)):
             print("disqualified")
             continue
         elif len(cell["pre_post_status"].unique())<6:
@@ -358,7 +358,7 @@ def cell_classifier_with_fnorm(pd_all_cells_mean,outdir):
         cell["field_norm %"] = cell["max_trace"]
         pre_res_cutoff = cell[(cell["frame_id"]=="pattern_0")&(cell["pre_post_status"]=="pre")]["max_trace"][0]
         print(f"cutoff amplitude(0.5mv):{pre_res_cutoff}")
-        if ((pre_res_cutoff<0.5) and pre_res_cutoff<10):
+        if ((pre_res_cutoff<0.5) and (pre_res_cutoff<10)):
             print("disqualified")
             continue
         elif len(cell["pre_post_status"].unique())<6:
