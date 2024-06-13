@@ -494,7 +494,7 @@ def main():
                        )
     parser.add_argument('--cellstat-path', '-c'
                         , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
+                        , help = 'path to h5 file with cell stats'
                         'exrracted data'
                        )
     parser.add_argument('--illustration-path', '-i'

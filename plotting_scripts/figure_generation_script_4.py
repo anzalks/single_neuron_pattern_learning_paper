@@ -47,6 +47,44 @@ cell_dist_key = ["leaners","non\nlearners","cells\nnot\ncosidered"]
 class Args: pass
 args_ = Args()
 
+
+def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
+    if title_row_num==1:
+        pattern_list = ["trained pattern","Overlapping pattern",
+                        "Non-overlapping pattern"]
+    else:
+        pattern_list = ["trained\npattern","Overlapping\npattern",
+                        "Non-overlapping\npattern"]
+
+    for pr_no, pattern in enumerate(pattern_list):
+        if pr_no==0:
+            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(0,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no==1:
+            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(4,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no ==2:
+            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(17,2)
+            axs_pat.imshow(pat_fr)
+        else:
+            print("exception in pattern number")
+        pat_pos = axs_pat.get_position()
+        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
+                        pat_pos.height]
+        axs_pat.set_position(new_pat_pos)
+        axs_pat.axis('off')
+        axs_pat.set_title(pattern,fontsize=10)
+    
+def label_axis(axis_list,letter_label):
+    for axs_no, axs in enumerate(axis_list):
+        axs_no = axs_no+1
+        axs.text(-0.05,1.05,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+                      fontsize=16, fontweight='bold', ha='center', va='center')
+
+
 def norm_values(cell_list,val_to_plot):
     cell_list = cell_list.copy()
     cell_list = cell_list.copy()
@@ -171,30 +209,6 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
                    y_lim,x_label,cell_type,line_color,strp_color
                   )
     
-def plot_patterns(axs_pat1,axs_pat2,axs_pat3):
-    pattern_list = ["trained\npattern","Overlapping\npattern",
-                    "Non-overlapping\npattern"]
-    for pr_no, pattern in enumerate(pattern_list):
-        if pr_no==0:
-            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no==1:
-            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no ==2:
-            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
-            axs_pat.imshow(pat_fr)
-        else:
-            print("exception in pattern number")
-        pat_pos = axs_pat.get_position()
-        new_pat_pos = [pat_pos.x0, pat_pos.y0-0.1, pat_pos.width,
-                        pat_pos.height]
-        axs_pat.set_position(new_pat_pos)
-        axs_pat.axis('off')
-        axs_pat.set_title(pattern,fontsize=10)
 
 
 def plot_figure_4(extracted_feature_pickle_file_path,
@@ -224,33 +238,39 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     gs = GridSpec(8, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.1, hspace=0.3)
+    gs.update(wspace=0.4, hspace=0.5)
 
 
 
     #plot patterns
     axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
-    axs_pat_2 = fig.add_subplot(gs[0:1,5:6])
-    axs_pat_3 = fig.add_subplot(gs[0:1,9:10])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3)
+    axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
+    axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.1,1)
 
     #plot distribution epsp for learners and non-leaners
     axs_ex_pat1 = fig.add_subplot(gs[2:5,0:3])
-    axs_ex_pat2 = fig.add_subplot(gs[2:5,4:7])
-    axs_ex_pat3 = fig.add_subplot(gs[2:5,8:11])
+    axs_ex_pat2 = fig.add_subplot(gs[2:5,3:6])
+    axs_ex_pat3 = fig.add_subplot(gs[2:5,6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
                                                 "max_trace",fig,axs_ex_pat1,
                                                 axs_ex_pat2,axs_ex_pat3,
                                                 "pot_cells"
                                                )
-    axs_in_pat1 = fig.add_subplot(gs[6:10,0:3])
-    axs_in_pat2 = fig.add_subplot(gs[6:10,4:7])
-    axs_in_pat3 = fig.add_subplot(gs[6:10,8:11])
+    axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
+    label_axis(axs_ex_list,"A")
+
+
+    axs_in_pat1 = fig.add_subplot(gs[5:9,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[5:9,3:6])
+    axs_in_pat3 = fig.add_subplot(gs[5:9,6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
                                                 "max_trace",fig,axs_in_pat1,
                                                 axs_in_pat2,axs_in_pat3,
                                                 "dep_cells"
                                                )
+    axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
+    label_axis(axs_in_list,"B")
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))

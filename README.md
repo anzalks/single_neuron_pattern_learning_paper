@@ -16,4 +16,11 @@ enshot\ 2023-06-28\ at\ 22.21.46.png
 -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle 
 -r /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_inR.pickle 
 -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_1.jpg 
--p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg   
+-p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg
+
+
+"figure 3"
+:!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle 
+-s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle 
+-i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg 
+-c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 
