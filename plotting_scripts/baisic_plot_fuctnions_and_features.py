@@ -27,14 +27,14 @@ def convert_pvalue_to_asterisks(pvalue):
     if pvalue <= 0.0001:
         print(f"pvalue:{pvalue}")
         #return str(pvalue)
-        return "****"
+        return f"**** p= {np.around(pvalue,3)}"
     elif pvalue <= 0.001:
-        return "***"
+        return f"*** p= {np.around(pvalue,3)}"
     elif pvalue <= 0.01:
-        return "**"
+        return f"** p= {np.around(pvalue,3)}"
     elif pvalue <= 0.05:
         #return str(pvalue)
-        return "*"
+        return f"* p= {np.around(pvalue,3)}"
     else:
         return "ns"
 
@@ -47,6 +47,7 @@ def set_plot_properties():
     plt.rcParams['xtick.labelsize'] = 11
     plt.rcParams['ytick.labelsize'] = 11
     plt.rcParams['legend.fontsize'] = 11
+    plt.rcParams['legend.title_fontsize'] = 11
 """    
     plt.rcParams['axes.grid'] = True
     plt.rcParams['grid.alpha'] = 0.5

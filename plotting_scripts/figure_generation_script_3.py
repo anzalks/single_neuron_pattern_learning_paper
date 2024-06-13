@@ -47,16 +47,62 @@ cell_dist_key = ["leaners","non\nlearners","cells\nnot\ncosidered"]
 class Args: pass
 args_ = Args()
 
+def label_axis(axis_list,letter_label):
+    for axs_no, axs in enumerate(axis_list):
+        axs_no = axs_no+1
+        axs.text(-0.1,1.05,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+                      fontsize=16, fontweight='bold', ha='center', va='center')
+
+def plot_image(image,axs_img,xoffset,yoffset,pltscale):
+    axs_img.imshow(image, cmap='gray')
+    pos = axs_img.get_position()  # Get the original position
+    new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+               pos.height*pltscale]
+    # Shrink the plot
+    axs_img.set_position(new_pos)
+    axs_img.axis('off')       
+        
+def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
+    if title_row_num==1:
+        pattern_list = ["trained pattern","Overlapping pattern",
+                        "Non-overlapping pattern"]
+    else:
+        pattern_list = ["trained\npattern","Overlapping\npattern",
+                        "Non-overlapping\npattern"]
+
+    for pr_no, pattern in enumerate(pattern_list):
+        if pr_no==0:
+            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(0,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no==1:
+            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(4,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no ==2:
+            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(17,2)
+            axs_pat.imshow(pat_fr)
+        else:
+            print("exception in pattern number")
+        pat_pos = axs_pat.get_position()
+        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
+                        pat_pos.height]
+        axs_pat.set_position(new_pat_pos)
+        axs_pat.axis('off')
+        axs_pat.set_title(pattern,fontsize=10)
+
+
 def plot_pie_cell_dis(fig,axs,cell_dist,cell_dist_key):
     palette_color = sns.color_palette('colorblind')
     axs.pie(cell_dist,labels=cell_dist_key,
             colors=palette_color,startangle=220,
             labeldistance=1,autopct='%.0f%%')
-    axs.text(-0.1,1.2,'D',transform=axs.transAxes,    
+    axs.text(-0.05,1.15,'E',transform=axs.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
     ax_pos = axs.get_position()
-    new_ax_pos = [ax_pos.x0-0.07, ax_pos.y0, ax_pos.width,
-                   ax_pos.height]
+    new_ax_pos = [ax_pos.x0-0.1, ax_pos.y0, ax_pos.width*1.4,
+                   ax_pos.height*1.4]
     axs.set_position(new_ax_pos)
 
 
@@ -86,6 +132,15 @@ def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
     axs.spines[['right', 'top']].set_visible(False)
     axs.set_ylabel("CDF of cell numbers")
     axs.set_xlabel("% change in response\nto patterns")
+    handles, labels = axs.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    fig.legend(by_label.values(), by_label.keys(), 
+               bbox_to_anchor =(0.5, 0.325),
+               ncol = 6,
+               loc='upper center')#,frameon=False)#,loc='lower center'    
+
+
+
     ax_pos = axs.get_position()
     new_ax_pos = [ax_pos.x0, ax_pos.y0+0.05, ax_pos.width,
                    ax_pos.height]
@@ -93,7 +148,7 @@ def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
 
 
     if cell_type=="learners":
-        axs.text(-0.1,1.4,'F',transform=axs.transAxes,    
+        axs.text(-0.1,1.4,'G',transform=axs.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
     else:
         pass
@@ -111,10 +166,10 @@ def norm_values(cell_list,val_to_plot):
                 continue
             else:
                 #print(f"c:{c}, p:{p}")
-                pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")]["min_field"]))
+                pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
                 pp_grp = pat.groupby(by="pre_post_status")
                 for pr, pp in pp_grp:
-                    norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])/float(np.abs(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)]["min_field"]))
+                    norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
                     norm_val = (norm_val/pre_val)*100
                     cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
     return cell_list
@@ -135,7 +190,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
             #print(f"pat = &&&&&&&{pat}%%%%%%%%%%%%%")
             g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
                             order=order,ax=axs,color=resp_color,
-                            alpha=0.6,size=3, label='cell response')#alpha=0.8,
+                            alpha=0.6,size=6, label='cell response')#alpha=0.8,
             sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
                           errorbar="se",order=order,capsize=0.08,ax=axs,
                           color=plt_color, linestyles='dotted',scale = 0.5,
@@ -185,12 +240,12 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
             g.set_xticklabels(time_points,rotation=30)
             g.set_xlabel("time points (mins)")
             g.legend_.remove()
-    axs.set_title("Cell distribution")
+    #axs.set_title("Cell distribution")
     ax_pos = axs.get_position()
-    new_ax_pos = [ax_pos.x0-0.02, ax_pos.y0, ax_pos.width,
-                  ax_pos.height]
+    new_ax_pos = [ax_pos.x0-0.03, ax_pos.y0+0.005, ax_pos.width*1.1,
+                  ax_pos.height*1.1]
     axs.set_position(new_ax_pos)
-    axs.text(-0.5,1.4,'C',transform=axs.transAxes,    
+    axs.text(-0.5,1.4,'D',transform=axs.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')    
 
 
@@ -206,7 +261,7 @@ def plot_cell_category_classified_EPSP_peaks(pot_cells_df,dep_cells_df,
                    bpf.CB_color_cycle[1],bpf.CB_color_cycle[1])
 
 
-def plot_cell_category_trace(fig,learner_status,gs,cell_df):
+def plot_cell_category_trace(fig,learner_status,gs,cell_df, label_letter):
     sampling_rate = 20000 # for patterns
     sc_pat_grp = cell_df.groupby(by="frame_id")
     for pat, pat_data in sc_pat_grp:
@@ -263,6 +318,8 @@ def plot_cell_category_trace(fig,learner_status,gs,cell_df):
                     axs.set_title(None)
             axs.set_ylim(-5,6)
             axs.spines[['right', 'top']].set_visible(False)
+            axs.text(-0.1,1.05,f'{label_letter}{pat_num+1}',transform=axs.transAxes,
+                         fontsize=16, fontweight='bold', ha='center', va='center')
 
 def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
                             pot_cells_df,dep_cells_df):
@@ -314,14 +371,14 @@ def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
     annotator2.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg2)])
     annotator2.annotate()
     
-    axs_inr.text(-0.5,1.2,'E',transform=axs_inr.transAxes,    
+    axs_inr.text(-0.5,1.2,'F',transform=axs_inr.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')    
     g1.set(xlim=(-1,2))
     g1.set(ylim=(-75,-60))
     g2.set(xlim=(-1,2))
     g2.set(ylim=(50,200))
-    g1.set_title("Resting membrane\npotential")
-    g2.set_title("Input\nresistance")
+    #g1.set_title("Resting membrane\npotential")
+    #g2.set_title("Input\nresistance")
     g1.set_xticklabels(g1.get_xticklabels(), rotation=30)
     g2.set_xticklabels(g2.get_xticklabels(), rotation=30)
     g1.set_ylabel("Resting membrane\npotential(mV)")
@@ -362,13 +419,11 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     gs = GridSpec(10, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.2, hspace=0.3)
+    gs.update(wspace=0.2, hspace=0.2)
     #place illustration
-    ax_img = fig.add_subplot(gs[0:2, 0:2])
-    ax_img.imshow(illustration)
-
-    ax_img.axis('off')
-    ax_img.text(-0.2,2.15,'A',transform=ax_img.transAxes,    
+    axs_img = fig.add_subplot(gs[0:2, 0:2])
+    plot_image(illustration,axs_img, -0.1,0,1.4)
+    axs_img.text(-0.2,2.15,'A',transform=axs_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
 
 
@@ -376,34 +431,14 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     learner_cell_df = learner_cell_df[~learner_cell_df["frame_status"].isin(deselect_list)]
 
 
-    plot_cell_category_trace(fig,"learner",gs, learner_cell_df)
-    plot_cell_category_trace(fig,"non_learner",gs, non_learner_cell_df)   
-        
-    pattern_list = ["trained\npattern","Overlapping\npattern",
-                    "Non-overlapping\npattern"]
-    for pr_no, pattern in enumerate(pattern_list):
-        if pr_no==0:
-            axs_pat = fig.add_subplot(gs[pr_no,2:3])  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
-            axs_pat.imshow(pat_fr)
-            axs_pat.text(0.1,2.5,'B',transform=axs_pat.transAxes,    
-                        fontsize=16, fontweight='bold', ha='center', va='center')
-        elif pr_no==1:
-            axs_pat = fig.add_subplot(gs[pr_no,2:3])  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no ==2:
-            axs_pat = fig.add_subplot(gs[pr_no,2:3])  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
-            axs_pat.imshow(pat_fr)
-        else:
-            print("exception in pattern number")
-        #pat_pos = axs_pat.get_position()
-        #new_pat_pos = [pat_pos.x0-0.07, pat_pos.y0, pat_pos.width,
-        #                pat_pos.height]
-        #axs_pat.set_position(new_pat_pos)
-        axs_pat.axis('off')
-        axs_pat.set_title(pattern,fontsize=10)
+    plot_cell_category_trace(fig,"learner",gs, learner_cell_df,"B")
+    plot_cell_category_trace(fig,"non_learner",gs, non_learner_cell_df,"C")   
+    
+    axs_pat1 = fig.add_subplot(gs[0,2:3])
+    axs_pat2 = fig.add_subplot(gs[1,2:3])
+    axs_pat3 = fig.add_subplot(gs[2,2:3])
+    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0,0,2)
+    
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
