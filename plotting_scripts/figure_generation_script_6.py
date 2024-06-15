@@ -45,12 +45,47 @@ selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
 class Args: pass
 args_ = Args()
 
+def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
+    if title_row_num==1:
+        pattern_list = ["trained pattern","Overlapping pattern",
+                        "Non-overlapping pattern"]
+    else:
+        pattern_list = ["trained\npattern","Overlapping\npattern",
+                        "Non-overlapping\npattern"]
 
+    for pr_no, pattern in enumerate(pattern_list):
+        if pr_no==0:
+            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(0,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no==1:
+            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(4,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no ==2:
+            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(17,2)
+            axs_pat.imshow(pat_fr)
+        else:
+            print("exception in pattern number")
+        pat_pos = axs_pat.get_position()
+        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
+                        pat_pos.height]
+        axs_pat.set_position(new_pat_pos)
+        axs_pat.axis('off')
+        axs_pat.set_title(pattern,fontsize=10)
+    
+def label_axis(axis_list,letter_label):
+    for axs_no, axs in enumerate(axis_list):
+        axs_no = axs_no+1
+        axs.text(-0.08,1.1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+                      fontsize=16, fontweight='bold', ha='center', va='center')
 
 def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_type,axs1,axs2,axs3):
     pd_cell_data_mean = pd_cell_data_mean[pd_cell_data_mean["pre_post_status"]!="post_5"]
     order = np.array(('pre','post_0','post_1','post_2','post_3','post_4'),dtype=object)
     pd_cell_data_mean_cell_grp = pd_cell_data_mean.groupby(by='cell_ID')
+    
     cells_ =[]
     for c, cell in pd_cell_data_mean_cell_grp:
         cell["min_f_norm"] = cell["min_field"]
@@ -80,16 +115,21 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
     #sns.stripplot(data=pd_cell_data_mean,x="pre_post_status", y= "min_field", hue="cell_ID", alpha=0.5, palette="colorblind")
     patterns = pd_cell_data_mean["frame_id"].unique()
     cb_cyclno = [5,1,0]
+    if cell_type=="learners":
+        pltcolor = bpf.CB_color_cycle[0]
+    else:
+        pltcolor= bpf.CB_color_cycle[1]
+
     axslist = [axs1,axs2,axs3]
     learnt_pat_post_3_mean = pd_cell_data_mean[(pd_cell_data_mean["frame_id"]=="pattern_0")&(pd_cell_data_mean["pre_post_status"]=="post_3")][trace_property].mean()
     for pat_num in patterns:
         if "pattern" in pat_num:
             ax_no = int(pat_num.split("_")[-1])
             g= sns.stripplot(data=pd_cell_data_mean[pd_cell_data_mean["frame_id"]==pat_num],x="pre_post_status",
-                          y= trace_property, alpha=0.6, color=bpf.CB_color_cycle[6], order=order, ax=axslist[ax_no],label=pat_num)
+                          y= trace_property, alpha=0.8, color=bpf.CB_color_cycle[6], order=order, ax=axslist[ax_no],label=pat_num)
             sns.pointplot(data=pd_cell_data_mean[pd_cell_data_mean["frame_id"]==pat_num],x="pre_post_status",
                           y= trace_property,
-                          color=bpf.CB_color_cycle[cb_cyclno[ax_no]],errorbar="sd",capsize=0.1,
+                          color=pltcolor,errorbar="sd",capsize=0.1,
                           order=order, ax=axslist[ax_no], label=pat_num)
 
             pps_grp  = pd_cell_data_mean.groupby(by="pre_post_status")
@@ -123,23 +163,25 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
             g.legend_.remove()
             if cell_type=="learners":
                 g.set_xlabel(None)
-                #g.set_xticklabels([])
+                g.set_xticklabels([])
                 if pat_num=="pattern_0":
                     g.set_ylabel("field response\n%change")
+
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
+                    pass
                 if pat_num=="pattern_1":
-                    g.set_title(cell_type)
-                    g.set_xlabel("time points (mins)")
+                    #g.set_title(cell_type)
+                    g.set_xlabel(None)
                 else:
                     g.set_title(None)
             else:
                 if pat_num=="pattern_1":
                     g.set_xlabel("time points (mins)")
-                    g.set_title(cell_type)
+                    #g.set_title(cell_type)
                 else:
-                    g.set_title(None)
+                    #g.set_title(None)
                     g.set_xlabel(None)
                 if pat_num=="pattern_0":
                     g.set_ylabel("field response\n%change")
@@ -151,7 +193,8 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
             pass
 
 
-def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, fig, axs):
+def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, 
+                    cell_type,fig, axs):
     order = np.array(("pre",timepoint_to_plot),dtype=object)
     c_ratio = float(int(timepoint_to_plot.split("_")[-1])/4)
     
@@ -160,13 +203,18 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, fig, a
     
     x_pre=np.array(df_cells[(df_cells["pre_post_status"]=="pre")&(df_cells["frame_id"]==pattern_num)]["pre_post_status"])
     x_post=np.array(df_cells[(df_cells["pre_post_status"]==timepoint_to_plot)&(df_cells["frame_id"]==pattern_num)]["pre_post_status"])
-    axs.scatter(x_pre,pre_pat0,color=bpf.CB_color_cycle[6],alpha=0.6)
-    axs.scatter(x_post,post4_pat0,color=bpf.CB_color_cycle[6],alpha=0.6)
+    if cell_type=="learners":
+        pltcolor = bpf.CB_color_cycle[0]
+    else:
+        pltcolor= bpf.CB_color_cycle[1]
+
+    axs.scatter(x_pre,pre_pat0,color=bpf.CB_color_cycle[6],alpha=0.8)
+    axs.scatter(x_post,post4_pat0,color=bpf.CB_color_cycle[6],alpha=0.8)
     for i in range(len(x_pre)):
-        axs.plot([x_pre[i], x_post[i]], [pre_pat0[i], post4_pat0[i]], color=bpf.CB_color_cycle[6],alpha=0.5, linestyle='--')
+        axs.plot([x_pre[i], x_post[i]], [pre_pat0[i], post4_pat0[i]], color=bpf.CB_color_cycle[6],alpha=0.8, linestyle='--')
     
     sns.pointplot(data=df_cells[(df_cells["pre_post_status"]==timepoint_to_plot)&(df_cells["frame_id"]==pattern_num)],
-                  x="pre_post_status",y=field_to_plot,color=bpf.post_late,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response post training")
+                  x="pre_post_status",y=field_to_plot,color=pltcolor,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response post training")
     sns.pointplot(data=df_cells[(df_cells["pre_post_status"]=="pre")&(df_cells["frame_id"]==pattern_num)],
                   x="pre_post_status",y=field_to_plot,color=bpf.pre_color,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response pre training")
     #axs.scatter(pre_pat0,post4_pat0)
@@ -205,35 +253,10 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, fig, a
         axs.set_xlabel(None)
     
 def plot_field_response_pairs(df_cells,feature,timepoint,cell_grp_type,nomr_status,fig, axs1,axs2,axs3):
-    plot_raw_points(df_cells,"pattern_0",feature,timepoint, fig, axs1)
-    plot_raw_points(df_cells,"pattern_1",feature,timepoint, fig, axs2)
-    plot_raw_points(df_cells,"pattern_2",feature,timepoint, fig, axs3)
+    plot_raw_points(df_cells,"pattern_0",feature,timepoint, cell_grp_type, fig, axs1)
+    plot_raw_points(df_cells,"pattern_1",feature,timepoint, cell_grp_type, fig, axs2)
+    plot_raw_points(df_cells,"pattern_2",feature,timepoint, cell_grp_type, fig, axs3)
     
-
-def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset):
-    pattern_list = ["trained\npattern","Overlapping\npattern",
-                    "Non-overlapping\npattern"]
-    for pr_no, pattern in enumerate(pattern_list):
-        if pr_no==0:
-            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no==1:
-            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no ==2:
-            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
-            axs_pat.imshow(pat_fr)
-        else:
-            print("exception in pattern number")
-        pat_pos = axs_pat.get_position()
-        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
-                        pat_pos.height]
-        axs_pat.set_position(new_pat_pos)
-        axs_pat.axis('off')
-        axs_pat.set_title(pattern,fontsize=10)
 
 
 def plot_figure_6(extracted_feature_pickle_file_path,
@@ -268,7 +291,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     gs = GridSpec(10, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.1, hspace=0.3)
+    gs.update(wspace=0.5, hspace=0.5)
 
 
 
@@ -279,12 +302,8 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_pat_4 = fig.add_subplot(gs[0:1,4:5])
     axs_pat_5 = fig.add_subplot(gs[0:1,5:6])
     axs_pat_6 = fig.add_subplot(gs[0:1,6:7])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0)
-    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,0,0)
-    axs_pat_1.text(-0.5,1.4,'A',transform=axs_pat_1.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')
-    axs_pat_4.text(-0.5,1.4,'B',transform=axs_pat_4.transAxes,    
-                   fontsize=16, fontweight='bold', ha='center', va='center')
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0,1)
+    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,0,0,1)
 
 
     #plot distribution epsp for learners and leaners
@@ -294,6 +313,8 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     plot_field_response_pairs(sc_data_dict["ap_cells"],"min_field","post_3",
                               "learners","no norm",
                               fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
+    axs_ex_fl_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
+    label_axis(axs_ex_fl_list,"A")
     
     axs_in_pat1 = fig.add_subplot(gs[1:3,4:5])
     axs_in_pat2 = fig.add_subplot(gs[1:3,5:6])
@@ -302,25 +323,30 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                               "non-learners","no norm",
                               fig,axs_in_pat1,axs_in_pat2,axs_in_pat3)
     
+    axs_in_fl_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
+    label_axis(axs_in_fl_list,"B")
+    
     axs_pat_fl1 = fig.add_subplot(gs[4:5,0:2])
     axs_pat_fl2 = fig.add_subplot(gs[4:5,2:4])
     axs_pat_fl3 = fig.add_subplot(gs[4:5,4:6])
-    plot_patterns(axs_pat_fl1,axs_pat_fl2,axs_pat_fl3,0.07,0)
-    axs_pat_fl1.text(-0.5,1.4,'C',transform=axs_pat_fl1.transAxes,    
-                   fontsize=16, fontweight='bold', ha='center', va='center')
+    plot_patterns(axs_pat_fl1,axs_pat_fl2,axs_pat_fl3,0.07,0,1)
 
 
 
-    axs_ex_fl1 = fig.add_subplot(gs[5:6,0:2])
-    axs_ex_fl2 = fig.add_subplot(gs[5:6,2:4])
-    axs_ex_fl3 = fig.add_subplot(gs[5:6,4:6])
+    axs_ex_fl1 = fig.add_subplot(gs[5:7,0:2])
+    axs_ex_fl2 = fig.add_subplot(gs[5:7,2:4])
+    axs_ex_fl3 = fig.add_subplot(gs[5:7,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
                                       "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
-    axs_in_fl1 = fig.add_subplot(gs[7:8,0:2])
-    axs_in_fl2 = fig.add_subplot(gs[7:8,2:4])
-    axs_in_fl3 = fig.add_subplot(gs[7:8,4:6])
+    axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
+    label_axis(axs_ex_fl_list,"C")    
+    axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
+    axs_in_fl2 = fig.add_subplot(gs[7:9,2:4])
+    axs_in_fl3 = fig.add_subplot(gs[7:9,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
+    axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
+    label_axis(axs_in_fl_list,"D")
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
     #fig.legend(by_label.values(), by_label.keys(), 

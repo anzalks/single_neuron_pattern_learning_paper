@@ -45,7 +45,41 @@ selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
 class Args: pass
 args_ = Args()
 
+def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
+    if title_row_num==1:
+        pattern_list = ["trained pattern","Overlapping pattern",
+                        "Non-overlapping pattern"]
+    else:
+        pattern_list = ["trained\npattern","Overlapping\npattern",
+                        "Non-overlapping\npattern"]
 
+    for pr_no, pattern in enumerate(pattern_list):
+        if pr_no==0:
+            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(0,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no==1:
+            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(4,2)
+            axs_pat.imshow(pat_fr)
+        elif pr_no ==2:
+            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(17,2)
+            axs_pat.imshow(pat_fr)
+        else:
+            print("exception in pattern number")
+        pat_pos = axs_pat.get_position()
+        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
+                        pat_pos.height]
+        axs_pat.set_position(new_pat_pos)
+        axs_pat.axis('off')
+        axs_pat.set_title(pattern,fontsize=10)
+    
+def label_axis(axis_list,letter_label):
+    for axs_no, axs in enumerate(axis_list):
+        axs_no = axs_no+1
+        axs.text(-0.075,1.1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+                      fontsize=16, fontweight='bold', ha='center', va='center')
 
 #def gama_fit(expt,alp,bet,gam):
 #    return expt-(((bet*expt)/(gam+expt))*expt)-alp
@@ -57,7 +91,7 @@ def gama_fit(expt,alp,bet,gam):
 
 
 def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,eq_pre_max,
-           eq_post_max,fig, axs):
+           eq_post_max,cell_type,fig, axs):
     x_y_responses = np.array(list_of_x_y_responses)
     pre_x_y = np.array(list_of_x_y_responses_pre)
     pre_arr1,pre_arr2=np.split(pre_x_y,2,axis=1)
@@ -78,9 +112,12 @@ def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,eq_pre_max,
     x  = np.linspace(-0.5, 10,len(arr2))
     pre_y = gama_fit(pre_x,param_pre[0],param_pre[1],param_pre[2])
     y = gama_fit(x,param[0],param[1],param[2])
-    
+    if cell_type=="learners":
+        color=bpf.CB_color_cycle[0]
+    else:
+        color= bpf.CB_color_cycle[1]
     axs.plot(pre_x, pre_y, color='k', linestyle='-', alpha=0.8, label="pre_training",linewidth=3)
-    axs.plot(x, y, color=bpf.CB_color_cycle[1], linestyle='-', alpha=0.8, label="post_training",linewidth=3)
+    axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
     #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10) 
     return x, y
 
@@ -115,7 +152,10 @@ def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status
                 #continue
                 cmx= int(pp.split("_")[-1])/cl
                 color=bpf.colorFader(bpf.post_color,bpf.post_late,mix=cmx)
-                color = bpf.post_late
+                if cell_type=="learners":
+                    color = bpf.CB_color_cycle[0]
+                else:
+                    color = bpf.CB_color_cycle[1]
             pats= ppresp[ppresp["frame_status"]=="pattern"]["frame_id"].unique()
             for pat in pats:
                 pat_num = int(pat.split("_")[-1])
@@ -125,7 +165,8 @@ def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status
                 pat_val_nrm = pat_val#-pat_val
                 point_sum_val_nrm = point_sum_val#-pat_val
                 #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
-                axs[pat_num].axline([0,0], [1,1], linestyle=':', color=bpf.CB_color_cycle[0], label="linear sum",linewidth=2)
+                axs[pat_num].axline([0,0], [1,1], linestyle=':',
+                                    color=bpf.CB_color_cycle[6], label="linear sum",linewidth=2)
                 axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,color=color, label=pp, alpha=0.8,linewidth=2)
                 axs[pat_num].spines[['right', 'top']].set_visible(False)
                 axs[pat_num].set_xlim(-1,12)
@@ -166,36 +207,12 @@ def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status
     #poly_fit_sums(pre_all_resp_pat_2,all_resp_pat_2,2,fig, axs)
     eq_pre_max = np.max(pre_all_resp_pat_0)
     eq_post_max = np.max(all_resp_pat_0)
-    eq_fit(pre_all_resp_pat_0,all_resp_pat_0,0,eq_pre_max,eq_post_max,fig, axs1)
-    eq_fit(pre_all_resp_pat_1,all_resp_pat_1,1,eq_pre_max,eq_post_max,fig, axs2)
-    eq_fit(pre_all_resp_pat_2,all_resp_pat_2,2,eq_pre_max,eq_post_max,fig, axs3)
+    eq_fit(pre_all_resp_pat_0,all_resp_pat_0,0,eq_pre_max,eq_post_max,cell_type, fig, axs1)
+    eq_fit(pre_all_resp_pat_1,all_resp_pat_1,1,eq_pre_max,eq_post_max,cell_type, fig, axs2)
+    eq_fit(pre_all_resp_pat_2,all_resp_pat_2,2,eq_pre_max,eq_post_max,cell_type, fig, axs3)
 
     
 
-def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset):
-    pattern_list = ["trained\npattern","Overlapping\npattern",
-                    "Non-overlapping\npattern"]
-    for pr_no, pattern in enumerate(pattern_list):
-        if pr_no==0:
-            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no==1:
-            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
-            axs_pat.imshow(pat_fr)
-        elif pr_no ==2:
-            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
-            axs_pat.imshow(pat_fr)
-        else:
-            print("exception in pattern number")
-        pat_pos = axs_pat.get_position()
-        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
-                        pat_pos.height]
-        axs_pat.set_position(new_pat_pos)
-        axs_pat.axis('off')
-        axs_pat.set_title(pattern,fontsize=10)
 
 
 def plot_figure_7(extracted_feature_pickle_file_path,
@@ -239,10 +256,8 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     axs_pat_2 = fig.add_subplot(gs[0:1,2:3])
     axs_pat_3 = fig.add_subplot(gs[0:1,4:5])
 
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0.05,0.03)
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0.05,0.03,1)
 
-    axs_pat_1.text(-0.5,1.4,'A',transform=axs_pat_1.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')
 
 
     #plot summation for learners and leaners
@@ -251,15 +266,19 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     axs_ex_sm3 = fig.add_subplot(gs[1:3,4:6])
     plot_expected_vs_observed(sc_data_dict["ap_cells"],"learners","no_fnorm",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
-    axs_ex_sm2.set_title("learners")
+    axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
+    label_axis(axs_ex_sm_l_list, "A")
+    #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
     axs_ex_sm4 = fig.add_subplot(gs[4:6,0:2])
     axs_ex_sm5 = fig.add_subplot(gs[4:6,2:4])
     axs_ex_sm6 = fig.add_subplot(gs[4:6,4:6])
-    plot_expected_vs_observed(sc_data_dict["an_cells"],"learners","no_fnorm",
+    plot_expected_vs_observed(sc_data_dict["an_cells"],"non-learners","no_fnorm",
                               fig,axs_ex_sm4,axs_ex_sm5,axs_ex_sm6)
-    axs_ex_sm5.set_title("non-learners")
-
+    #axs_ex_sm5.set_title("non-learners")
+    
+    axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
+    label_axis(axs_ex_sm_nl_list,"B")
 
 
 

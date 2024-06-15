@@ -194,7 +194,7 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
     elif cell_type=="dep_cells":
         strp_color = bpf.CB_color_cycle[1]
         line_color = bpf.CB_color_cycle[5]
-        y_lim = (-50,1400)
+        y_lim = (-50,1300)
         x_label = None
     elif cell_type=="all_cells":
         strp_color = bpf.CB_color_cycle[2]
