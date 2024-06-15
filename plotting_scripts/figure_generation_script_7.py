@@ -179,9 +179,15 @@ def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status
                     
                 else:
                     axs[pat_num].set_yticklabels([])
-                if pat_num==1:
-                    axs[pat_num].set_xlabel("expected response (mV)")                    
-                
+                if cell_type=="learners":
+                    axs[pat_num].set_title(None)
+                    axs[pat_num].set_xlabel(None)
+                    axs[pat_num].set_xticklabels([])
+                else:
+                    if pat_num==1:
+                        axs[pat_num].set_xlabel("expected response (mV)")
+                    else:
+                        axs[pat_num].set_title(None)
                 if pp!="pre":
                     if pat_num==0:
                         all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
@@ -247,7 +253,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     gs = GridSpec(10, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.1, hspace=0.3)
+    gs.update(wspace=0.1, hspace=1)
 
 
 
@@ -270,9 +276,9 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     label_axis(axs_ex_sm_l_list, "A")
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
-    axs_ex_sm4 = fig.add_subplot(gs[4:6,0:2])
-    axs_ex_sm5 = fig.add_subplot(gs[4:6,2:4])
-    axs_ex_sm6 = fig.add_subplot(gs[4:6,4:6])
+    axs_ex_sm4 = fig.add_subplot(gs[3:5,0:2])
+    axs_ex_sm5 = fig.add_subplot(gs[3:5,2:4])
+    axs_ex_sm6 = fig.add_subplot(gs[3:5,4:6])
     plot_expected_vs_observed(sc_data_dict["an_cells"],"non-learners","no_fnorm",
                               fig,axs_ex_sm4,axs_ex_sm5,axs_ex_sm6)
     #axs_ex_sm5.set_title("non-learners")
