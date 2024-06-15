@@ -82,8 +82,8 @@ def label_axis(axis_list,letter_label):
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_type,axs1,axs2,axs3):
-    pd_cell_data_mean = pd_cell_data_mean[pd_cell_data_mean["pre_post_status"]!="post_5"]
-    order = np.array(('pre','post_0','post_1','post_2','post_3','post_4'),dtype=object)
+    pd_cell_data_mean = pd_cell_data_mean[pd_cell_data_mean["pre_post_status"]!="post_4"]
+    order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
     pd_cell_data_mean_cell_grp = pd_cell_data_mean.groupby(by='cell_ID')
     
     cells_ =[]
@@ -150,7 +150,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
             #"""
             axslist[ax_no].axhline(100,color='k', linestyle=':', alpha=0.4,linewidth=2)
             axslist[ax_no].axhline(learnt_pat_post_3_mean, color='r', linestyle='-.', alpha=0.5,linewidth=2)
-            axslist[ax_no].set_xticklabels(["pre","0", "10", "20","30", "40"])
+            axslist[ax_no].set_xticklabels(["pre","0", "10", "20","30"])
             #axs[ax_no].axhline(125, color='r', linestyle=':', alpha=0.6,linewidth=3)
             ax_pos = axslist[ax_no].get_position()
             new_ax_pos = [ax_pos.x0+0.07, ax_pos.y0-0.02, ax_pos.width,
@@ -302,8 +302,8 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_pat_4 = fig.add_subplot(gs[0:1,4:5])
     axs_pat_5 = fig.add_subplot(gs[0:1,5:6])
     axs_pat_6 = fig.add_subplot(gs[0:1,6:7])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0,1)
-    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,0,0,1)
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0,2)
+    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,0,0,2)
 
 
     #plot distribution epsp for learners and leaners

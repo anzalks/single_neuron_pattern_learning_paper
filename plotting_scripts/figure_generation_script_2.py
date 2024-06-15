@@ -265,7 +265,7 @@ def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,p
                 handles, labels = g.get_legend_handles_labels()
                 by_label = dict(zip(labels, handles))
                 axs_slp.legend(by_label.values(), by_label.keys(), 
-                               bbox_to_anchor =(0.6, 0.9),
+                               bbox_to_anchor =(0.6, 1),
                                ncol = 1,title="cell response",
                                loc='upper center',frameon=False)
 
@@ -308,8 +308,10 @@ def inR_sag_plot(inR_all_Cells_df,fig,axs):
                     capsize=0.2,errorbar=('sd'),order=order,color="k",
                     label="input\nresistance")
     sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",
-                  capsize=0.2,errorbar=('sd'),order=order,label="sag value")
-    sns.stripplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",
+                  capsize=0.2,errorbar=('sd'),order=order,
+                  color=bpf.CB_color_cycle[4], label="sag value")
+    sns.stripplot(data=inR_all_Cells_df,color=bpf.CB_color_cycle[4],
+                  x="pre_post_status",y="sag",
                   order=order,alpha=0.2)
 
     pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="pre"]["sag"]
