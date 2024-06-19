@@ -11,6 +11,9 @@ import warnings
 import time
 from pathlib import Path
 import argparse
+from  matplotlib import pyplot as plt
+from scipy.signal import butter, filtfilt
+import scipy
 
 
 class Args: pass
@@ -42,6 +45,46 @@ def baseline_data_extractor(cells_df,outdir):
     print(f"all traces 'pre' written to pickle file: {outpath}")
     return pre_only_df
 
+from scipy.signal import butter, filtfilt
+
+def butter_bandpass(lowcut, highcut, fs, order=4):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def bandpass_filter(data, lowcut, highcut, fs, order=4):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    filtered_data = filtfilt(b, a, data)
+    return filtered_data
+
+
+def mini_features(trace, sampling_rate=20000,threshold=0.3, min_distance=0.05, max_height=10):
+    max_height =max_height # maximum amplitude of mepsp in mV
+    trace_time = len(trace)/sampling_rate # in seconds
+    #fig,axs=plt.subplots(3,1)
+    min_distance = int(min_distance*sampling_rate) # minimum time before next mini peak
+    smoothed_data = bandpass_filter(trace,10, 1000, sampling_rate, order=4) #band pass filter applied on the trace
+    smoothed_data = scipy.ndimage.gaussian_filter1d(smoothed_data,5)
+    threshold = 0.25#np.std(smoothed_data)*3 # threshold to consider the minimum amplitude iin mV
+    peaks, properties = scipy.signal.find_peaks(smoothed_data, distance=min_distance, height=(threshold, max_height))
+    time = np.linspace(0,trace_time,len(trace))*1000 # time in ms
+    mepsp_time, mepsp_amp = time[peaks],trace[peaks]
+    num_mepsp = len(peaks) # absoulte number
+    freq_mepsp = num_mepsp/trace_time # in minis per second
+    
+    """
+    axs[0].plot(time,trace, label="raw data")
+    axs[0].plot(time,smoothed_data, label="smoothened", alpha=0.5)
+    axs[0].axhline(threshold,color="k",alpha=0.5)
+    axs[0].scatter(time[peaks],trace[peaks], color='r',alpha=0.6)
+    axs[0].set_ylim(-1,5)
+    plt.show()
+    plt.close()
+    """
+    return mepsp_amp, mepsp_time, num_mepsp, freq_mepsp
+    
 
 def extract_cell_features_all_trials(cells_df, outdir):
     cell_grp = cells_df.groupby(by="cell_ID")
@@ -74,6 +117,8 @@ def extract_cell_features_all_trials(cells_df, outdir):
                             field_trace = np.array(trial['field_trace(mV)'])
                             ttl_trace = np.array(trial["ttl_trace(V)"])
                             pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
+                            no_stim_trace = pat_trace[int(sampling_rate*0.5):]
+                            mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(no_stim_trace)
                             pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
                             field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
                             field_trace = field_trace[:int(sampling_rate*0.5)] #500ms time window
@@ -112,12 +157,12 @@ def extract_cell_features_all_trials(cells_df, outdir):
                                               min_trace_t,max_trace_t,
                                               max_field_t, min_field_t,
                                               pat_trace,field_trace,
-                                              ttl_trace, cell_rmp])
+                                              ttl_trace, cell_rmp, mepsp_amp, mepsp_time, num_mepsp, freq_mepsp])
     clist_header=["cell_ID","frame_status","pre_post_status","frame_id",
                   "trial_no","min_trace","max_trace","abs_area","pos_area",
                   "neg_area","onset_time","max_field","min_field","slope",
                   "intercept","min_trace_t","max_trace_t","max_field_t",
-                  "min_field_t","trace","field","ttl","mean_rmp"]
+                  "min_field_t","trace","field","ttl","mean_rmp","mepsp_amp", "mepsp_time", "num_mepsp", "freq_mepsp"]
     pd_cell_list =pd.concat(pd.DataFrame([i],columns=clist_header) for i in tqdm(cell_list))
     pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"]!="post_5"]
     outpath = f"{outdir}/pd_all_cells_all_trials"

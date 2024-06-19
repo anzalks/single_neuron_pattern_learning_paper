@@ -195,6 +195,8 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
 
 def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, 
                     cell_type,fig, axs):
+    df_cells=df_cells.copy()
+    df_cells[field_to_plot] = df_cells[field_to_plot].abs()
     order = np.array(("pre",timepoint_to_plot),dtype=object)
     c_ratio = float(int(timepoint_to_plot.split("_")[-1])/4)
     
