@@ -4,7 +4,7 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 7 of pattern learning paper.
+Generates the figure 8 of pattern learning paper.
 Takes in the pickle file that stores all the experimental data.
 Takes in the image files with slice and pipettes showing recordin location and
 the fluroscence on CA3.
@@ -198,16 +198,12 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset):
         axs_pat.set_title(pattern,fontsize=10)
 
 
-def plot_figure_7(extracted_feature_pickle_file_path,
+def plot_figure_8(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
-                  cell_stats_pickle_file,
                   outdir,learner_cell=learner_cell,
                   non_learner_cell=non_learner_cell):
-    deselect_list = ["no_frame","inR","point"]
+    #deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
-    cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
-    print(f"cell stat df : {cell_stats_df}")
-    single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
     non_learner_cell_df = single_cell_df.copy()
     learner_cell_df = single_cell_df[(single_cell_df["cell_ID"]==learner_cell)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
@@ -272,7 +268,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_7.png"
+    outpath = f"{outdir}/figure_8.png"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
@@ -282,25 +278,17 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
 def main():
     # Argument parser.
-    description = '''Generates figure 7'''
+    description = '''Generates figure 8'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
+                        'all trail data'
                        )
     parser.add_argument('--sortedcell-path', '-s'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with cell sorted'
                         'exrracted data'
-                       )
-    parser.add_argument('--cellstat-path', '-c'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
-                        'exrracted data'
-                       )
-    parser.add_argument('--illustration-path', '-i'
-                        , required = False,default ='./', type=str
-                        , help = 'path to the image file in png format'
                        )
 
     parser.add_argument('--outdir-path','-o'
@@ -311,14 +299,11 @@ def main():
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
     scpath = Path(args.sortedcell_path)
-    illustration_path = Path(args.illustration_path)
-    cell_stat_path = Path(args.cellstat_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_7'
+    globoutdir= globoutdir/'Figure_8'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_7(pklpath,scpath,cell_stat_path,globoutdir)
-    print(f"illustration path: {illustration_path}")
+    plot_figure_8(pklpath,scpath,globoutdir)
 
 
 

@@ -69,8 +69,10 @@ def mini_features(trace, sampling_rate=20000,threshold=0.3, min_distance=0.05, m
     smoothed_data = scipy.ndimage.gaussian_filter1d(smoothed_data,5)
     threshold = 0.25#np.std(smoothed_data)*3 # threshold to consider the minimum amplitude iin mV
     peaks, properties = scipy.signal.find_peaks(smoothed_data, distance=min_distance, height=(threshold, max_height))
+    peaks = np.delete(peaks,trace[peaks]<=0)
+    peaks = np.delete(peaks,trace[peaks]>5)
     time = np.linspace(0,trace_time,len(trace))*1000 # time in ms
-    mepsp_time, mepsp_amp = time[peaks],trace[peaks]
+    mepsp_time, mepsp_amp = time[peaks],np.mean(trace[peaks])
     num_mepsp = len(peaks) # absoulte number
     freq_mepsp = num_mepsp/trace_time # in minis per second
     
@@ -117,7 +119,7 @@ def extract_cell_features_all_trials(cells_df, outdir):
                             field_trace = np.array(trial['field_trace(mV)'])
                             ttl_trace = np.array(trial["ttl_trace(V)"])
                             pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
-                            no_stim_trace = pat_trace[int(sampling_rate*0.5):]
+                            no_stim_trace = pat_trace[int(sampling_rate*1):]
                             mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(no_stim_trace)
                             pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
                             field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
