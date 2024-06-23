@@ -69,22 +69,11 @@ def mini_features(trace, sampling_rate=20000,threshold=0.3, min_distance=0.05, m
     smoothed_data = scipy.ndimage.gaussian_filter1d(smoothed_data,5)
     threshold = 0.25#np.std(smoothed_data)*3 # threshold to consider the minimum amplitude iin mV
     peaks, properties = scipy.signal.find_peaks(smoothed_data, distance=min_distance, height=(threshold, max_height))
-    peaks = np.delete(peaks,trace[peaks]<=0)
-    peaks = np.delete(peaks,trace[peaks]>5)
     time = np.linspace(0,trace_time,len(trace))*1000 # time in ms
-    mepsp_time, mepsp_amp = time[peaks],np.mean(trace[peaks])
+    mepsp_time = time[peaks]
+    mepsp_amp = np.mean(trace[peaks])
     num_mepsp = len(peaks) # absoulte number
     freq_mepsp = num_mepsp/trace_time # in minis per second
-    
-    """
-    axs[0].plot(time,trace, label="raw data")
-    axs[0].plot(time,smoothed_data, label="smoothened", alpha=0.5)
-    axs[0].axhline(threshold,color="k",alpha=0.5)
-    axs[0].scatter(time[peaks],trace[peaks], color='r',alpha=0.6)
-    axs[0].set_ylim(-1,5)
-    plt.show()
-    plt.close()
-    """
     return mepsp_amp, mepsp_time, num_mepsp, freq_mepsp
     
 
@@ -120,7 +109,8 @@ def extract_cell_features_all_trials(cells_df, outdir):
                             ttl_trace = np.array(trial["ttl_trace(V)"])
                             pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
                             no_stim_trace = pat_trace[int(sampling_rate*1):]
-                            mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(no_stim_trace)
+                            mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(no_stim_trace,
+                                                                                         sampling_rate=sampling_rate)
                             pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
                             field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
                             field_trace = field_trace[:int(sampling_rate*0.5)] #500ms time window
@@ -172,6 +162,29 @@ def extract_cell_features_all_trials(cells_df, outdir):
     print(f"all cells all trails features extracted, file: {outpath}")
     return pd_cell_list
 
+def extract_training_data(cell_data,outdir):
+    cell_data = cell_data[cell_data["frame_id"].str.contains("training", case=False, na=False)]
+    cell_grp = cell_data.groupby(by="cell_ID")
+    cell_list = []
+    for cell, cell_data in cell_grp:
+        sampling_rate = int(cell_data["sampling_rate(Hz)"].unique())
+        trial_grp = cell_data.groupby(by="trial_no")
+        for trial, trial_data in trial_grp:
+            trace=trial_data["cell_trace(mV)"].to_numpy()
+            trace=substract_baseline(trace,sampling_rate, 5)
+            ttl=trial_data["ttl_trace(V)"].to_numpy()
+            trigger=np.argmax(ttl>0.5)
+            trigger_time = (trigger/sampling_rate)*1000
+            trigger_val = ttl[trigger]
+            cell_thresh=np.argmax(trace>0.25)
+            cell_thresh_time = (cell_thresh/sampling_rate)*1000
+            cell_thresh_val = trace[cell_thresh]
+            cell_list.append([cell,trial,trigger_time,trigger_val,cell_thresh_time,cell_thresh_val,trace])
+            clist_header=["cell_ID","trial_no","trigger_time","trigger_val","cell_thresh_time","cell_thresh_val","trace"]
+    pd_cell_list =pd.concat(pd.DataFrame([i],columns=clist_header) for i in tqdm(cell_list))
+    outpath = f"{outdir}/pd_training_data_all_cells_all_trials"
+    write_pkl(pd_cell_list,outpath)    
+    return None
 
 def extract_cell_features_mean(all_data_with_training_df, outdir):
     cell_grp = all_data_with_training_df.groupby(by="cell_ID")
@@ -501,8 +514,10 @@ def main():
     extract_cell_inR_features(all_data_with_training_df,globoutdir)
     extract_cell_features_all_trials(all_data_with_training_df,globoutdir)
     pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df,globoutdir)
+    extract_training_data(all_data_with_training_df,globoutdir)
     cell_group_classifier(pd_all_cells_mean,globoutdir)
     cell_classifier_with_fnorm(pd_all_cells_mean,globoutdir)
+    
 
 if __name__  == '__main__':
     #timing the run with time.time

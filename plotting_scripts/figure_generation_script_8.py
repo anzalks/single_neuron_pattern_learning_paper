@@ -108,18 +108,93 @@ def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
     return c_df
 
 def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
+    if field_to_plot=="mepsp_amp":
+        ylim=(0,1.3)
+    elif field_to_plot=="freq_mepsp":
+        ylim=(0,10)
+    else:
+        ylim=(None,None)
     order = np.array(["pre","post_3"])
     cells_df=cells_df.copy()
     data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
     learners_df = data_to_plot[data_to_plot["cell_ID"].isin(learners)]
     non_learners_df = data_to_plot[data_to_plot["cell_ID"].isin(non_learners)]
+    pre_dat = learners_df[learners_df["pre_post_status"]=="pre"][field_to_plot]
+    post_dat = learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot]
+
     sns.pointplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
-                 order=order,color=bpf.CB_color_cycle[0])
+                 order=order,color=bpf.CB_color_cycle[0],
+                 errorbar='sd')
     sns.pointplot(data=non_learners_df,x="pre_post_status",
-                  y=field_to_plot,ax=axs,order=order,color=bpf.CB_color_cycle[1])
+                  y=field_to_plot,ax=axs,order=order,
+                  color=bpf.CB_color_cycle[1],errorbar='sd')
+    stat_analysis= spst.wilcoxon(pre_dat,post_dat, zero_method="wilcox", correction=True)
+    pvalList = stat_analysis.pvalue
+    anotp_list=["pre","post_3"]
+    annotator =Annotator(axs,[anotp_list], data=learners_df, 
+                         x="pre_post_status",y=field_to_plot,order=order)
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
+    #annotator.annotate()
     axs.set_title(field_to_plot)
-    
-def plot_mini_distribution(df_cells,dict_cell_classified,fig, axs1,axs2,axs3):
+    axs.set_ylabel(None)
+    axs.set_ylim(ylim)
+    return None
+   
+def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non_learners,fig,axs):
+    if field_to_plot=="mepsp_amp":
+        ylim=(0,1.3)
+    elif field_to_plot=="freq_mepsp":
+        ylim=(0,10)
+    else:
+        ylim=(None,None)
+    order = np.array(["learners","non_learners"])
+    cells_df=cells_df.copy()
+    data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
+    learners_df = data_to_plot[data_to_plot["cell_ID"].isin(learners)]
+    non_learners_df = data_to_plot[data_to_plot["cell_ID"].isin(non_learners)]
+    learners_dat = learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot].to_numpy()
+    non_learners_dat = non_learners_df[non_learners_df["pre_post_status"]=="post_3"][field_to_plot].to_numpy()
+    len_learners = len(learners_dat)
+    len_non_learners = len(non_learners_dat)
+    if len_learners > len_non_learners:
+        non_learners_dat = np.pad(non_learners_dat, 
+                                  (0, len_learners -len_non_learners),
+                                  constant_values=np.nan)
+    else:
+        learners_dat = np.pad(learners_dat, 
+                              (0, len_non_learners -len_learners),
+                              constant_values=np.nan)
+    lrn_df = pd.DataFrame({"learners":learners_dat,"non_learners":non_learners_dat})
+    long_df = lrn_df.melt(var_name='Category', value_name='Values')
+    #long_df['Values'] = pd.to_numeric(long_df['Values'], errors='coerce')
+
+
+    sns.pointplot(data=long_df, x='Category', y='Values',ax=axs,
+                 color=bpf.CB_color_cycle[2],errorbar='sd')
+    #lrn_df = pd.DataFrame("learners":learners_dat,"non-learners":non_learners_dat})
+    #
+    #sns.pointplot(data=lrn_df,x="learners",y="non-learners",ax=axs,
+    #              order=order,color=bpf.CB_color_cycle[0],
+    #              errorbar='sd')
+    stat_analysis= spst.f_oneway(learners_dat,non_learners_dat)
+    pvalList = stat_analysis.pvalue
+    anotp_list=["learners","non_learners"]
+    annotator =Annotator(axs,[anotp_list], data=long_df,
+                         x="Category",y="Values",order=order)
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
+    annotator.annotate()
+    axs.set_title(field_to_plot)
+    axs.set_ylabel(None)
+    axs.set_xticklabels(axs.get_xticklabels(), rotation=45)
+    axs.set_ylim(ylim)
+    return None
+
+
+
+
+
+def plot_mini_distribution(df_cells,dict_cell_classified,
+                           fig, axs1,axs2,axs3,axs4):
     learners = dict_cell_classified["ap_cells"]["cell_ID"].unique()
     non_learners = dict_cell_classified["an_cells"]["cell_ID"].unique()
     
@@ -128,13 +203,16 @@ def plot_mini_distribution(df_cells,dict_cell_classified,fig, axs1,axs2,axs3):
     plot_mini_feature(norm_df_amp,"mepsp_amp",learners,non_learners,fig,axs1)
     norm_df_num = df_cells.copy()
 #    norm_df_num = normalise_df_to_pre(norm_df_num,"num_mepsp")
-    plot_mini_feature(norm_df_num,"num_mepsp",learners,non_learners,fig,axs2)
+#    plot_mini_feature(norm_df_num,"num_mepsp",learners,non_learners,fig,axs2)
     norm_df_freq = df_cells.copy()
 #    norm_df_freq = normalise_df_to_pre(norm_df_freq,"freq_mepsp")
-    plot_mini_feature(norm_df_freq,"freq_mepsp",learners,non_learners,fig,axs3)
+    plot_mini_feature(norm_df_freq,"freq_mepsp",learners,non_learners,fig,axs2)
+    plot_learner_vs_non_learner_mini_feature(df_cells,"mepsp_amp",
+                                            learners,non_learners,fig,axs3)
+    plot_learner_vs_non_learner_mini_feature(df_cells,"freq_mepsp",
+                                             learners,non_learners,fig,axs4)
 
-
-def plot_figure_6(extracted_feature_pickle_file_path,
+def plot_figure_8(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
                   outdir
@@ -162,11 +240,14 @@ def plot_figure_6(extracted_feature_pickle_file_path,
 
     #plot distribution of minis
     axs_mini_amp = fig.add_subplot(gs[1:3,0:1])
-    axs_mini_num = fig.add_subplot(gs[1:3,1:2])
-    axs_mini_freq = fig.add_subplot(gs[1:3,2:3])
-    plot_mini_distribution(all_cell_all_trial_df,sc_data_dict, fig, axs_mini_amp,
-                           axs_mini_num, axs_mini_freq)
-    axs_mini_list = [axs_mini_amp,axs_mini_num,axs_mini_freq]
+    axs_mini_freq = fig.add_subplot(gs[1:3,1:2])
+    axs_mini_comp_amp = fig.add_subplot(gs[1:3,2:3])
+    axs_mini_comp_freq = fig.add_subplot(gs[1:3,3:4])
+    plot_mini_distribution(all_cell_all_trial_df,sc_data_dict, fig, 
+                           axs_mini_amp,axs_mini_freq,
+                           axs_mini_comp_amp,axs_mini_comp_freq)
+    axs_mini_list = [axs_mini_amp,axs_mini_freq,
+                     axs_mini_comp_amp,axs_mini_comp_freq]
     #label_axis(axs_mini_list,"A")
 
     plt.tight_layout()
@@ -216,7 +297,7 @@ def main():
     globoutdir= globoutdir/'Figure_8'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_6(pklpath,scpath,cell_stat_path,globoutdir)
+    plot_figure_8(pklpath,scpath,cell_stat_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

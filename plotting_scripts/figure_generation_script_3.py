@@ -50,8 +50,17 @@ args_ = Args()
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.1,1.05,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(-0.1,1.085,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
+
+def move_axis(axs_list,xoffset,yoffset,pltscale):
+    for axs in axs_list:
+        pos = axs.get_position()  # Get the original position
+        new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+                   pos.height*pltscale]
+        # Shrink the plot
+        axs.set_position(new_pos)
+
 
 def plot_image(image,axs_img,xoffset,yoffset,pltscale):
     axs_img.imshow(image, cmap='gray')
@@ -104,6 +113,194 @@ def plot_pie_cell_dis(fig,axs,cell_dist,cell_dist_key):
     new_ax_pos = [ax_pos.x0-0.1, ax_pos.y0, ax_pos.width*1.4,
                    ax_pos.height*1.4]
     axs.set_position(new_ax_pos)
+def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
+    cell_grp=all_trial_cell_df.groupby(by="cell_ID")
+    c_df = all_trial_cell_df.copy()
+    for cell, cell_data in cell_grp:
+        pps_grp = cell_data.groupby(by="pre_post_status")
+        for pps,pps_data in pps_grp:
+            if pps=="pre":
+                pass
+            elif pps=="post_3":
+                pass
+            else:
+                pass
+            trial_grp = pps_data.groupby(by="trial_no")
+            for trial_no,trial_data in trial_grp:
+                frame_grp = trial_data.groupby(by="frame_id")
+                for frame, frame_data in frame_grp:
+                    pre_data =c_df[(c_df["cell_ID"]==cell)&(c_df["pre_post_status"]=="pre")&(c_df["trial_no"]==trial_no)&(c_df["frame_id"]==frame)][field_to_plot].to_numpy()
+                    norm_data =(frame_data[field_to_plot].to_numpy()/pre_data)*100
+                    if norm_data==0:
+                        norm_data=np.nan
+                        print(f"pre_data: {pre_data},zero is there")
+                    else:
+                        norm_data=norm_data
+                        print(f"pre_data, {pre_data} no zero")
+                    #print(f"pps:{pps}, pre: {pre_data}" )
+                    c_df[field_to_plot].iloc[(c_df["cell_ID"]==cell)&(c_df["pre_post_status"]==pps)&(c_df["trial_no"]==trial_no)&(c_df["frame_id"]==frame)]=norm_data
+    return c_df
+
+def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
+    if field_to_plot=="mepsp_amp":
+        ylim=(-1,2)
+        ylabel=("mEPSP amplitude (mV)")
+    elif field_to_plot=="freq_mepsp":
+        ylim=(-1,10)
+        ylabel=("mEPSP frequency (Hz)")
+    else:
+        ylim=(None,None)
+        ylabel=None
+    order = np.array(["pre","post_3"])
+    cells_df=cells_df.copy()
+    data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
+    learners_df =  data_to_plot[data_to_plot["cell_ID"].isin(learners)].reset_index(drop=True)
+    non_learners_df =  data_to_plot[data_to_plot["cell_ID"].isin(non_learners)].reset_index(drop=True)
+    pre_dat =  learners_df[learners_df["pre_post_status"]=="pre"][field_to_plot].reset_index(drop=True)
+    post_dat =  learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot].reset_index(drop=True)
+
+    pointplot1=sns.pointplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
+                 order=order,color=bpf.CB_color_cycle[0],
+                 capsize=0.15,errorbar='sd')
+    pointplot2=sns.pointplot(data=non_learners_df,x="pre_post_status",
+                  y=field_to_plot,ax=axs,order=order,
+                  color=bpf.CB_color_cycle[1],capsize=0.15,
+                  errorbar='sd')
+    #sns.stripplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
+    #             order=order,color=bpf.CB_color_cycle[0],
+    #             alpha=0.1,zorder=1)
+    #sns.stripplot(data=non_learners_df,x="pre_post_status",
+    #              y=field_to_plot,ax=axs,order=order,
+    #              color=bpf.CB_color_cycle[1],alpha=0.1,zorder=1)
+
+
+    stat_analysis= spst.wilcoxon(pre_dat,post_dat, zero_method="wilcox", correction=True)
+    pvalList = stat_analysis.pvalue
+    anotp_list=["pre","post_3"]
+    annotator =Annotator(axs,[anotp_list], data=learners_df, 
+                         x="pre_post_status",y=field_to_plot,order=order)
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
+    #annotator.annotate()
+    axs.set_ylabel(ylabel)
+    axs.set_xlabel("time points\n(mins)")
+    axs.set_xticklabels(["pre","30 mins"])
+    axs.set_ylim(ylim)
+    axs.spines[['right', 'top']].set_visible(False)
+    return None
+
+def plot_threshold_timing(training_data,sc_data_dict,fig,axs):
+    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
+    cell_grp = training_data.groupby(by="cell_ID")
+    lrns=[]
+    non_lrns=[]
+    for cell, cell_data in cell_grp:
+        if cell in learners:
+            lrns.append(cell_data)
+        elif cell in non_learners:
+            non_lrns.append(cell_data)
+        else:
+            print(cell,"no selection")
+            continue
+    #print(lrns)
+    #print(non_lrns)
+    lrns = pd.concat(lrns)
+    non_lrns = pd.concat(non_lrns)
+    print(non_lrns["trigger_time"].unique())
+
+    sns.pointplot(data=lrns,x="trigger_time", y="cell_thresh_time",
+                  color=bpf.CB_color_cycle[0],errorbar="sd",
+                  capsize=0.15, dodge=True,ax=axs)
+    sns.pointplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
+                  color=bpf.CB_color_cycle[1],errorbar="sd" ,
+                  capsize=0.15,dodge=True,ax=axs)
+
+    sns.stripplot(data=lrns,x="trigger_time", y="cell_thresh_time", 
+                  color=bpf.CB_color_cycle[0],alpha=0.5)
+    sns.stripplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
+                  color=bpf.CB_color_cycle[1],alpha=0.5)
+    axs.set_ylabel("cell threshold\ntime point (ms)")
+    axs.set_xlabel("projection\ntrigger time (ms)")
+    axs.spines[['right', 'top']].set_visible(False)
+
+def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non_learners,fig,axs):
+    if field_to_plot=="mepsp_amp":
+        ylim=(-1,2)
+    elif field_to_plot=="freq_mepsp":
+        ylim=(-1,10)
+    else:
+        ylim=(None,None)
+        ylabel=None
+    order = np.array(["learners","non_learners"])
+    cells_df=cells_df.copy()
+    data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
+    learners_df = data_to_plot[data_to_plot["cell_ID"].isin(learners)]
+    non_learners_df = data_to_plot[data_to_plot["cell_ID"].isin(non_learners)]
+    learners_dat = learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot].to_numpy()
+    non_learners_dat = non_learners_df[non_learners_df["pre_post_status"]=="post_3"][field_to_plot].to_numpy()
+    len_learners = len(learners_dat)
+    len_non_learners = len(non_learners_dat)
+    if len_learners > len_non_learners:
+        non_learners_dat = np.pad(non_learners_dat, 
+                                  (0, len_learners -len_non_learners),
+                                  constant_values=np.nan)
+    else:
+        learners_dat = np.pad(learners_dat, 
+                              (0, len_non_learners -len_learners),
+                              constant_values=np.nan)
+    lrn_df = pd.DataFrame({"learners":learners_dat,"non_learners":non_learners_dat})
+    long_df = lrn_df.melt(var_name='Category', value_name='Values')
+    #long_df['Values'] = pd.to_numeric(long_df['Values'], errors='coerce')
+
+
+    sns.pointplot(data=long_df, x='Category', y='Values',ax=axs,
+                 color=bpf.CB_color_cycle[3],capsize=0.15,errorbar='sd')
+    #sns.stripplot(data=long_df, x='Category', y='Values',ax=axs,
+    #             color=bpf.CB_color_cycle[3],alpha=0.1)
+
+    #lrn_df = pd.DataFrame("learners":learners_dat,"non-learners":non_learners_dat})
+    #
+    #sns.pointplot(data=lrn_df,x="learners",y="non-learners",ax=axs,
+    #              order=order,color=bpf.CB_color_cycle[0],
+    #              errorbar='sd')
+    stat_analysis= spst.f_oneway(learners_dat,non_learners_dat)
+    pvalList = stat_analysis.pvalue
+    anotp_list=["learners","non_learners"]
+    annotator =Annotator(axs,[anotp_list], data=long_df,
+                         x="Category",y="Values",order=order)
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
+    annotator.annotate()
+    axs.set_ylabel(None)
+    axs.set_xlabel(None)
+    axs.set_xticklabels(["learners","non-learners"])
+    axs.set_yticklabels([])
+    axs.set_xticklabels(axs.get_xticklabels(), rotation=45)
+    axs.set_ylim(ylim)
+    axs.spines[['right', 'top']].set_visible(False)
+    return None
+
+
+
+
+
+def plot_mini_distribution(df_cells,dict_cell_classified,
+                           fig, axs1,axs2,axs3,axs4):
+    learners = dict_cell_classified["ap_cells"]["cell_ID"].unique()
+    non_learners = dict_cell_classified["an_cells"]["cell_ID"].unique()
+    
+    norm_df_amp=df_cells.copy()
+#    norm_df_amp = normalise_df_to_pre(norm_df_amp,"mepsp_amp")
+    plot_mini_feature(norm_df_amp,"mepsp_amp",learners,non_learners,fig,axs1)
+    norm_df_num = df_cells.copy()
+#    norm_df_num = normalise_df_to_pre(norm_df_num,"num_mepsp")
+#    plot_mini_feature(norm_df_num,"num_mepsp",learners,non_learners,fig,axs2)
+    norm_df_freq = df_cells.copy()
+#    norm_df_freq = normalise_df_to_pre(norm_df_freq,"freq_mepsp")
+    plot_mini_feature(norm_df_freq,"freq_mepsp",learners,non_learners,fig,axs2)
+    plot_learner_vs_non_learner_mini_feature(df_cells,"mepsp_amp",
+                                            learners,non_learners,fig,axs3)
+    plot_learner_vs_non_learner_mini_feature(df_cells,"freq_mepsp",
+                                             learners,non_learners,fig,axs4)
 
 
 def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
@@ -129,28 +326,20 @@ def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
                         color=bpf.CB_color_cycle[0],linewidth=3)
     axs.set_xlim(-50,350)
     axs.set_title(cell_type)
-    axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("CDF of cell numbers")
     axs.set_xlabel("% change in response\nto patterns")
     handles, labels = axs.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     fig.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.5, 0.325),
+               bbox_to_anchor =(0.5, 0.30),
                ncol = 6,
-               loc='upper center')#,frameon=False)#,loc='lower center'    
+               loc='upper center')#,frameon=False)#,loc='lower center'
 
-
-
-    ax_pos = axs.get_position()
-    new_ax_pos = [ax_pos.x0, ax_pos.y0+0.05, ax_pos.width,
-                   ax_pos.height]
-    axs.set_position(new_ax_pos)
-
-
+    axs.spines[['right', 'top']].set_visible(False)
     if cell_type=="learners":
-        axs.text(-0.1,1.4,'G',transform=axs.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+        axs.set_ylabel("CDF of cell numbers")
     else:
+        axs.set_ylabel(None)
+        axs.set_yticklabels([])
         pass
     #axs.xaxis.set_tick_params(labelsize=14,width=1.5,length=5)
     #axs.yaxis.set_tick_params(labelsize=14,width=1.5,length=5)
@@ -392,14 +581,18 @@ def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
 
 
 def plot_figure_3(extracted_feature_pickle_file_path,
+                  all_trails_all_Cells_path,
                   cell_categorised_pickle_file,
+                  training_data_pickle_file,
                   cell_stats_pickle_file,
                   illustration_path,
                   outdir,learner_cell=learner_cell,
                   non_learner_cell=non_learner_cell):
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
+    all_trial_df = pd.read_pickle(all_trails_all_Cells_path)
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
+    training_data = pd.read_pickle(training_data_pickle_file)
     print(f"cell stat df : {cell_stats_df}")
     single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
@@ -439,6 +632,12 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_pat3 = fig.add_subplot(gs[2,2:3])
     plot_patterns(axs_pat1,axs_pat2,axs_pat3,0,0,2)
     
+    #plot distribution epsp for learners and non-leaners
+    axs_dist1 = fig.add_subplot(gs[2:3,0:2])
+    plot_cell_category_classified_EPSP_peaks(sc_data_dict["ap_cells"],
+                                             sc_data_dict["an_cells"],
+                                             "max_trace",fig,axs_dist1,
+                                             )    
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
@@ -447,20 +646,39 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_rmp = fig.add_subplot(gs[4:6,6:8])
     compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
+    
+    #plot distribution of minis
+    axs_mini_amp = fig.add_subplot(gs[7:8,0:2])
+    axs_mini_comp_amp = fig.add_subplot(gs[7:8,2:4])
+    axs_mini_freq = fig.add_subplot(gs[7:8,4:6])
+    axs_mini_comp_freq = fig.add_subplot(gs[7:8,6:8])
+    plot_mini_distribution(all_trial_df,sc_data_dict, fig, 
+                           axs_mini_amp,axs_mini_freq,
+                           axs_mini_comp_amp,axs_mini_comp_freq)
+    move_axis([axs_mini_amp],-0.05,0.05,0.9)
+    move_axis([axs_mini_comp_amp],-0.05,0.05,0.9)
+    move_axis([axs_mini_freq],0.05,0.05,0.9)
+    move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
+    axs_mini_list = [axs_mini_amp,axs_mini_freq,
+                     axs_mini_comp_amp,axs_mini_comp_freq]
+    label_axis(axs_mini_list,"G")    
+    
     #plot CDF for cells
-    axs_cdf1 = fig.add_subplot(gs[7:8,0:3])
-    axs_cdf2 = fig.add_subplot(gs[7:8,5:8])
+    axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
+    axs_cdf2 = fig.add_subplot(gs[9:10,3:6])
     plot_cell_distribution_plasticity(sc_data_dict["ap_cells"],
                                       fig,axs_cdf1,"learners")
     plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
                                       fig,axs_cdf2,"non-learners")
-    #plot distribution epsp for learners and non-leaners
-    axs_dist1 = fig.add_subplot(gs[2:3,0:2])
-    plot_cell_category_classified_EPSP_peaks(sc_data_dict["ap_cells"],
-                                             sc_data_dict["an_cells"],
-                                             "max_trace",fig,axs_dist1,
-                                             )
+    axs_cdf_list = [axs_cdf1,axs_cdf2]
+    label_axis(axs_cdf_list,"G")
+    move_axis(axs_cdf_list,-0.05,0.05,1)
 
+    #plot training timing details
+    axs_trn = fig.add_subplot(gs[9:10,6:8])
+    plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
+    move_axis([axs_trn],0.05,0.05,1)
+    
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
@@ -487,6 +705,14 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
+    parser.add_argument('--alltrial-path', '-a'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with extracted features'
+                       )
+    parser.add_argument('--training-path', '-t'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with extracted features'
+                       )
     parser.add_argument('--sortedcell-path', '-s'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with cell sorted'
@@ -509,6 +735,8 @@ def main():
     #    parser.parse_args(namespace=args_)
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
+    alltrialspath=Path(args.alltrial_path)
+    trainingpath = Path(args.training_path)
     scpath = Path(args.sortedcell_path)
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
@@ -516,7 +744,7 @@ def main():
     globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_3(pklpath,scpath,cell_stat_path,illustration_path,globoutdir)
+    plot_figure_3(pklpath,alltrialspath,scpath,trainingpath,cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
