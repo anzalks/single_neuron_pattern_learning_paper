@@ -188,7 +188,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
-            g.set_ylim(0,300)
+            g.set_ylim(50,250)
         else:
             pass
 

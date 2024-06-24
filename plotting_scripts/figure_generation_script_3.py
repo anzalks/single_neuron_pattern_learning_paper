@@ -28,6 +28,7 @@ import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 import baisic_plot_fuctnions_and_features as bpf
+from matplotlib.ticker import MultipleLocator
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -42,7 +43,7 @@ time_points = ["pre","0", "10", "20","30" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
                         #'post_4','post_5']
 cell_dist=[8,10,4]
-cell_dist_key = ["leaners","non\nlearners","cells\nnot\ncosidered"]
+cell_dist_key = ["leaners","non-learners","cells not\ncosidered"]
 
 class Args: pass
 args_ = Args()
@@ -105,14 +106,11 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
 def plot_pie_cell_dis(fig,axs,cell_dist,cell_dist_key):
     palette_color = sns.color_palette('colorblind')
     axs.pie(cell_dist,labels=cell_dist_key,
-            colors=palette_color,startangle=220,
+            colors=palette_color,startangle=210,
             labeldistance=1,autopct='%.0f%%')
-    axs.text(-0.05,1.15,'E',transform=axs.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
-    ax_pos = axs.get_position()
-    new_ax_pos = [ax_pos.x0-0.1, ax_pos.y0, ax_pos.width*1.4,
-                   ax_pos.height*1.4]
-    axs.set_position(new_ax_pos)
+    
+    
+
 def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
     cell_grp=all_trial_cell_df.groupby(by="cell_ID")
     c_df = all_trial_cell_df.copy()
@@ -140,6 +138,41 @@ def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
                     #print(f"pps:{pps}, pre: {pre_data}" )
                     c_df[field_to_plot].iloc[(c_df["cell_ID"]==cell)&(c_df["pre_post_status"]==pps)&(c_df["trial_no"]==trial_no)&(c_df["frame_id"]==frame)]=norm_data
     return c_df
+
+def plot_threshold_timing(training_data,sc_data_dict,fig,axs):
+    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
+    cell_grp = training_data.groupby(by="cell_ID")
+    lrns=[]
+    non_lrns=[]
+    for cell, cell_data in cell_grp:
+        if cell in learners:
+            lrns.append(cell_data)
+        elif cell in non_learners:
+            non_lrns.append(cell_data)
+        else:
+            print(cell,"no selection")
+            continue
+    #print(lrns)
+    #print(non_lrns)
+    lrns = pd.concat(lrns)
+    non_lrns = pd.concat(non_lrns)
+    print(non_lrns["trigger_time"].unique())
+
+    sns.pointplot(data=lrns,x="trigger_time", y="cell_thresh_time",
+                  color=bpf.CB_color_cycle[0],errorbar="sd",
+                  capsize=0.15, dodge=True,ax=axs)
+    sns.pointplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
+                  color=bpf.CB_color_cycle[1],errorbar="sd" ,
+                  capsize=0.15,dodge=True,ax=axs)
+
+    sns.stripplot(data=lrns,x="trigger_time", y="cell_thresh_time", 
+                  color=bpf.CB_color_cycle[0],alpha=0.5)
+    sns.stripplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
+                  color=bpf.CB_color_cycle[1],alpha=0.5)
+    axs.set_ylabel("cell threshold\ntime point (ms)")
+    axs.set_xlabel("projection\ntrigger time (ms)")
+    axs.spines[['right', 'top']].set_visible(False)
 
 def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
     if field_to_plot=="mepsp_amp":
@@ -188,40 +221,6 @@ def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
     axs.spines[['right', 'top']].set_visible(False)
     return None
 
-def plot_threshold_timing(training_data,sc_data_dict,fig,axs):
-    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-    cell_grp = training_data.groupby(by="cell_ID")
-    lrns=[]
-    non_lrns=[]
-    for cell, cell_data in cell_grp:
-        if cell in learners:
-            lrns.append(cell_data)
-        elif cell in non_learners:
-            non_lrns.append(cell_data)
-        else:
-            print(cell,"no selection")
-            continue
-    #print(lrns)
-    #print(non_lrns)
-    lrns = pd.concat(lrns)
-    non_lrns = pd.concat(non_lrns)
-    print(non_lrns["trigger_time"].unique())
-
-    sns.pointplot(data=lrns,x="trigger_time", y="cell_thresh_time",
-                  color=bpf.CB_color_cycle[0],errorbar="sd",
-                  capsize=0.15, dodge=True,ax=axs)
-    sns.pointplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
-                  color=bpf.CB_color_cycle[1],errorbar="sd" ,
-                  capsize=0.15,dodge=True,ax=axs)
-
-    sns.stripplot(data=lrns,x="trigger_time", y="cell_thresh_time", 
-                  color=bpf.CB_color_cycle[0],alpha=0.5)
-    sns.stripplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
-                  color=bpf.CB_color_cycle[1],alpha=0.5)
-    axs.set_ylabel("cell threshold\ntime point (ms)")
-    axs.set_xlabel("projection\ntrigger time (ms)")
-    axs.spines[['right', 'top']].set_visible(False)
 
 def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non_learners,fig,axs):
     if field_to_plot=="mepsp_amp":
@@ -302,6 +301,27 @@ def plot_mini_distribution(df_cells,dict_cell_classified,
     plot_learner_vs_non_learner_mini_feature(df_cells,"freq_mepsp",
                                              learners,non_learners,fig,axs4)
 
+def plot_fi_curve(firing_properties,sc_data_dict,fig,axs):
+    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
+    sns.stripplot(data=firing_properties[firing_properties["cell_ID"].isin(learners)],
+                  x="injected_current",y="spike_frequency",
+                  alpha=0.2,color=bpf.CB_color_cycle[0])
+    sns.pointplot(data=firing_properties[firing_properties["cell_ID"].isin(learners)],
+                  x="injected_current",y="spike_frequency",color=bpf.CB_color_cycle[0], 
+                  capsize=0.15,label="learners")
+    sns.stripplot(data=firing_properties[firing_properties["cell_ID"].isin(non_learners)],
+                  x="injected_current",y="spike_frequency",
+                  alpha=0.2, color=bpf.CB_color_cycle[1])
+    sns.pointplot(data=firing_properties[firing_properties["cell_ID"].isin(non_learners)],
+                  x="injected_current",y="spike_frequency",color=bpf.CB_color_cycle[1],
+                  capsize=0.15, label="non-learners")
+    axs.set_ylabel("spike frequency\n(spikes/s)")
+    axs.set_xlabel("injected current\n(pA)")
+    axs.spines[['right', 'top']].set_visible(False)
+    axs.xaxis.set_major_locator(MultipleLocator(6))
+    axs.legend_.remove()
+    
 
 def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
                                       fig,axs,cell_type):
@@ -434,9 +454,6 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
     new_ax_pos = [ax_pos.x0-0.03, ax_pos.y0+0.005, ax_pos.width*1.1,
                   ax_pos.height*1.1]
     axs.set_position(new_ax_pos)
-    axs.text(-0.5,1.4,'D',transform=axs.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')    
-
 
 
 
@@ -560,8 +577,6 @@ def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
     annotator2.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg2)])
     annotator2.annotate()
     
-    axs_inr.text(-0.5,1.2,'F',transform=axs_inr.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')    
     g1.set(xlim=(-1,2))
     g1.set(ylim=(-75,-60))
     g2.set(xlim=(-1,2))
@@ -584,6 +599,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                   all_trails_all_Cells_path,
                   cell_categorised_pickle_file,
                   training_data_pickle_file,
+                  firing_properties_path,
                   cell_stats_pickle_file,
                   illustration_path,
                   outdir,learner_cell=learner_cell,
@@ -593,6 +609,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     all_trial_df = pd.read_pickle(all_trails_all_Cells_path)
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
     training_data = pd.read_pickle(training_data_pickle_file)
+    firing_properties= pd.read_pickle(firing_properties_path)
     print(f"cell stat df : {cell_stats_df}")
     single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
@@ -615,10 +632,10 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     gs.update(wspace=0.2, hspace=0.2)
     #place illustration
     axs_img = fig.add_subplot(gs[0:2, 0:2])
-    plot_image(illustration,axs_img, -0.1,0,1.4)
-    axs_img.text(-0.2,2.15,'A',transform=axs_img.transAxes,    
+    plot_image(illustration,axs_img, 0,0,1)
+    axs_img.text(-0.05,1.15,'A',transform=axs_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
-
+    move_axis([axs_img],-0.075,0.025,1.3)
 
     #plot EPSP classification for learner & non-learner
     learner_cell_df = learner_cell_df[~learner_cell_df["frame_status"].isin(deselect_list)]
@@ -638,15 +655,37 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                                              sc_data_dict["an_cells"],
                                              "max_trace",fig,axs_dist1,
                                              )    
+    axs_dist1.text(-0.025,1.1,'D',transform=axs_dist1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_dist1],0,0.05,1)
+    
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
+    axs_pie.text(-0.025,0.85,'E',transform=axs_pie.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_pie],-0.075,0.115,1)
+    
+    #plot F-I curve
+    axs_fi = fig.add_subplot(gs[4:6,0:2])
+    plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
+    move_axis([axs_fi],-0.05,0,1)
+    axs_fi.text(-0.05,1.05,'F',transform=axs_fi.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+
     #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
     axs_rmp = fig.add_subplot(gs[4:6,6:8])
-    compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
+    compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
+    move_axis([axs_inr],-0.045,0,1)
+    axs_inr.text(-0.05,1.05,'G',transform=axs_inr.transAxes,    
+                fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_rmp.text(-0.05,1.05,'H',transform=axs_rmp.transAxes,    
+                fontsize=16, fontweight='bold', ha='center', va='center')
     
+    
+
     #plot distribution of minis
     axs_mini_amp = fig.add_subplot(gs[7:8,0:2])
     axs_mini_comp_amp = fig.add_subplot(gs[7:8,2:4])
@@ -659,9 +698,9 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_mini_comp_amp],-0.05,0.05,0.9)
     move_axis([axs_mini_freq],0.05,0.05,0.9)
     move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
-    axs_mini_list = [axs_mini_amp,axs_mini_freq,
-                     axs_mini_comp_amp,axs_mini_comp_freq]
-    label_axis(axs_mini_list,"G")    
+    axs_mini_list = [axs_mini_amp,axs_mini_comp_amp,
+                     axs_mini_freq,axs_mini_comp_freq]
+    label_axis(axs_mini_list,"I")    
     
     #plot CDF for cells
     axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
@@ -671,14 +710,15 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
                                       fig,axs_cdf2,"non-learners")
     axs_cdf_list = [axs_cdf1,axs_cdf2]
-    label_axis(axs_cdf_list,"G")
+    label_axis(axs_cdf_list,"J")
     move_axis(axs_cdf_list,-0.05,0.05,1)
 
     #plot training timing details
     axs_trn = fig.add_subplot(gs[9:10,6:8])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0.05,1)
-    
+    axs_trn.text(-0.05,1.05,'K',transform=axs_trn.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
@@ -694,7 +734,6 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     plt.show(block=False)
     plt.pause(1)
     plt.close()
-
 
 
 def main():
@@ -723,6 +762,11 @@ def main():
                         , help = 'path to h5 file with cell stats'
                         'exrracted data'
                        )
+    parser.add_argument('--firingproperties-path', '-q'
+                        , required = False,default ='./', type=str
+                        , help = 'path to h5 file with cell stats'
+                        'exrracted data'
+                       )    
     parser.add_argument('--illustration-path', '-i'
                         , required = False,default ='./', type=str
                         , help = 'path to the image file in png format'
@@ -740,11 +784,12 @@ def main():
     scpath = Path(args.sortedcell_path)
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
+    firing_properties_path = Path(args.firingproperties_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_3(pklpath,alltrialspath,scpath,trainingpath,cell_stat_path,illustration_path,globoutdir)
+    plot_figure_3(pklpath,alltrialspath,scpath,trainingpath,firing_properties_path,cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
