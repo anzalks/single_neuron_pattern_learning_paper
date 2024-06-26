@@ -95,7 +95,7 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
 def norm_values(cell_list,val_to_plot):
     cell_list = cell_list.copy()
     cell_list = cell_list.copy()
-    print(f"cell list inside func : {cell_list}")
+    #print(f"cell list inside func : {cell_list}")
     cell_grp=cell_list.groupby(by="cell_ID")
     for c, cell in cell_grp:
         pat_grp = cell.groupby(by="frame_id")
@@ -187,6 +187,31 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
     #new_ax_pos = [ax_pos.x0-0.02, ax_pos.y0, ax_pos.width,
     #              ax_pos.height]
     #axs.set_position(new_ax_pos)
+
+def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
+                                                fig,axs1,axs2,axs3,cell_type):
+    cell_df= norm_values(esp_feat_cells_df,val_to_plot)
+    if cell_type=="pot_cells":
+        strp_color = bpf.CB_color_cycle[0]
+        line_color = bpf.CB_color_cycle[5]
+        y_lim = (-25,800)
+        x_label = None
+    elif cell_type=="dep_cells":
+        strp_color = bpf.CB_color_cycle[1]
+        line_color = bpf.CB_color_cycle[5]
+        y_lim = (-200,500)
+        x_label = "time points (mins)"
+    else:
+        print("uncagerised cell")
+    plot_cell_dist(cell_df,val_to_plot,fig,axs1,"pattern_0",
+                   y_lim,x_label,cell_type,line_color,strp_color
+                  )
+    plot_cell_dist(cell_df,val_to_plot,fig,axs2,"pattern_1",
+                   y_lim,x_label,cell_type,line_color,strp_color
+                  )
+    plot_cell_dist(cell_df,val_to_plot,fig,axs3,"pattern_2",
+                   y_lim,x_label,cell_type,line_color,strp_color
+                  )
     
 def plot_response_summary_bar(sc_data_dict,fig,axs):
     order = ["pre", "post_3"]
@@ -252,12 +277,12 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
     # Plot 'pre' bars
     sns.barplot(data=combined_df[combined_df["pre_post_status"] == "pre"],
                 x="combined", y="max_trace", hue="group", order=combined_order,
-                palette=palette, alpha=0.5,ax=axs,ci=None)
+                palette=palette, alpha=0.5,ax=axs,errorbar=None)
 
     # Plot 'post_3' bars
     sns.barplot(data=combined_df[combined_df["pre_post_status"] == "post_3"],
                 x="combined", y="max_trace", hue="group", order=combined_order,
-                palette=palette,alpha=1,ax=axs,ci=None)
+                palette=palette,alpha=1,ax=axs,errorbar=None)
     for label in axs.get_xticklabels():
         label.set_position((label.get_position()[0] + 0.5, label.get_position()[1]))  # Adjust the offset value as needed
 
@@ -270,34 +295,31 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
     axs.set_xlabel(None)
     #axs.set_ylim(-2,10,)
 
-def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
-                                                fig,axs1,axs2,axs3,cell_type):
-    cell_df= norm_values(esp_feat_cells_df,val_to_plot)
-    if cell_type=="pot_cells":
-        strp_color = bpf.CB_color_cycle[0]
-        line_color = bpf.CB_color_cycle[5]
-        y_lim = (-25,800)
-        x_label = None
-    elif cell_type=="dep_cells":
-        strp_color = bpf.CB_color_cycle[1]
-        line_color = bpf.CB_color_cycle[5]
-        y_lim = (-200,500)
-        x_label = "time points (mins)"
-    else:
-        print("uncagerised cell")
-    plot_cell_dist(cell_df,val_to_plot,fig,axs1,"pattern_0",
-                   y_lim,x_label,cell_type,line_color,strp_color
-                  )
-    plot_cell_dist(cell_df,val_to_plot,fig,axs2,"pattern_1",
-                   y_lim,x_label,cell_type,line_color,strp_color
-                  )
-    plot_cell_dist(cell_df,val_to_plot,fig,axs3,"pattern_2",
-                   y_lim,x_label,cell_type,line_color,strp_color
-                  )
-    
+
+def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict,fig,axs):
+    learners_df=sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners_df = sc_data_dict["an_cells"]["cell_ID"].unique()
+    #cell_df = cell_features_all_trials[cell_features_all_trials["frame_id"].str.contains("points",case=False,na=False)]
+    points_df = cell_features_all_trials.copy()
+    #points_df = norm_values(points_df,"max_trace")
+    points_df_pre =  points_df[(points_df["frame_id"].str.contains("point"))&(points_df["pre_post_status"]=="pre")]
+    points_df_post = points_df[(points_df["frame_id"].str.contains("point"))&(points_df["pre_post_status"]=="post_3")]
+    sns.pointplot(points_df_pre,x="frame_id",y="max_trace",
+                ax=axs,color=bpf.pre_color)
+    sns.pointplot(points_df_post, x="frame_id",y="max_trace",
+                ax=axs,color=bpf.post_late)
+    sns.stripplot(points_df_pre,x="frame_id",y="max_trace",
+                ax=axs,color=bpf.pre_color,alpha=0.2)
+    sns.stripplot(points_df_post, x="frame_id",y="max_trace",
+                ax=axs,color=bpf.post_late,alpha=0.2)
+
+    axs.set_ylim(-1,4)
+    axs.spines[['right', 'top']].set_visible(False)
+    axs.set_xticklabels(axs.get_xticklabels(),rotation=30)
 
 
 def plot_figure_4(extracted_feature_pickle_file_path,
+                  all_trial_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
                   outdir,learner_cell=learner_cell,
@@ -305,6 +327,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
+    cell_features_all_trials = pd.read_pickle(all_trial_path)
     print(f"cell stat df : {cell_stats_df}")
     single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
@@ -318,13 +341,13 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     # Define the width and height ratios
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
-                     1, 1,]  # Adjust these values as needed
+                     1, 1, 1, 1]  # Adjust these values as needed
     width_ratios = [1, 1, 1, 1, 1, 
                     1, 1, 1, 1, 1, 
                     1, 1]# Adjust these values as needed
 
     fig = plt.figure(figsize=(12,8))
-    gs = GridSpec(12, 12,width_ratios=width_ratios,
+    gs = GridSpec(14, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.4, hspace=0.5)
@@ -361,9 +384,17 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
     label_axis(axs_in_list,"B")
 
-    axs_bar = fig.add_subplot(gs[9:,0:9])
+    axs_bar = fig.add_subplot(gs[9:11,0:9])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.05,1)
+    axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
+
+
+    axs_points = fig.add_subplot(gs[11:13,0:9])
+    plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,axs_points)
+    move_axis([axs_points],0,-0.15,1)
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
     #fig.legend(by_label.values(), by_label.keys(), 
@@ -389,6 +420,13 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
+    parser.add_argument('--alltrial-path', '-t'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with extracted features'
+                       )
+
+
+
     parser.add_argument('--sortedcell-path', '-s'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with cell sorted'
@@ -414,11 +452,12 @@ def main():
     scpath = Path(args.sortedcell_path)
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
+    all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_4'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_4(pklpath,scpath,cell_stat_path,globoutdir)
+    plot_figure_4(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

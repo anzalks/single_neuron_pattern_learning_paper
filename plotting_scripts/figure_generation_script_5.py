@@ -82,7 +82,13 @@ def label_axis(axis_list,letter_label):
         axs.text(-0.075,1.01,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
-
+def move_axis(axs_list,xoffset,yoffset,pltscale):
+    for axs in axs_list:
+        pos = axs.get_position()  # Get the original position
+        new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+                   pos.height*pltscale]
+        # Shrink the plot
+        axs.set_position(new_pos)
 
 def norm_values(cell_list,val_to_plot):
     cell_list = cell_list.copy()
@@ -213,6 +219,87 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
                    y_lim,x_label,cell_type,line_color,strp_color
                   )
 
+def plot_response_summary_bar(sc_data_dict,fig,axs):
+    order = ["pre", "post_3"]
+    learners = sc_data_dict["ap_cells"]["cell_ID"].unique
+    learners_df = sc_data_dict["ap_cells"]
+    learners_df= norm_values(learners_df,"max_trace")
+    learners_df = learners_df[learners_df["pre_post_status"].isin(["pre",
+                                                                   "post_3"])]
+    pat_df_learners = learners_df[learners_df["frame_id"].isin(["pattern_0",
+                                                                "pattern_1",
+                                                                "pattern_2"])]
+
+    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique
+    non_learners_df = sc_data_dict["an_cells"]
+    non_learners_df= norm_values(non_learners_df,"max_trace")
+    non_learners_df = non_learners_df[non_learners_df["pre_post_status"].isin(["pre", "post_3"])]
+    pat_df_non_learners = non_learners_df[non_learners_df["frame_id"].isin(["pattern_0", "pattern_1",
+                                                      "pattern_2"])]
+
+    # Add a column to distinguish between learners and non-learners
+    pat_df_learners['group'] = 'learners'
+    pat_df_non_learners['group'] = 'non_learners'
+
+    # Create the combined column for x-axis
+    pat_df_learners['combined'] = 'learners_' + pat_df_learners['frame_id'] +"_" + pat_df_learners['pre_post_status']
+    pat_df_non_learners['combined'] = 'non_learners_' + pat_df_non_learners['frame_id'] + "_" +pat_df_non_learners['pre_post_status']
+
+    # Define the order of the combined x-axis categories
+    combined_order = ['learners_pattern_0_pre', 'learners_pattern_0_post_3', 
+                                        'learners_pattern_1_pre',
+                      'learners_pattern_1_post_3',
+                                        'learners_pattern_2_pre',
+                      'learners_pattern_2_post_3',
+                                        'non_learners_pattern_0_pre',
+                      'non_learners_pattern_0_post_3', 
+                                        'non_learners_pattern_1_pre',
+                      'non_learners_pattern_1_post_3',
+                                        'non_learners_pattern_2_pre',
+                      'non_learners_pattern_2_post_3']
+
+#    x_labels = [None, 'trained\npattern', None,'overlapping\npattern',None,
+#               'non-overlapping\npattern',
+#                None, 'trained\npattern', None,'overlapping\npattern',None,
+#                'non-overlapping\npattern'
+#               ]
+    x_labels = ['trained\npattern', None,'overlapping\npattern',None,
+               'non-overlapping\npattern',
+                None, 'trained\npattern', None,'overlapping\npattern',None,
+                'non-overlapping\npattern', None
+               ]
+
+
+
+    # Concatenate the two DataFrames
+    combined_df = pd.concat([pat_df_learners, pat_df_non_learners])
+
+    # Define the color palette
+    palette = {"learners": bpf.CB_color_cycle[0], 
+               "non_learners":bpf.CB_color_cycle[1]}
+
+    # Plotting with seaborn
+
+    # Plot 'pre' bars
+    sns.barplot(data=combined_df[combined_df["pre_post_status"] == "pre"],
+                x="combined", y="max_trace", hue="group", order=combined_order,
+                palette=palette, alpha=0.5,ax=axs,ci=None)
+
+    # Plot 'post_3' bars
+    sns.barplot(data=combined_df[combined_df["pre_post_status"] == "post_3"],
+                x="combined", y="max_trace", hue="group", order=combined_order,
+                palette=palette,alpha=1,ax=axs,ci=None)
+    for label in axs.get_xticklabels():
+        label.set_position((label.get_position()[0] + 0.5, label.get_position()[1]))  # Adjust the offset value as needed
+
+    axs.set_xticklabels(x_labels)
+    axs.set_xticklabels(axs.get_xticklabels(),rotation=30, ha="left")
+    axs.spines[['right', 'top']].set_visible(False)
+    #axs.tick_params(axis='x', pad=5)
+    axs.legend_.remove()
+    axs.set_ylabel("% change in\nEPSP amplitude")
+    axs.set_xlabel(None)
+    #axs.set_ylim(-2,10,)    
 
 def plot_figure_5(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
@@ -236,6 +323,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
+                     1, 1, 1, 1, 1,
                      1, 1]# Adjust these values as needed
     
     width_ratios = [1, 1, 1, 1, 1, 
@@ -243,7 +331,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                     1, 1, ]# Adjust these values as needed
 
     fig = plt.figure(figsize=(12,9))
-    gs = GridSpec(17, 12,width_ratios=width_ratios,
+    gs = GridSpec(22, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.6, hspace=0.8)
@@ -290,7 +378,12 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     axs_al_list = [axs_al_pat1,axs_al_pat2,axs_al_pat3]
     label_axis(axs_al_list,"C")
 
-
+    axs_bar = fig.add_subplot(gs[16:,0:9])
+    plot_response_summary_bar(sc_data_dict,fig,axs_bar)
+    move_axis([axs_bar],0,-0.05,1)    
+    axs_bar.text(-0.05,1.05,'D',transform=axs_bar.transAxes,    
+                fontsize=16, fontweight='bold', ha='center',
+                va='center')
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
