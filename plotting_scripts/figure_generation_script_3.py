@@ -202,7 +202,7 @@ def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
     #sns.stripplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
     #             order=order,color=bpf.CB_color_cycle[0],
     #             alpha=0.1,zorder=1)
-    #sns.stripplot(data=non_learners_df,x="pre_post_status",
+    #sns.stripplot(data=non_learners_df,x="pre_ost_status",
     #              y=field_to_plot,ax=axs,order=order,
     #              color=bpf.CB_color_cycle[1],alpha=0.1,zorder=1)
 
