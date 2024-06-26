@@ -218,6 +218,28 @@ def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status
     eq_fit(pre_all_resp_pat_2,all_resp_pat_2,2,eq_pre_max,eq_post_max,cell_type, fig, axs3)
 
     
+def plot_initial_final_wt(feature_extracted_data,sc_data_dict,fig,axs):
+    learners=sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners=sc_data_dict["an_cells"]["cell_ID"].unique()
+    deselect_list = ["no_frame","inR"]
+    feature_extracted_data=feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
+    cell_grp = feature_extracted_data.groupby(by="cell_ID")
+    for cell, cell_data in cell_grp:
+        if cell in learners:
+            color=bpf.CB_color_cycle[0]
+        elif cell in non_learners:
+            color=bpf.CB_color_cycle[1]
+        else:
+            continue
+        frame_grp = cell_data.groupby(by="frame_status")
+        for frame, frame_data in frame_grp:
+            if "point" not in frame:
+                continue
+            else:
+                point_num = int(frame.split("_")[-1])
+                pps_grp=frame_data.groupby(by="pre_post_status")
+                for pps,pps_data in pps_grp:
+                    axs.scatter(point_num,pps_data["max_trace"])
 
 
 
