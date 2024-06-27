@@ -28,7 +28,8 @@ def read_pkl(pkl_file):
 
 def write_pkl(file_to_write,file_path):
     with open(f'{file_path}.pickle', 'wb') as handle:
-        pickle.dump(file_to_write,handle,protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(file_t
+o_write,handle,protocol=pickle.HIGHEST_PROTOCOL)
     print(f" wrote file to pickle")
     
 def substract_baseline(trace,sampling_rate, bl_period_in_ms):
