@@ -28,6 +28,7 @@ import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 import baisic_plot_fuctnions_and_features as bpf
+import re
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -47,7 +48,11 @@ cell_dist_key = ["leaners","non\nlearners","cells\nnot\ncosidered"]
 class Args: pass
 args_ = Args()
 
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
+def human_sort(lst):
+    return sorted(lst, key=natural_sort_key)
 def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     if title_row_num==1:
         pattern_list = ["trained pattern","Overlapping pattern",
@@ -94,24 +99,48 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
 
 def norm_values(cell_list,val_to_plot):
     cell_list = cell_list.copy()
-    cell_list = cell_list.copy()
     #print(f"cell list inside func : {cell_list}")
     cell_grp=cell_list.groupby(by="cell_ID")
     for c, cell in cell_grp:
         pat_grp = cell.groupby(by="frame_id")
         for p,pat in pat_grp:
-            if "pattern" not in p:
-                continue
-            else:
-                #print(f"c:{c}, p:{p}")
-                pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
-                pp_grp = pat.groupby(by="pre_post_status")
-                for pr, pp in pp_grp:
-                    norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
-                    norm_val = (norm_val/pre_val)*100
-                    cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
+            #print(f"c:{c}, p:{p}")
+            pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
+            pp_grp = pat.groupby(by="pre_post_status")
+            for pr, pp in pp_grp:
+                norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
+                norm_val = (norm_val/pre_val)*100
+                cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
     return cell_list
    
+
+def norm_values_all_trials(cell_list, val_to_plot):
+    cell_list = cell_list.copy()
+    # Group by 'cell_ID'
+    cell_grp = cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p, pat in pat_grp:
+            trial_grp = pat.groupby(by="trial_no")
+            for trial, trial_data in trial_grp:
+                pre_val = trial_data[trial_data["pre_post_status"] == "pre"][val_to_plot].values
+                if len(pre_val) == 0:
+                    continue
+                else:
+                    pre_val = pre_val[0]  # Assuming there is only one 'pre' value per group
+                    pp_grp = trial_data.groupby(by="pre_post_status")
+                    for pr, pp in pp_grp:
+                        norm_val = pp[val_to_plot].values
+                        norm_val = (norm_val / pre_val) * 100
+                        # Using vectorized operations for efficiency
+                        mask_cell_ID = cell_list["cell_ID"] == c
+                        mask_frame_id = cell_list["frame_id"] == p
+                        mask_pre_post_status = cell_list["pre_post_status"] == pr
+                        mask_trial_no = cell_list["trial_no"] == trial
+                        combined_mask = mask_cell_ID & mask_frame_id & mask_pre_post_status & mask_trial_no
+                        cell_list.loc[combined_mask, val_to_plot] = norm_val
+    return cell_list
+
 def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
                    x_label, cell_type,plt_color,resp_color):
     pat_num=int(pattern_number.split("_")[-1])
@@ -296,26 +325,89 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
     #axs.set_ylim(-2,10,)
 
 
-def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict,fig,axs):
-    learners_df=sc_data_dict["ap_cells"]["cell_ID"].unique()
-    non_learners_df = sc_data_dict["an_cells"]["cell_ID"].unique()
-    #cell_df = cell_features_all_trials[cell_features_all_trials["frame_id"].str.contains("points",case=False,na=False)]
-    points_df = cell_features_all_trials.copy()
-    #points_df = norm_values(points_df,"max_trace")
-    points_df_pre =  points_df[(points_df["frame_id"].str.contains("point"))&(points_df["pre_post_status"]=="pre")]
-    points_df_post = points_df[(points_df["frame_id"].str.contains("point"))&(points_df["pre_post_status"]=="post_3")]
-    sns.pointplot(points_df_pre,x="frame_id",y="max_trace",
-                ax=axs,color=bpf.pre_color)
-    sns.pointplot(points_df_post, x="frame_id",y="max_trace",
-                ax=axs,color=bpf.post_late)
-    sns.stripplot(points_df_pre,x="frame_id",y="max_trace",
-                ax=axs,color=bpf.pre_color,alpha=0.2)
-    sns.stripplot(points_df_post, x="frame_id",y="max_trace",
-                ax=axs,color=bpf.post_late,alpha=0.2)
+#def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict,fig,axs):
+#    learners_df=sc_data_dict["ap_cells"]["cell_ID"].unique()
+#    non_learners_df = sc_data_dict["an_cells"]["cell_ID"].unique()
+#    
+#    
+#    
+#    points_df = cell_features_all_trials.copy()
+#    #points_df = norm_values_all_trials(points_df,"max_trace")
+#    points_df_pre =  points_df[(points_df["frame_id"].str.contains("point"))&(points_df["pre_post_status"]=="pre")]
+#    points_df_post = points_df[(points_df["frame_id"].str.contains("point"))&(points_df["pre_post_status"]=="post_3")]
+#    sns.pointplot(points_df_pre,x="frame_id",y="max_trace",
+#                ax=axs,color=bpf.pre_color,capsize=0.15)
+#    sns.pointplot(points_df_post, x="frame_id",y="max_trace",
+#                ax=axs,color=bpf.post_late,capsize=0.15)
+#    sns.stripplot(points_df_pre,x="frame_id",y="max_trace",
+#                ax=axs,color=bpf.pre_color,alpha=0.2)
+#    sns.stripplot(points_df_post, x="frame_id",y="max_trace",
+#                ax=axs,color=bpf.post_late,alpha=0.2)
+#
+#    #axs.set_ylim(-50,400)
+#    axs.set_ylim(-1,4)
+#    axs.spines[['right', 'top']].set_visible(False)
+#    axs.set_xticklabels(axs.get_xticklabels(),rotation=30)
 
-    axs.set_ylim(-1,4)
-    axs.spines[['right', 'top']].set_visible(False)
-    axs.set_xticklabels(axs.get_xticklabels(),rotation=30)
+def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
+                               axs_lr,axs_nl):
+    pre_color= bpf.pre_color 
+    lrn_post_color = bpf.CB_color_cycle[0]
+    non_lrn_post_color = bpf.CB_color_cycle[1]
+    cell_features_all_trials["max_trace"] = cell_features_all_trials["max_trace"].apply(lambda x: np.nan if x > 5 else x)
+    cell_features_all_trials=norm_values_all_trials(cell_features_all_trials,
+                                                    "max_trace")
+    order = cell_features_all_trials[cell_features_all_trials["frame_status"]=="point"]["frame_id"].unique()
+    order = human_sort(order) 
+    learners_df = sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners_df = sc_data_dict["an_cells"]["cell_ID"].unique()
+    
+    # Split data into learners and non-learners
+    points_df_learners = cell_features_all_trials[cell_features_all_trials["cell_ID"].isin(learners_df)].copy()
+    points_df_non_learners = cell_features_all_trials[cell_features_all_trials["cell_ID"].isin(non_learners_df)].copy()
+    
+    # Filter for 'pre' and 'post_3' statuses
+    points_df_pre_learners = points_df_learners[(points_df_learners["frame_id"].str.contains("point")) &(points_df_learners["pre_post_status"] == "pre")].reset_index(drop=True)
+    points_df_post_learners = points_df_learners[(points_df_learners["frame_id"].str.contains("point"))&(points_df_learners["pre_post_status"] =="post_3")].reset_index(drop=True)
+
+    points_df_pre_non_learners = points_df_non_learners[(points_df_non_learners["frame_id"].str.contains("point")) & (points_df_non_learners["pre_post_status"] == "pre")].reset_index(drop=True)
+    points_df_post_non_learners = points_df_non_learners[(points_df_non_learners["frame_id"].str.contains("point")) & (points_df_non_learners["pre_post_status"] == "post_3")].reset_index(drop=True)
+    
+    # Plot learners
+    sns.pointplot(data=points_df_pre_learners, x="frame_id", y="max_trace",
+                  ax=axs_lr, color=pre_color, label='Learners - Pre',capsize=0.15,
+                  order=order)
+    sns.pointplot(data=points_df_post_learners, x="frame_id", y="max_trace",
+                  ax=axs_lr, color=lrn_post_color, label='Learners - Post',capsize=0.15,
+                  order=order)
+    sns.stripplot(data=points_df_pre_learners, x="frame_id", y="max_trace", 
+                  ax=axs_lr, color=pre_color, alpha=0.2,order=order)
+    sns.stripplot(data=points_df_post_learners, x="frame_id", y="max_trace", 
+                  ax=axs_lr, color=lrn_post_color, alpha=0.2,order=order)
+    # Plot non-learners
+    sns.pointplot(data=points_df_pre_non_learners, x="frame_id", y="max_trace",
+                  ax=axs_nl, color=pre_color, label='Non-Learners - Pre',
+                  capsize=0.15, order=order)
+    sns.pointplot(data=points_df_post_non_learners, x="frame_id",
+                  y="max_trace", ax=axs_nl, color=non_lrn_post_color,order=order, 
+                  label='Non-Learners - Post',capsize=0.15)
+    sns.stripplot(data=points_df_pre_non_learners, x="frame_id", y="max_trace", 
+                  ax=axs_nl, color=pre_color, alpha=0.2,order=order)
+    sns.stripplot(data=points_df_post_non_learners, x="frame_id", y="max_trace", 
+                  ax=axs_nl, color=non_lrn_post_color, alpha=0.2, order=order)
+    # Customization
+    #axs_lr.set_ylim(-0.1, 4)
+    axs_lr.set_ylim(-50,500)
+    axs_lr.spines[['right', 'top']].set_visible(False)
+    axs_lr.set_xticklabels(axs_lr.get_xticklabels(), rotation=90)
+    axs_lr.legend(loc='upper center', bbox_to_anchor=(0.5, -0.6), ncol=4)
+    #axs_nl.set_ylim(-0.1, 4)
+    axs_nl.set_ylim(-50,500)
+    axs_nl.spines[['right', 'top']].set_visible(False)
+    axs_nl.set_xticklabels(axs_nl.get_xticklabels(), rotation=90)
+    axs_nl.set_ylabel(None)
+    axs_nl.set_yticklabels([])
+    axs_nl.legend(loc='upper center', bbox_to_anchor=(0.5, -0.6), ncol=4)
 
 
 def plot_figure_4(extracted_feature_pickle_file_path,
@@ -341,13 +433,14 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     # Define the width and height ratios
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
-                     1, 1, 1, 1]  # Adjust these values as needed
+                     1, 1, 1, 1, 1,
+                     1]  # Adjust these values as needed
     width_ratios = [1, 1, 1, 1, 1, 
                     1, 1, 1, 1, 1, 
                     1, 1]# Adjust these values as needed
 
-    fig = plt.figure(figsize=(12,8))
-    gs = GridSpec(14, 12,width_ratios=width_ratios,
+    fig = plt.figure(figsize=(14,10))
+    gs = GridSpec(16, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.4, hspace=0.5)
@@ -358,7 +451,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
     axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
     axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.1,1)
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.05,1)
 
     #plot distribution epsp for learners and non-leaners
     axs_ex_pat1 = fig.add_subplot(gs[2:5,0:3])
@@ -392,9 +485,12 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                  va='center')
 
 
-    axs_points = fig.add_subplot(gs[11:13,0:9])
-    plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,axs_points)
-    move_axis([axs_points],0,-0.15,1)
+    axs_points_lr = fig.add_subplot(gs[11:15,0:4])
+    axs_points_nl = fig.add_subplot(gs[11:15,4:9])
+    plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
+                               axs_points_lr,axs_points_nl)
+    move_axis([axs_points_lr,axs_points_nl],0,-0.15,1)
+    label_axis([axs_points_lr,axs_points_nl],"D")
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
     #fig.legend(by_label.values(), by_label.keys(), 
