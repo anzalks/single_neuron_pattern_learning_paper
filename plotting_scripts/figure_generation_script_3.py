@@ -524,8 +524,8 @@ def plot_cell_category_trace(fig,learner_status,gs,cell_df, label_letter):
                     axs.set_title(None)
             axs.set_ylim(-5,6)
             axs.spines[['right', 'top']].set_visible(False)
-            axs.text(-0.1,1.05,f'{label_letter}{pat_num+1}',transform=axs.transAxes,
-                         fontsize=16, fontweight='bold', ha='center', va='center')
+            #axs.text(-0.1,1.05,f'{label_letter}{pat_num+1}',transform=axs.transAxes,
+            #             fontsize=16, fontweight='bold', ha='center', va='center')
 
 def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
                             pot_cells_df,dep_cells_df):
@@ -633,8 +633,8 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #place illustration
     axs_img = fig.add_subplot(gs[0:2, 0:2])
     plot_image(illustration,axs_img, 0,0,1)
-    axs_img.text(-0.05,1.15,'A',transform=axs_img.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_img.text(-0.05,1.15,'A',transform=axs_img.transAxes,    
+    #        fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_img],-0.075,0.025,1.3)
 
     #plot EPSP classification for learner & non-learner
@@ -655,23 +655,23 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                                              sc_data_dict["an_cells"],
                                              "max_trace",fig,axs_dist1,
                                              )    
-    axs_dist1.text(-0.025,1.1,'D',transform=axs_dist1.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_dist1.text(-0.025,1.1,'D',transform=axs_dist1.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_dist1],0,0.05,1)
     
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
-    axs_pie.text(-0.025,0.85,'E',transform=axs_pie.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_pie.text(-0.025,0.85,'E',transform=axs_pie.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_pie],-0.075,0.115,1)
     
     #plot F-I curve
     axs_fi = fig.add_subplot(gs[4:6,0:2])
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
     move_axis([axs_fi],-0.05,0,1)
-    axs_fi.text(-0.05,1.05,'F',transform=axs_fi.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_fi.text(-0.05,1.05,'F',transform=axs_fi.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
@@ -679,10 +679,10 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,0,1)
-    axs_inr.text(-0.05,1.05,'G',transform=axs_inr.transAxes,    
-                fontsize=16, fontweight='bold', ha='center', va='center')
-    axs_rmp.text(-0.05,1.05,'H',transform=axs_rmp.transAxes,    
-                fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_inr.text(-0.05,1.05,'G',transform=axs_inr.transAxes,    
+    #            fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_rmp.text(-0.05,1.05,'H',transform=axs_rmp.transAxes,    
+    #            fontsize=16, fontweight='bold', ha='center', va='center')
     
     
 
@@ -700,7 +700,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
     axs_mini_list = [axs_mini_amp,axs_mini_comp_amp,
                      axs_mini_freq,axs_mini_comp_freq]
-    label_axis(axs_mini_list,"I")    
+    #label_axis(axs_mini_list,"I")    
     
     #plot CDF for cells
     axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
@@ -710,15 +710,15 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
                                       fig,axs_cdf2,"non-learners")
     axs_cdf_list = [axs_cdf1,axs_cdf2]
-    label_axis(axs_cdf_list,"J")
+    #label_axis(axs_cdf_list,"J")
     move_axis(axs_cdf_list,-0.05,0.05,1)
 
     #plot training timing details
     axs_trn = fig.add_subplot(gs[9:10,6:8])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0.05,1)
-    axs_trn.text(-0.05,1.05,'K',transform=axs_trn.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_trn.text(-0.05,1.05,'K',transform=axs_trn.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))

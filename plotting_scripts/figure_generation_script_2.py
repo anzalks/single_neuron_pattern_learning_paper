@@ -120,8 +120,8 @@ def plot_raw_trace_time_points(single_cell_df,
                     axs_trace.set_ylabel(None)
                 if pat_num ==0:
                     axs_trace.set_title("pre")
-                    axs_trace.text(-2,1.4,'B',transform=axs_trace.transAxes,    
-                                fontsize=16, fontweight='bold', ha='center', va='center')            
+                    #axs_trace.text(-2,1.4,'B',transform=axs_trace.transAxes,    
+                    #            fontsize=16, fontweight='bold', ha='center', va='center')            
                 else:
                     axs_trace.set_title(None)
             else:
@@ -379,8 +379,8 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     axs_img = fig.add_subplot(gs[:3, :6])
     plot_image(illustration,axs_img,0,-0.01,1)
 
-    axs_img.text(-0.07,0.95,'A',transform=axs_img.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')
+    #axs_img.text(-0.07,0.95,'A',transform=axs_img.transAxes,    
+    #        fontsize=16, fontweight='bold', ha='center', va='center')
 
     axs_vpat1=fig.add_subplot(gs[3,0])
     axs_vpat2=fig.add_subplot(gs[4,0])
@@ -409,19 +409,19 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                                                  fig,axs_slp1,axs_slp2,
                                                  axs_slp3)
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    label_axis(axs_slp_list,"C")
+    #label_axis(axs_slp_list,"C")
 
 
     axs_inr = fig.add_subplot(gs[9:10,3:6])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    axs_inr.text(-0.05,1.1,'E',transform=axs_inr.transAxes,    
-             fontsize=16, fontweight='bold', ha='center', va='center')            
+    #axs_inr.text(-0.05,1.1,'E',transform=axs_inr.transAxes,    
+    #         fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     axs_inrill = fig.add_subplot(gs[9:10,0:3])
     plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
-    axs_inrill.text(-0.05,1.1,'D',transform=axs_inrill.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')            
+    #axs_inrill.text(-0.05,1.1,'D',transform=axs_inrill.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     #handles, labels = plt.gca().get_legend_handles_labels()

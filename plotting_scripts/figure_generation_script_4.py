@@ -4,7 +4,7 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 3 of pattern learning paper.
+Generates the figure 4 of pattern learning paper.
 Takes in the pickle file that stores all the experimental data.
 Takes in the image files with slice and pipettes showing recordin location and
 the fluroscence on CA3.
@@ -424,24 +424,24 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
         pat_grp = lrn_data.groupby(by="frame_id")
         for pat,pat_data in pat_grp:
             if pat=="pattern_0":
-                alpha=0.6
+                alpha=0.5
                 marker="^"
                 label = f"trn_{labl}"
             elif pat=="pattern_1":
-                alpha=0.6
+                alpha=0.5
                 marker="."
                 label = f"ov_{labl}"
             elif pat=="pattern_2":
-                alpha=0.6
+                alpha=0.5
                 marker="+"
                 label = f"untr_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["max_trace"]
             y= pat_data[pat_data["pre_post_status"]=="post_3"]["max_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
-    axs.axline([0, 0], [1, 1],alpha=0.5,color='k')
+    axs.axline([0, 0], [1, 1],alpha=0.5,color='k',linestyle=":")
     axs.set_aspect("equal")
-    axs.set_ylim(-3,10)
-    axs.set_xlim(-3,10)
+    axs.set_ylim(-1,10)
+    axs.set_xlim(-1,10)
     axs.spines[['right', 'top']].set_visible(False)
     axs.set_ylabel("EPSP ampliude post\n30 min(mV)")
     axs.set_xlabel("EPSP ampliude pre (mV)")
@@ -481,21 +481,21 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
         pat_grp = lrn_data.groupby(by="frame_id")
         for pat,pat_data in pat_grp:
             if pat=="pattern_0":
-                alpha=0.6
+                alpha=0.5
                 marker="^"
                 label = f"trn_{labl}"
             elif pat=="pattern_1":
-                alpha=0.6
+                alpha=0.5
                 marker="."
                 label = f"ov_{labl}"
             elif pat=="pattern_2":
-                alpha=0.6
+                alpha=0.5
                 marker="+"
                 label = f"untr_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["max_trace"]
             y=norm_df[(norm_df["group"]==lrn)&(norm_df["frame_id"]==pat)&(norm_df["pre_post_status"]=="post_3")]["max_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
-    axs.axline([0, -50], [10, 500],alpha=0.5,color='k')
+    axs.axline([0, -50], [10, 500],alpha=0.5,color='k', linestyle=":")
     axs.set_ylim(-50,500)
     axs.set_xlim(0,10)
     axs.set_aspect(0.02)
@@ -561,7 +561,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"A")
+    #label_axis(axs_ex_list,"A")
 
 
     axs_in_pat1 = fig.add_subplot(gs[5:9,0:3])
@@ -573,33 +573,33 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"B")
+    #label_axis(axs_in_list,"B")
 
     axs_bar = fig.add_subplot(gs[9:11,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.05,1)
-    axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center',
-                 va='center')
+    #axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center',
+    #             va='center')
 
     axs_comp_peaks = fig.add_subplot(gs[9:11,4:6])
     plot_peak_comp_pre_post(sc_data_dict,fig,axs_comp_peaks)
     move_axis([axs_comp_peaks],-0.055,-0.1,1.75)
-    axs_comp_peaks.text(-0.05,1.05,'D',transform=axs_comp_peaks.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center',
-                 va='center')
+    #axs_comp_peaks.text(-0.05,1.05,'D',transform=axs_comp_peaks.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center',
+    #             va='center')
     axs_comp_per = fig.add_subplot(gs[9:11,6:9])
     plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
     move_axis([axs_comp_per],0,-0.1,1.75)
-    axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
-                        fontsize=16, fontweight='bold', ha='center',
-                        va='center')
+    #axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
+    #                    fontsize=16, fontweight='bold', ha='center',
+    #                    va='center')
     axs_points_lr = fig.add_subplot(gs[11:15,0:4])
     axs_points_nl = fig.add_subplot(gs[11:15,4:9])
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
                                axs_points_lr,axs_points_nl)
     move_axis([axs_points_lr,axs_points_nl],0,-0.15,1)
-    label_axis([axs_points_lr,axs_points_nl],"F")
+    #label_axis([axs_points_lr,axs_points_nl],"F")
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
     #fig.legend(by_label.values(), by_label.keys(), 
