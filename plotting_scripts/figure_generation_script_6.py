@@ -81,6 +81,14 @@ def label_axis(axis_list,letter_label):
         axs.text(-0.08,1.1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
+def move_axis(axs_list,xoffset,yoffset,pltscale):
+    for axs in axs_list:
+        pos = axs.get_position()  # Get the original position
+        new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+                   pos.height*pltscale]
+        # Shrink the plot
+        axs.set_position(new_pos)
+
 def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_type,axs1,axs2,axs3):
     pd_cell_data_mean = pd_cell_data_mean[pd_cell_data_mean["pre_post_status"]!="post_4"]
     order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
@@ -322,6 +330,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     # Define the width and height ratios
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
+                     1, 1
                     ]
                      # Adjust these values as needed
     
@@ -330,7 +339,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                    ]# Adjust these values as needed
 
     fig = plt.figure(figsize=(12,9))
-    gs = GridSpec(10, 8,width_ratios=width_ratios,
+    gs = GridSpec(12, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.5, hspace=0.5)
@@ -345,7 +354,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_pat_5 = fig.add_subplot(gs[0:1,5:6])
     axs_pat_6 = fig.add_subplot(gs[0:1,6:7])
     plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0,2)
-    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,0,0,2)
+    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,-0.05,0,2)
 
 
     #plot distribution epsp for learners and leaners
@@ -357,7 +366,8 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                               fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
     axs_ex_fl_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
     label_axis(axs_ex_fl_list,"A")
-    
+    move_axis(axs_ex_fl_list,0,0,1)
+
     axs_in_pat1 = fig.add_subplot(gs[1:3,4:5])
     axs_in_pat2 = fig.add_subplot(gs[1:3,5:6])
     axs_in_pat3 = fig.add_subplot(gs[1:3,6:7])
@@ -367,12 +377,14 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     
     axs_in_fl_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
     label_axis(axs_in_fl_list,"B")
+    move_axis(axs_in_fl_list,-0.05,0,1)
     
-    axs_pat_fl1 = fig.add_subplot(gs[4:5,0:2])
-    axs_pat_fl2 = fig.add_subplot(gs[4:5,2:4])
-    axs_pat_fl3 = fig.add_subplot(gs[4:5,4:6])
+    axs_pat_fl1 = fig.add_subplot(gs[4:5,0:1])
+    axs_pat_fl2 = fig.add_subplot(gs[4:5,2:3])
+    axs_pat_fl3 = fig.add_subplot(gs[4:5,4:5])
     plot_patterns(axs_pat_fl1,axs_pat_fl2,axs_pat_fl3,0.07,0,1)
-
+    axs_pat_list = [axs_pat_fl1,axs_pat_fl2,axs_pat_fl3]
+    move_axis(axs_pat_list,-0.02,0,1)
 
 
     axs_ex_fl1 = fig.add_subplot(gs[5:7,0:2])
@@ -389,8 +401,9 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
     axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
     label_axis(axs_in_fl_list,"D")
-    axs_slope = fig.add_subplot(gs[7:9,6:])
+    axs_slope = fig.add_subplot(gs[9:11,0:2])
     plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,axs_slope)
+    move_axis([axs_slope],0,-0.05,1)
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
     #fig.legend(by_label.values(), by_label.keys(), 
