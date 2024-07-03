@@ -89,9 +89,8 @@ def gama_fit(expt,alp,bet,gam):
     alp=0
     return expt-(((bet*expt)/(gam+expt))*expt)-alp
 
-
-def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,eq_pre_max,
-           eq_post_max,cell_type,fig, axs):
+def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,
+           cell_type,fig, axs):
     x_y_responses = np.array(list_of_x_y_responses)
     pre_x_y = np.array(list_of_x_y_responses_pre)
     pre_arr1,pre_arr2=np.split(pre_x_y,2,axis=1)
@@ -100,6 +99,7 @@ def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,eq_pre_max,
     arr1,arr2=np.split(x_y_responses,2,axis=1)
     arr1 = np.ravel(arr1)
     arr2 = np.ravel(arr2)
+    print(f"array shape: {np.shape(pre_arr2)}")
 
     param_pre, _param_pre = scipy.optimize.curve_fit(gama_fit,pre_arr1,pre_arr2, bounds=(0,60))
     param, _param = scipy.optimize.curve_fit(gama_fit,arr1,arr2, bounds=(0,60))
@@ -118,14 +118,23 @@ def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,eq_pre_max,
         color= bpf.CB_color_cycle[1]
     axs.plot(pre_x, pre_y, color='k', linestyle='-', alpha=0.8, label="pre_training",linewidth=3)
     axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
-    #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10) 
+    #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10)
+    axs.set_aspect(0.6)
     return x, y
 
-def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status,fig,axs1,axs2,axs3):
-    pd_cell_data_mean_cell_grp = pd_cell_data_mean_cell_grp[pd_cell_data_mean_cell_grp["pre_post_status"]!="post_5"]
-    pd_cell_data_mean_cell_grp = pd_cell_data_mean_cell_grp.groupby(by='cell_ID')
+def plot_expected_vs_observed_all_trials(alltrial_Df,
+                                         mean_all_cell_df,
+                                         sc_data_dict,
+                                         cell_type,
+                                         fig,axs1,axs2,axs3):
+    if cell_type=="learners":
+        lrn=sc_data_dict["ap_cells"]["cell_ID"].unique()
+        alltrial_Df = alltrial_Df[alltrial_Df["cell_ID"].isin(lrn)]
+    elif cell_type=="non-learners":
+        nlrn=sc_data_dict["an_cells"]["cell_ID"].unique()
+        alltrial_Df=alltrial_Df[alltrial_Df["cell_ID"].isin(nlrn)]
+    cell_grp  = alltrial_Df.groupby(by='cell_ID')
     axs=[axs1,axs2,axs3]
-    
     all_resp_pat_0 =[]
     all_resp_pat_1 =[]
     all_resp_pat_2 =[]
@@ -133,91 +142,207 @@ def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status
     pre_all_resp_pat_1 =[]
     pre_all_resp_pat_2 =[]
     
-    for c, cell in pd_cell_data_mean_cell_grp:
+    for c, cell in cell_grp:
+        if c=="2022_12_12_cell_5":
+            continue
         pp_grps = cell.groupby(by="pre_post_status")
-        cl = len(cell["pre_post_status"].unique())-2
-        for pp, ppresp in pp_grps:
+        for pp, pp_data in pp_grps:
             if pp not in ['pre','post_3']:
                 continue
             else:
                 pp =pp
                 #print(f"found pp stat")
-                
             if pp=="pre":
                 color=bpf.pre_color
-            #elif pp=="post_4":
-            #    cmx= int(pp.split("_")[-1])/cl
-            #    color=colorFader(post_color,post_late,mix=cmx)
             else:
-                #continue
-                cmx= int(pp.split("_")[-1])/cl
-                color=bpf.colorFader(bpf.post_color,bpf.post_late,mix=cmx)
                 if cell_type=="learners":
                     color = bpf.CB_color_cycle[0]
                 else:
                     color = bpf.CB_color_cycle[1]
-            pats= ppresp[ppresp["frame_status"]=="pattern"]["frame_id"].unique()
-            for pat in pats:
-                pat_num = int(pat.split("_")[-1])
-                point_list = bpf.map_points_to_patterns(pat)
-                pat_val = float(ppresp[ppresp["frame_id"]==pat]["max_trace"])
-                point_sum_val = float(np.sum(np.array((ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"]))))
-                pat_val_nrm = pat_val#-pat_val
-                point_sum_val_nrm = point_sum_val#-pat_val
-                #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
-                axs[pat_num].axline([0,0], [1,1], linestyle=':',
-                                    color=bpf.CB_color_cycle[6], label="linear sum",linewidth=2)
-                axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,color=color, label=pp, alpha=0.8,linewidth=2)
-                axs[pat_num].spines[['right', 'top']].set_visible(False)
-                axs[pat_num].set_xlim(-1,12)
-                axs[pat_num].set_ylim(-1,12)
-                axs[pat_num].set_xticks(np.arange(-1,12,4))
-                axs[pat_num].set_yticks(np.arange(-1,12,4))
-                
-                if pat_num==0:
-                    axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
+            pats= pp_data[pp_data["frame_status"]=="pattern"]["frame_id"].unique()
+            trial_grp  = pp_data.groupby(by="trial_no")
+            for trial, trial_data in trial_grp:
+                print(f"trial num: {trial}")
+                ppresp =pp_data.copy()
+                ppresp = ppresp[ppresp["trial_no"]==trial]
+                ppresp.reset_index(drop=True)
+                for pat in pats:
+                    pat_num = int(pat.split("_")[-1])
+                    point_list = bpf.map_points_to_patterns(pat)
+                    print(f"point list for ...{pat}...:{point_list}")
+                    pat_val=float(ppresp[ppresp["frame_id"]==pat]["max_trace"].values)
+                    print(f"pat vals : {pat_val}")
+                    #if not filtered_series.empty:
+                    #    pat_val = float(filtered_series.iloc[0])
+                    #else:
+                    #    #continue
+                    #    pat_val = float('nan')  # or some other appropriate value or action
+                    point_sum_val =np.sum(np.array(ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"]))
+                    print(f"point_sum_val:{point_sum_val}")
+                    pat_val_nrm = pat_val#-pat_val
+                    point_sum_val_nrm = point_sum_val#-pat_val
+                    #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
+                    if pp!="pre":
+                        if pat_num==0:
+                            all_resp_pat_0.append([point_sum_val_nrm,pat_val_nrm])
+                        elif pat_num==1:
+                            all_resp_pat_1.append([point_sum_val_nrm,pat_val_nrm])
+                        elif pat_num==2:
+                            all_resp_pat_2.append([point_sum_val_nrm,pat_val_nrm])
+                        else:
+                            continue
+                    elif pp=="pre":
+                        if pat_num==0:
+                            pre_all_resp_pat_0.append([point_sum_val_nrm,pat_val_nrm])
+                        elif pat_num==1:
+                            pre_all_resp_pat_1.append([point_sum_val_nrm,pat_val_nrm])
+                        elif pat_num==2:
+                            pre_all_resp_pat_2.append([point_sum_val_nrm,pat_val_nrm])
+                        else:
+                            continue
+                    axs[pat_num].axline([0,0], [1,1], linestyle=':',
+                                        color=bpf.CB_color_cycle[6], label="linear sum",linewidth=2)
+                    axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,
+                                         color=color, label=pp, alpha=0.8,
+                                         linewidth=1,marker=".")
+                    axs[pat_num].spines[['right', 'top']].set_visible(False)
+                    axs[pat_num].set_xlim(-1,12)
+                    axs[pat_num].set_ylim(-1,12)
+                    axs[pat_num].set_xticks(np.arange(-1,12,4))
+                    axs[pat_num].set_yticks(np.arange(-1,12,4))
                     
-                else:
-                    axs[pat_num].set_yticklabels([])
-                if cell_type=="learners":
-                    axs[pat_num].set_title(None)
-                    axs[pat_num].set_xlabel(None)
-                    axs[pat_num].set_xticklabels([])
-                else:
-                    if pat_num==1:
-                        axs[pat_num].set_xlabel("expected response (mV)")
+                    if pat_num==0:
+                        axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
+                        
                     else:
+                        axs[pat_num].set_yticklabels([])
+                    if cell_type=="learners":
                         axs[pat_num].set_title(None)
-                if pp!="pre":
-                    if pat_num==0:
-                        all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
-                    elif pat_num==1:
-                        all_resp_pat_1.append([point_sum_val_nrm,float(pat_val_nrm)])
-                    elif pat_num==2:
-                        all_resp_pat_2.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        axs[pat_num].set_xlabel(None)
+                        axs[pat_num].set_xticklabels([])
                     else:
-                        continue
-                elif pp=="pre":
-                    if pat_num==0:
-                        pre_all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
-                    elif pat_num==1:
-                        pre_all_resp_pat_1.append([point_sum_val_nrm,float(pat_val_nrm)])
-                    elif pat_num==2:
-                        pre_all_resp_pat_2.append([point_sum_val_nrm,float(pat_val_nrm)])
-                    else:
-                        continue
-                    
+                        if pat_num==1:
+                            axs[pat_num].set_xlabel("expected response (mV)")
+                        else:
+                            axs[pat_num].set_title(None)
+                    if pp!="pre":
+                        if pat_num==0:
+                            all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        elif pat_num==1:
+                            all_resp_pat_1.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        elif pat_num==2:
+                            all_resp_pat_2.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        else:
+                            continue
+                    elif pp=="pre":
+                        if pat_num==0:
+                            pre_all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        elif pat_num==1:
+                            pre_all_resp_pat_1.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        elif pat_num==2:
+                            pre_all_resp_pat_2.append([point_sum_val_nrm,float(pat_val_nrm)])
+                        else:
+                            continue
+    eq_fit(pre_all_resp_pat_0,all_resp_pat_0,0,cell_type, fig, axs1)
+    eq_fit(pre_all_resp_pat_1,all_resp_pat_1,1,cell_type, fig, axs2)
+    eq_fit(pre_all_resp_pat_2,all_resp_pat_2,2,cell_type, fig, axs3)
 
-    #poly_fit_sums(pre_all_resp_pat_0,all_resp_pat_0,0,fig, axs)
-    #poly_fit_sums(pre_all_resp_pat_1,all_resp_pat_1,1,fig, axs)
-    #poly_fit_sums(pre_all_resp_pat_2,all_resp_pat_2,2,fig, axs)
-    eq_pre_max = np.max(pre_all_resp_pat_0)
-    eq_post_max = np.max(all_resp_pat_0)
-    eq_fit(pre_all_resp_pat_0,all_resp_pat_0,0,eq_pre_max,eq_post_max,cell_type, fig, axs1)
-    eq_fit(pre_all_resp_pat_1,all_resp_pat_1,1,eq_pre_max,eq_post_max,cell_type, fig, axs2)
-    eq_fit(pre_all_resp_pat_2,all_resp_pat_2,2,eq_pre_max,eq_post_max,cell_type, fig, axs3)
+#def plot_expected_vs_observed(pd_cell_data_mean_cell_grp,cell_type,f_norm_status,fig,axs1,axs2,axs3):
+#    pd_cell_data_mean_cell_grp = pd_cell_data_mean_cell_grp[pd_cell_data_mean_cell_grp["pre_post_status"]!="post_5"]
+#    pd_cell_data_mean_cell_grp = pd_cell_data_mean_cell_grp.groupby(by='cell_ID')
+#    axs=[axs1,axs2,axs3]
+#    
+#    all_resp_pat_0 =[]
+#    all_resp_pat_1 =[]
+#    all_resp_pat_2 =[]
+#    pre_all_resp_pat_0 =[]
+#    pre_all_resp_pat_1 =[]
+#    pre_all_resp_pat_2 =[]
+#    
+#    for c, cell in pd_cell_data_mean_cell_grp:
+#        pp_grps = cell.groupby(by="pre_post_status")
+#        cl = len(cell["pre_post_status"].unique())-2
+#        for pp, ppresp in pp_grps:
+#            if pp not in ['pre','post_3']:
+#                continue
+#            else:
+#                pp =pp
+#                #print(f"found pp stat")
+#                
+#            if pp=="pre":
+#                color=bpf.pre_color
+#            #elif pp=="post_4":
+#            #    cmx= int(pp.split("_")[-1])/cl
+#            #    color=colorFader(post_color,post_late,mix=cmx)
+#            else:
+#                #continue
+#                cmx= int(pp.split("_")[-1])/cl
+#                color=bpf.colorFader(bpf.post_color,bpf.post_late,mix=cmx)
+#                if cell_type=="learners":
+#                    color = bpf.CB_color_cycle[0]
+#                else:
+#                    color = bpf.CB_color_cycle[1]
+#            pats= ppresp[ppresp["frame_status"]=="pattern"]["frame_id"].unique()
+#            for pat in pats:
+#                pat_num = int(pat.split("_")[-1])
+#                point_list = bpf.map_points_to_patterns(pat)
+#                pat_val = float(ppresp[ppresp["frame_id"]==pat]["max_trace"])
+#                point_sum_val = float(np.sum(np.array((ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"]))))
+#                pat_val_nrm = pat_val#-pat_val
+#                point_sum_val_nrm = point_sum_val#-pat_val
+#                #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
+#                axs[pat_num].axline([0,0], [1,1], linestyle=':',
+#                                    color=bpf.CB_color_cycle[6], label="linear sum",linewidth=2)
+#                axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,color=color, label=pp, alpha=0.8,linewidth=2)
+#                axs[pat_num].spines[['right', 'top']].set_visible(False)
+#                axs[pat_num].set_xlim(-1,12)
+#                axs[pat_num].set_ylim(-1,12)
+#                axs[pat_num].set_xticks(np.arange(-1,12,4))
+#                axs[pat_num].set_yticks(np.arange(-1,12,4))
+#                
+#                if pat_num==0:
+#                    axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
+#                    
+#                else:
+#                    axs[pat_num].set_yticklabels([])
+#                if cell_type=="learners":
+#                    axs[pat_num].set_title(None)
+#                    axs[pat_num].set_xlabel(None)
+#                    axs[pat_num].set_xticklabels([])
+#                else:
+#                    if pat_num==1:
+#                        axs[pat_num].set_xlabel("expected response (mV)")
+#                    else:
+#                        axs[pat_num].set_title(None)
+#                if pp!="pre":
+#                    if pat_num==0:
+#                        all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
+#                    elif pat_num==1:
+#                        all_resp_pat_1.append([point_sum_val_nrm,float(pat_val_nrm)])
+#                    elif pat_num==2:
+#                        all_resp_pat_2.append([point_sum_val_nrm,float(pat_val_nrm)])
+#                    else:
+#                        continue
+#                elif pp=="pre":
+#                    if pat_num==0:
+#                        pre_all_resp_pat_0.append([point_sum_val_nrm,float(pat_val_nrm)])
+#                    elif pat_num==1:
+#                        pre_all_resp_pat_1.append([point_sum_val_nrm,float(pat_val_nrm)])
+#                    elif pat_num==2:
+#                        pre_all_resp_pat_2.append([point_sum_val_nrm,float(pat_val_nrm)])
+#                    else:
+#                        continue
+#                    
+#
+#    #poly_fit_sums(pre_all_resp_pat_0,all_resp_pat_0,0,fig, axs)
+#    #poly_fit_sums(pre_all_resp_pat_1,all_resp_pat_1,1,fig, axs)
+#    #poly_fit_sums(pre_all_resp_pat_2,all_resp_pat_2,2,fig, axs)
+#    eq_pre_max = np.max(pre_all_resp_pat_0)
+#    eq_post_max = np.max(all_resp_pat_0)
+#    eq_fit(pre_all_resp_pat_0,all_resp_pat_0,0,eq_pre_max,eq_post_max,cell_type, fig, axs1)
+#    eq_fit(pre_all_resp_pat_1,all_resp_pat_1,1,eq_pre_max,eq_post_max,cell_type, fig, axs2)
+#    eq_fit(pre_all_resp_pat_2,all_resp_pat_2,2,eq_pre_max,eq_post_max,cell_type, fig, axs3)
 
-    
 def plot_initial_final_wt(feature_extracted_data,sc_data_dict,fig,axs):
     learners=sc_data_dict["ap_cells"]["cell_ID"].unique()
     non_learners=sc_data_dict["an_cells"]["cell_ID"].unique()
@@ -246,12 +371,14 @@ def plot_initial_final_wt(feature_extracted_data,sc_data_dict,fig,axs):
 def plot_figure_7(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
+                  all_trials_path,
                   outdir,learner_cell=learner_cell,
                   non_learner_cell=non_learner_cell):
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
     print(f"cell stat df : {cell_stats_df}")
+    alltrial_Df=pd.read_pickle(all_trials_path)
     single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
     non_learner_cell_df = single_cell_df.copy()
@@ -292,7 +419,9 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     axs_ex_sm1 = fig.add_subplot(gs[1:3,0:2])
     axs_ex_sm2 = fig.add_subplot(gs[1:3,2:4])
     axs_ex_sm3 = fig.add_subplot(gs[1:3,4:6])
-    plot_expected_vs_observed(sc_data_dict["ap_cells"],"learners","no_fnorm",
+    plot_expected_vs_observed_all_trials(alltrial_Df,
+                                         feature_extracted_data,
+                                         sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
     label_axis(axs_ex_sm_l_list, "A")
@@ -301,7 +430,9 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     axs_ex_sm4 = fig.add_subplot(gs[3:5,0:2])
     axs_ex_sm5 = fig.add_subplot(gs[3:5,2:4])
     axs_ex_sm6 = fig.add_subplot(gs[3:5,4:6])
-    plot_expected_vs_observed(sc_data_dict["an_cells"],"non-learners","no_fnorm",
+    plot_expected_vs_observed_all_trials(alltrial_Df,
+                                         feature_extracted_data,
+                                         sc_data_dict,"non-learners",
                               fig,axs_ex_sm4,axs_ex_sm5,axs_ex_sm6)
     #axs_ex_sm5.set_title("non-learners")
     
@@ -340,6 +471,11 @@ def main():
                         , help = 'path to pickle file with cell sorted'
                         'exrracted data'
                        )
+    parser.add_argument('--alltrials-path', '-t'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with all trials'
+                        'all cells data in pickle'
+                       )
     parser.add_argument('--cellstat-path', '-c'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with cell sorted'
@@ -360,11 +496,12 @@ def main():
     scpath = Path(args.sortedcell_path)
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
+    all_trials_path= Path(args.alltrials_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_7'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_7(pklpath,scpath,cell_stat_path,globoutdir)
+    plot_figure_7(pklpath,scpath,cell_stat_path,all_trials_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
