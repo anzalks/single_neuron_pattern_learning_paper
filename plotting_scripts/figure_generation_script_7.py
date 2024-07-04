@@ -120,6 +120,10 @@ def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,
     axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
     #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10)
     axs.set_aspect(0.6)
+    axs.text(0.5,1.1,f'γ pre = {np.around(param_pre[-1],1)}',transform=axs.transAxes,    
+                 fontsize=12, ha='center', va='center')
+    axs.text(0.5,0.9,f'γ post = {np.around(param[-1],1)}',transform=axs.transAxes,    
+                  fontsize=12, ha='center', va='center')   
     return x, y
 
 def plot_expected_vs_observed_all_trials(alltrial_Df,
@@ -162,23 +166,14 @@ def plot_expected_vs_observed_all_trials(alltrial_Df,
             pats= pp_data[pp_data["frame_status"]=="pattern"]["frame_id"].unique()
             trial_grp  = pp_data.groupby(by="trial_no")
             for trial, trial_data in trial_grp:
-                print(f"trial num: {trial}")
                 ppresp =pp_data.copy()
                 ppresp = ppresp[ppresp["trial_no"]==trial]
                 ppresp.reset_index(drop=True)
                 for pat in pats:
                     pat_num = int(pat.split("_")[-1])
                     point_list = bpf.map_points_to_patterns(pat)
-                    print(f"point list for ...{pat}...:{point_list}")
                     pat_val=float(ppresp[ppresp["frame_id"]==pat]["max_trace"].values)
-                    print(f"pat vals : {pat_val}")
-                    #if not filtered_series.empty:
-                    #    pat_val = float(filtered_series.iloc[0])
-                    #else:
-                    #    #continue
-                    #    pat_val = float('nan')  # or some other appropriate value or action
                     point_sum_val =np.sum(np.array(ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"]))
-                    print(f"point_sum_val:{point_sum_val}")
                     pat_val_nrm = pat_val#-pat_val
                     point_sum_val_nrm = point_sum_val#-pat_val
                     #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
