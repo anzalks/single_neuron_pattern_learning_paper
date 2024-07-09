@@ -205,7 +205,8 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
                 pass 
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=0)
-            g.legend_.remove()
+            if g.get_legend() is not None:
+                    g.get_legend().remove()
             if cell_type!="dep_cells":
                 axs.set_xticklabels([])
             else:
@@ -309,7 +310,7 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
     # Plot 'post_3' bars
     sns.barplot(data=combined_df[combined_df["pre_post_status"] == "post_3"],
                 x="combined", y="max_trace", hue="group", order=combined_order,
-                palette=palette,alpha=1,ax=axs,errorbar=None)
+                palette=palette,alpha=1,ax=axs,ci=None)
     #for label in axs.get_xticklabels():
     #    label.set_position((label.get_position()[0] + 0.5, label.get_position()[1]))  # Adjust the offset value as needed
 
@@ -426,15 +427,15 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
             if pat=="pattern_0":
                 alpha=0.5
                 marker="^"
-                label = f"trn_{labl}"
+                label = f"trained"#_{labl}"
             elif pat=="pattern_1":
                 alpha=0.5
                 marker="."
-                label = f"ov_{labl}"
+                label = f"overlapping"#_{labl}"
             elif pat=="pattern_2":
                 alpha=0.5
                 marker="+"
-                label = f"untr_{labl}"
+                label = f"untrained"#_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["max_trace"]
             y= pat_data[pat_data["pre_post_status"]=="post_3"]["max_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
@@ -443,8 +444,8 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
     axs.set_ylim(-1,10)
     axs.set_xlim(-1,10)
     axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("EPSP ampliude post\n30 min(mV)")
-    axs.set_xlabel("EPSP ampliude pre (mV)")
+    axs.set_ylabel("EPSP amplitude post\n30 min(mV)")
+    axs.set_xlabel("EPSP amplitude pre (mV)")
     axs.legend(loc='upper center', bbox_to_anchor=(1.3, 1),frameon=False, 
                   ncol=1)
 
@@ -483,15 +484,15 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
             if pat=="pattern_0":
                 alpha=0.5
                 marker="^"
-                label = f"trn_{labl}"
+                label = f"trained"#_{labl}"
             elif pat=="pattern_1":
                 alpha=0.5
                 marker="."
-                label = f"ov_{labl}"
+                label = f"overlapping"#_{labl}"
             elif pat=="pattern_2":
                 alpha=0.5
                 marker="+"
-                label = f"untr_{labl}"
+                label = f"untrained"#_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["max_trace"]
             y=norm_df[(norm_df["group"]==lrn)&(norm_df["frame_id"]==pat)&(norm_df["pre_post_status"]=="post_3")]["max_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
@@ -500,8 +501,8 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
     axs.set_xlim(0,10)
     axs.set_aspect(0.02)
     axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("% EPSP ampliude post")
-    axs.set_xlabel("EPSP ampliude pre (mV)")
+    axs.set_ylabel("% EPSP amplitude post")
+    axs.set_xlabel("EPSP amplitude pre (mV)")
     #axs.legend(loc='upper center', bbox_to_anchor=(1.2, 1),frameon=False, 
     #              ncol=1)
 
@@ -561,7 +562,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #label_axis(axs_ex_list,"A")
+    label_axis(axs_ex_list,"A")
 
 
     axs_in_pat1 = fig.add_subplot(gs[5:9,0:3])
@@ -578,22 +579,22 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     axs_bar = fig.add_subplot(gs[9:11,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.05,1)
-    #axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center',
-    #             va='center')
+    axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
 
     axs_comp_peaks = fig.add_subplot(gs[9:11,4:6])
     plot_peak_comp_pre_post(sc_data_dict,fig,axs_comp_peaks)
     move_axis([axs_comp_peaks],-0.055,-0.1,1.75)
-    #axs_comp_peaks.text(-0.05,1.05,'D',transform=axs_comp_peaks.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center',
-    #             va='center')
+    axs_comp_peaks.text(-0.05,1.05,'D',transform=axs_comp_peaks.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
     axs_comp_per = fig.add_subplot(gs[9:11,6:9])
     plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
     move_axis([axs_comp_per],0,-0.1,1.75)
-    #axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
-    #                    fontsize=16, fontweight='bold', ha='center',
-    #                    va='center')
+    axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
+                        fontsize=16, fontweight='bold', ha='center',
+                        va='center')
     axs_points_lr = fig.add_subplot(gs[11:15,0:4])
     axs_points_nl = fig.add_subplot(gs[11:15,4:9])
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,

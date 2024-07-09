@@ -51,7 +51,7 @@ args_ = Args()
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.1,1.085,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 def move_axis(axs_list,xoffset,yoffset,pltscale):
@@ -156,24 +156,41 @@ def plot_threshold_timing(training_data,sc_data_dict,fig,axs):
     #print(lrns)
     #print(non_lrns)
     lrns = pd.concat(lrns)
+    lrns["l_stat"]="learners"
     non_lrns = pd.concat(non_lrns)
+    non_lrns["l_stat"]="non\nlearners"
+    all_df = pd.concat([lrns,non_lrns])
     print(non_lrns["trigger_time"].unique())
-
-    sns.pointplot(data=lrns,x="trigger_time", y="cell_thresh_time",
-                  color=bpf.CB_color_cycle[0],errorbar="sd",
+    palette = {"learners": bpf.CB_color_cycle[0], "non\nlearners": bpf.CB_color_cycle[1]}
+    sns.pointplot(data=all_df,x="l_stat",
+                  y="cell_thresh_time",
+                  hue="l_stat",
+                  palette=palette,ci="sd",
                   capsize=0.15, dodge=True,ax=axs)
-    sns.pointplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
-                  color=bpf.CB_color_cycle[1],errorbar="sd" ,
-                  capsize=0.15,dodge=True,ax=axs)
-
-    sns.stripplot(data=lrns,x="trigger_time", y="cell_thresh_time", 
-                  color=bpf.CB_color_cycle[0],alpha=0.5)
-    sns.stripplot(data=non_lrns,x="trigger_time", y="cell_thresh_time",
-                  color=bpf.CB_color_cycle[1],alpha=0.5)
-    axs.set_ylabel("cell threshold\ntime point (ms)")
-    axs.set_xlabel("projection\ntrigger time (ms)")
+#    
+#    sns.pointplot(data=all_df[all_df["l_stat"]=="non_learner"],x="l_stat",
+#                  y="cell_thresh_time",
+#                  color=bpf.CB_color_cycle[1],ci="sd" ,
+#                  capsize=0.15,dodge=True,ax=axs)
+#
+    sns.stripplot(data=all_df,
+                  x="l_stat", y="cell_thresh_time",
+                  hue="l_stat",
+                  palette=palette,alpha=0.5)
+#    sns.stripplot(data=all_df[all_df["l_stat"]=="non_learner"] ,
+#                  x="l_stat", y="cell_thresh_time",
+#                  color=bpf.CB_color_cycle[1],alpha=0.5)
+    axs.set_ylabel("rise time from \nprojection (ms)")
+    axs.set_xlabel(None)
+    axs.set_ylim(0,20)
     axs.spines[['right', 'top']].set_visible(False)
-
+    handles, labels = axs.get_legend_handles_labels()
+    by_label = dict(zip(["learners","non-learners"], handles))
+    fig.legend(by_label.values(), by_label.keys(), 
+               bbox_to_anchor =(0.5, 0.31),
+               ncol = 6,
+               loc='upper center')#,frameon=False)#,loc='lower center'
+    axs.legend_.remove()
 def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
     if field_to_plot=="mepsp_amp":
         ylim=(-1,2)
@@ -194,11 +211,11 @@ def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
 
     pointplot1=sns.pointplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
                  order=order,color=bpf.CB_color_cycle[0],
-                 capsize=0.15,errorbar='sd')
+                 capsize=0.15,ci='sd')
     pointplot2=sns.pointplot(data=non_learners_df,x="pre_post_status",
                   y=field_to_plot,ax=axs,order=order,
                   color=bpf.CB_color_cycle[1],capsize=0.15,
-                  errorbar='sd')
+                  ci='sd')
     #sns.stripplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
     #             order=order,color=bpf.CB_color_cycle[0],
     #             alpha=0.1,zorder=1)
@@ -253,7 +270,7 @@ def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non
 
 
     sns.pointplot(data=long_df, x='Category', y='Values',ax=axs,
-                 color=bpf.CB_color_cycle[3],capsize=0.15,errorbar='sd')
+                 color=bpf.CB_color_cycle[3],capsize=0.15,ci='sd')
     #sns.stripplot(data=long_df, x='Category', y='Values',ax=axs,
     #             color=bpf.CB_color_cycle[3],alpha=0.1)
 
@@ -320,7 +337,8 @@ def plot_fi_curve(firing_properties,sc_data_dict,fig,axs):
     axs.set_xlabel("injected current\n(pA)")
     axs.spines[['right', 'top']].set_visible(False)
     axs.xaxis.set_major_locator(MultipleLocator(6))
-    axs.legend_.remove()
+    if axs.legend_ is not None:
+            axs.legend_.remove()
     
 
 def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
@@ -335,22 +353,22 @@ def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
             pat_0_vals= frms[(frms["frame_id"]=="pattern_0")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
             sns.kdeplot(data = pat_0_vals, cumulative = True,
                         label = "trained pattern", ax=axs,
-                        color=bpf.CB_color_cycle[5],linewidth=3)
+                        color=bpf.CB_color_cycle[2],linewidth=3)
             pat_1_vals= frms[(frms["frame_id"]=="pattern_1")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
             sns.kdeplot(data = pat_1_vals, cumulative = True,
                         label="overlapping pattern", ax=axs,
-                        color=bpf.CB_color_cycle[1],linewidth=3)
+                        color=bpf.CB_color_cycle[4],linewidth=3)
             pat_2_vals= frms[(frms["frame_id"]=="pattern_2")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
             sns.kdeplot(data = pat_2_vals, cumulative = True, 
                         label="non-overlapping pattern", ax=axs,
-                        color=bpf.CB_color_cycle[0],linewidth=3)
+                        color=bpf.CB_color_cycle[5],linewidth=3)
     axs.set_xlim(-50,350)
     axs.set_title(cell_type)
     axs.set_xlabel("% change in response\nto patterns")
     handles, labels = axs.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     fig.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.5, 0.30),
+               bbox_to_anchor =(0.5, 0.29),
                ncol = 6,
                loc='upper center')#,frameon=False)#,loc='lower center'
 
@@ -448,7 +466,8 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=30)
             g.set_xlabel("time points (mins)")
-            g.legend_.remove()
+            if g.legend_ is not None:
+                g.legend_.remove()
     #axs.set_title("Cell distribution")
     ax_pos = axs.get_position()
     new_ax_pos = [ax_pos.x0-0.03, ax_pos.y0+0.005, ax_pos.width*1.1,
@@ -633,8 +652,8 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #place illustration
     axs_img = fig.add_subplot(gs[0:2, 0:2])
     plot_image(illustration,axs_img, 0,0,1)
-    #axs_img.text(-0.05,1.15,'A',transform=axs_img.transAxes,    
-    #        fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_img.text(0,1,'A',transform=axs_img.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_img],-0.075,0.025,1.3)
 
     #plot EPSP classification for learner & non-learner
@@ -648,30 +667,32 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_pat2 = fig.add_subplot(gs[1,2:3])
     axs_pat3 = fig.add_subplot(gs[2,2:3])
     plot_patterns(axs_pat1,axs_pat2,axs_pat3,0,0,2)
-    
+    axs_pat1.text(0,1.35,'B',transform=axs_pat1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+
     #plot distribution epsp for learners and non-leaners
     axs_dist1 = fig.add_subplot(gs[2:3,0:2])
     plot_cell_category_classified_EPSP_peaks(sc_data_dict["ap_cells"],
                                              sc_data_dict["an_cells"],
                                              "max_trace",fig,axs_dist1,
                                              )    
-    #axs_dist1.text(-0.025,1.1,'D',transform=axs_dist1.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_dist1.text(0.05,1,'D',transform=axs_dist1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_dist1],0,0.05,1)
     
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
-    #axs_pie.text(-0.025,0.85,'E',transform=axs_pie.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_pie.text(-0.025,0.85,'E',transform=axs_pie.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_pie],-0.075,0.115,1)
     
     #plot F-I curve
     axs_fi = fig.add_subplot(gs[4:6,0:2])
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
     move_axis([axs_fi],-0.05,0,1)
-    #axs_fi.text(-0.05,1.05,'F',transform=axs_fi.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_fi.text(0.1,1,'F',transform=axs_fi.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
@@ -679,10 +700,10 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,0,1)
-    #axs_inr.text(-0.05,1.05,'G',transform=axs_inr.transAxes,    
-    #            fontsize=16, fontweight='bold', ha='center', va='center')
-    #axs_rmp.text(-0.05,1.05,'H',transform=axs_rmp.transAxes,    
-    #            fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_inr.text(0.1,1,'G',transform=axs_inr.transAxes,    
+                fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_rmp.text(0.1,1,'H',transform=axs_rmp.transAxes,    
+                fontsize=16, fontweight='bold', ha='center', va='center')
     
     
 
@@ -700,7 +721,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
     axs_mini_list = [axs_mini_amp,axs_mini_comp_amp,
                      axs_mini_freq,axs_mini_comp_freq]
-    #label_axis(axs_mini_list,"I")    
+    label_axis(axs_mini_list,"I")    
     
     #plot CDF for cells
     axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
@@ -712,13 +733,14 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_cdf_list = [axs_cdf1,axs_cdf2]
     #label_axis(axs_cdf_list,"J")
     move_axis(axs_cdf_list,-0.05,0.05,1)
+    label_axis(axs_cdf_list,"J")
 
     #plot training timing details
     axs_trn = fig.add_subplot(gs[9:10,6:8])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0.05,1)
-    #axs_trn.text(-0.05,1.05,'K',transform=axs_trn.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_trn.text(0.1,1,'K',transform=axs_trn.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))

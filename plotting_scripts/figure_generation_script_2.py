@@ -87,7 +87,7 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.1,1.05,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 def plot_raw_trace_time_points(single_cell_df,
@@ -222,7 +222,8 @@ def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,p
                           color=plt_color, linestyles='dotted',scale = 0.8,
                          label="average of\nall cells")
             #palette="pastel",hue="cell_ID")
-            g.legend_.remove()
+            if g.legend_ is not None:
+                    g.legend_.remove()
             g.set_title(None)
             #"""
             pvalList = []
@@ -305,10 +306,10 @@ def inR_sag_plot(inR_all_Cells_df,fig,axs):
     order = np.array(('pre','post_0', 'post_1', 'post_2', 'post_3'),dtype=object)
 
     g=sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="inR",
-                    capsize=0.2,errorbar=('sd'),order=order,color="k",
+                    capsize=0.2,ci=('sd'),order=order,color="k",
                     label="input\nresistance")
     sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",
-                  capsize=0.2,errorbar=('sd'),order=order,
+                  capsize=0.2,ci=('sd'),order=order,
                   color=bpf.CB_color_cycle[4], label="sag value")
     sns.stripplot(data=inR_all_Cells_df,color=bpf.CB_color_cycle[4],
                   x="pre_post_status",y="sag",
@@ -324,7 +325,8 @@ def inR_sag_plot(inR_all_Cells_df,fig,axs):
     #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
     annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
-    axs.legend_.remove()
+    if axs.legend_ is not None:
+        axs.legend_.remove()
 
     #sns.move_legend(axs, "upper left", bbox_to_anchor=(1, 1))
     #axs.set_ylim(-10,250)
@@ -379,14 +381,16 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     axs_img = fig.add_subplot(gs[:3, :6])
     plot_image(illustration,axs_img,0,-0.01,1)
 
-    #axs_img.text(-0.07,0.95,'A',transform=axs_img.transAxes,    
-    #        fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_img.text(-0.01,0.95,'A',transform=axs_img.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')
 
     axs_vpat1=fig.add_subplot(gs[3,0])
     axs_vpat2=fig.add_subplot(gs[4,0])
     axs_vpat3=fig.add_subplot(gs[5,0])
     plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,0,2)
-    
+    axs_vpat1.text(-0.07,1.35,'B',transform=axs_vpat1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+
     plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs)
     #plot pattern projections 
     axs_pat1 = fig.add_subplot(gs[6,0])
@@ -409,19 +413,19 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                                                  fig,axs_slp1,axs_slp2,
                                                  axs_slp3)
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    #label_axis(axs_slp_list,"C")
+    label_axis(axs_slp_list,"C")
 
 
     axs_inr = fig.add_subplot(gs[9:10,3:6])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    #axs_inr.text(-0.05,1.1,'E',transform=axs_inr.transAxes,    
-    #         fontsize=16, fontweight='bold', ha='center', va='center')            
+    axs_inr.text(0.035,1,'E',transform=axs_inr.transAxes,    
+             fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     axs_inrill = fig.add_subplot(gs[9:10,0:3])
     plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
-    #axs_inrill.text(-0.05,1.1,'D',transform=axs_inrill.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')            
+    axs_inrill.text(0.01,1.1,'D',transform=axs_inrill.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     #handles, labels = plt.gca().get_legend_handles_labels()

@@ -120,10 +120,11 @@ def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,
     axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
     #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10)
     axs.set_aspect(0.6)
-    axs.text(0.5,1.1,f'γ pre = {np.around(param_pre[-1],1)}',transform=axs.transAxes,    
-                 fontsize=12, ha='center', va='center')
     axs.text(0.5,0.9,f'γ post = {np.around(param[-1],1)}',transform=axs.transAxes,    
-                  fontsize=12, ha='center', va='center')   
+             fontsize=12, ha='center', va='center')
+    axs.text(0.5,0.7,f'γ pre = {np.around(param_pre[-1],1)}',transform=axs.transAxes,
+             fontsize=12, ha='center', va='center')
+    
     return x, y
 
 def plot_expected_vs_observed_all_trials(alltrial_Df,
@@ -419,7 +420,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
                                          sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
-    label_axis(axs_ex_sm_l_list, "A")
+    #label_axis(axs_ex_sm_l_list, "A")
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
     axs_ex_sm4 = fig.add_subplot(gs[3:5,0:2])
@@ -432,7 +433,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #axs_ex_sm5.set_title("non-learners")
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
-    label_axis(axs_ex_sm_nl_list,"B")
+    #label_axis(axs_ex_sm_nl_list,"B")
 
 
 

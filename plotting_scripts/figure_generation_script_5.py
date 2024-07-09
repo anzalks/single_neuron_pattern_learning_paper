@@ -86,7 +86,7 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.05,1.05,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(0.075,0.99,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 def move_axis(axs_list,xoffset,yoffset,pltscale):
@@ -183,7 +183,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
             if pat_num==0:
                 sns.despine(fig=None, ax=axs, top=True, right=True, 
                             left=False, bottom=False, offset=None, trim=False)
-                axs.set_ylabel("% change in\nEPSP amplitude")
+                axs.set_ylabel("% change in\nEPSP AHP")
                 axs.set_xlabel(None)
                 #axs[pat_num].set_yticks([])
             elif pat_num==1:
@@ -205,7 +205,8 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
                 pass 
             g.set(ylim=y_lim)
             g.set_xticklabels(time_points,rotation=0)
-            g.legend_.remove()
+            if g.get_legend() is not None:
+                    g.get_legend().remove()
             if cell_type!="dep_cells":
                 axs.set_xticklabels([])
             else:
@@ -309,7 +310,7 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
     # Plot 'post_3' bars
     sns.barplot(data=combined_df[combined_df["pre_post_status"] == "post_3"],
                 x="combined", y="min_trace", hue="group", order=combined_order,
-                palette=palette,alpha=1,ax=axs,errorbar=None)
+                palette=palette,alpha=1,ax=axs,ci=None)
     #for label in axs.get_xticklabels():
     #    label.set_position((label.get_position()[0] + 0.5, label.get_position()[1]))  # Adjust the offset value as needed
 
@@ -319,7 +320,7 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
     #axs.tick_params(axis='x', pad=5)
     axs.axhline(100,linestyle=":",color="k",alpha=0.6)
     axs.legend_.remove()
-    axs.set_ylabel("% change in\nEPSP amplitude")
+    axs.set_ylabel("% change in\nEPSP AHP")
     axs.set_xlabel(None)
     #axs.set_ylim(-2,10,)
 
@@ -374,7 +375,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     # Customization
     #axs_lr.set_ylim(-0.1, 4)
     axs_lr.set_ylim(-50,500)
-    axs_lr.set_ylabel("% change in\nEPSP amplitude")
+    axs_lr.set_ylabel("% change in\nEPSP AHP")
     axs_lr.set_xlabel("point no.")
     axs_lr.spines[['right', 'top']].set_visible(False)
     axs_lr.set_xticklabels(x_ticklabels)
@@ -426,15 +427,15 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
             if pat=="pattern_0":
                 alpha=0.5
                 marker="^"
-                label = f"trn_{labl}"
+                label = f"trained"#_{labl}"
             elif pat=="pattern_1":
                 alpha=0.5
                 marker="."
-                label = f"ov_{labl}"
+                label = f"overlapping"#_{labl}"
             elif pat=="pattern_2":
                 alpha=0.5
                 marker="+"
-                label = f"untr_{labl}"
+                label = f"untrained"#_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["min_trace"]
             y= pat_data[pat_data["pre_post_status"]=="post_3"]["min_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
@@ -443,9 +444,9 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
     axs.set_ylim(-5,5)
     axs.set_xlim(-5,5)
     axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("EPSP ampliude post\n30 min(mV)")
-    axs.set_xlabel("EPSP ampliude pre (mV)")
-    axs.legend(loc='upper center', bbox_to_anchor=(1.3, 1),frameon=False, 
+    axs.set_ylabel("EPSP AHP post\n30 min(mV)")
+    axs.set_xlabel("EPSP AHP pre (mV)")
+    axs.legend(loc='upper center', bbox_to_anchor=(1.25, 1.05),frameon=False, 
                   ncol=1)
 
 def plot_peak_perc_comp(sc_data_dict,fig,axs):
@@ -477,21 +478,21 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
             labl="lr"
         else:
             color=bpf.CB_color_cycle[1]
-            labl="n_lr"
+            labl="nlr"
         pat_grp = lrn_data.groupby(by="frame_id")
         for pat,pat_data in pat_grp:
             if pat=="pattern_0":
                 alpha=0.5
                 marker="^"
-                label = f"trn_{labl}"
+                label = f"trn"#_{labl}"
             elif pat=="pattern_1":
                 alpha=0.5
                 marker="."
-                label = f"ov_{labl}"
+                label = f"ov"#_{labl}"
             elif pat=="pattern_2":
                 alpha=0.5
                 marker="+"
-                label = f"untr_{labl}"
+                label = f"untr"#_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["min_trace"]
             y=norm_df[(norm_df["group"]==lrn)&(norm_df["frame_id"]==pat)&(norm_df["pre_post_status"]=="post_3")]["min_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
@@ -500,8 +501,8 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
     axs.set_xlim(-5,5)
     axs.set_aspect(0.02)
     axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("% EPSP ampliude post")
-    axs.set_xlabel("EPSP ampliude pre (mV)")
+    axs.set_ylabel("% EPSP AHP post")
+    axs.set_xlabel("EPSP AHP pre (mV)")
     #axs.legend(loc='upper center', bbox_to_anchor=(1.2, 1),frameon=False, 
     #              ncol=1)
 
@@ -549,7 +550,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
     axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
     axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.05,1)
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0.01,1)
 
     #plot distribution epsp for learners and non-leaners
     axs_ex_pat1 = fig.add_subplot(gs[2:5,0:3])
@@ -561,7 +562,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #label_axis(axs_ex_list,"A")
+    label_axis(axs_ex_list,"A")
 
 
     axs_in_pat1 = fig.add_subplot(gs[5:9,0:3])
@@ -573,32 +574,34 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #label_axis(axs_in_list,"B")
+    label_axis(axs_in_list,"B")
 
     axs_bar = fig.add_subplot(gs[9:11,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.05,1)
-    #axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center',
-    #             va='center')
+    axs_bar.text(0.05,1,'C',transform=axs_bar.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
 
     axs_comp_peaks = fig.add_subplot(gs[9:11,4:6])
     plot_peak_comp_pre_post(sc_data_dict,fig,axs_comp_peaks)
-    move_axis([axs_comp_peaks],-0.055,-0.1,1.75)
-    #axs_comp_peaks.text(-0.05,1.05,'D',transform=axs_comp_peaks.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center',
-    #             va='center')
+    move_axis([axs_comp_peaks],-0.025,-0.1,1.75)
+    axs_comp_peaks.text(0.1,1,'D',transform=axs_comp_peaks.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
     axs_comp_per = fig.add_subplot(gs[9:11,6:9])
     plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
-    move_axis([axs_comp_per],0,-0.1,1.75)
-    #axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
-    #                    fontsize=16, fontweight='bold', ha='center',
-    #                    va='center')
+    move_axis([axs_comp_per],0.025,-0.1,1.75)
+    axs_comp_per.text(0.1,1,'E',transform=axs_comp_per.transAxes,    
+                        fontsize=16, fontweight='bold', ha='center',
+                        va='center')
     axs_points_lr = fig.add_subplot(gs[11:15,0:4])
-    axs_points_nl = fig.add_subplot(gs[11:15,4:9])
+    axs_points_nl = fig.add_subplot(gs[11:15,5:9])
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
                                axs_points_lr,axs_points_nl)
-    move_axis([axs_points_lr,axs_points_nl],0,-0.15,1)
+    axs_points_list = [axs_points_lr,axs_points_nl]
+    move_axis(axs_points_list,0,-0.15,1)
+    label_axis(axs_points_list,"F")
     #label_axis([axs_points_lr,axs_points_nl],"F")
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))

@@ -78,7 +78,7 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.08,1.1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(0.1,1.05,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 def move_axis(axs_list,xoffset,yoffset,pltscale):
@@ -164,7 +164,8 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
 
 
             handles, labels = axslist[ax_no].get_legend_handles_labels()
-            g.legend_.remove()
+            if g.legend_ is not None:
+                g.legend_.remove()
             if cell_type=="learners":
                 g.set_xlabel(None)
                 g.set_xticklabels([])
@@ -404,6 +405,10 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     axs_slope = fig.add_subplot(gs[9:11,0:2])
     plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,axs_slope)
     move_axis([axs_slope],0,-0.05,1)
+    axs_slope.text(0.05,1,'E',transform=axs_slope.transAxes,    
+                        fontsize=16, fontweight='bold',
+                        ha='center',va='center')
+
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
     #fig.legend(by_label.values(), by_label.keys(), 

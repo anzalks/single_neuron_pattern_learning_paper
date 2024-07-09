@@ -131,6 +131,7 @@ def analyzeCell( dat, ret ):
             if len( Vm ) == 0:
                 continue
             Vm.shape = (3, len(Vm)//3)
+            print(Vm)
             mVm = Vm.mean( axis = 0 )
             soa = SumOfAlphas( mVm )
             params = soa.fit()
@@ -193,7 +194,7 @@ def main():
     # It is toward the faster end for the 1sq stim.
     outFrame = pandas.DataFrame(ret)
     print( outFrame )
-    outFrame.to_hdf( args.outfile, "Anzal_plasticity_1_from_v7", "w" )
+    outFrame.to_hdf( args.outfile, "Anzal_plasticity_1_from_v9", "w" )
     print( "Completed in {:.3f} seconds".format( time.time() - t0 ) )
 
 if __name__ == "__main__":

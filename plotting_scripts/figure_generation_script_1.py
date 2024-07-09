@@ -52,7 +52,7 @@ def plot_image(image,axs_img,xoffset,yoffset,pltscale):
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.2,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset):
@@ -99,10 +99,10 @@ def plot_trace_raw_all_pats(cell_data,field_to_plot,ylim,xlim,
         mean_trace = np.mean(mean_trace,axis=0)
         time = np.linspace(0,time_to_plot,len(mean_trace))*1000
         axs[axs_no].plot(time,mean_trace,color='k',label="mean")
-        axs[axs_no].axvline(0,color=vlinec,linestyle=':')
+        axs[axs_no].axvline(0,color=vlinec,linestyle=':',label="optical\nstim")
         axs[axs_no].spines[['right', 'top']].set_visible(False)
         axs[axs_no].set_ylim(ylim)
-        axs[axs_no].set_xlim(0,xlim)
+        axs[axs_no].set_xlim(-10,xlim)
         axs[axs_no].set_xlabel("time (ms)")
         axs[axs_no].set_ylabel(ylabel)
 
@@ -171,13 +171,13 @@ def plot_figure_1(pickle_file_path,image_file_path,
 
     axs_img = fig.add_subplot(gs[0:2, 0:2])
     plot_image(image,axs_img,-0.01,-0.175,1.01)
-    #axs_img.text(0.05,1.1,'A',transform=axs_img.transAxes,    
-    #         fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_img.text(0.05,1.1,'A',transform=axs_img.transAxes,    
+             fontsize=16, fontweight='bold', ha='center', va='center')
    
     axs_proj = fig.add_subplot(gs[2:4,0:2])
     plot_image(proj_img,axs_proj,0.02, -0.175,0.75)
-    #axs_proj.text(0.05,1.1,'B',transform=axs_proj.transAxes,    
-    #         fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_proj.text(0.05,1.1,'B',transform=axs_proj.transAxes,    
+             fontsize=16, fontweight='bold', ha='center', va='center')
 
     
     axs_pat1=fig.add_subplot(gs[0:1,2:3])
@@ -204,7 +204,7 @@ def plot_figure_1(pickle_file_path,image_file_path,
     axs_fl2.set_yticklabels([])
     axs_fl3.set_yticklabels([])
     axs_fl_list = [axs_fl1,axs_fl2,axs_fl3]
-    #label_axis(axs_fl_list,"C")
+    label_axis(axs_fl_list,"C")
 
     axs_inset = fig.add_subplot(gs[1:3,2:4])
     ylim = (-0.7,0.3)
@@ -240,13 +240,13 @@ def plot_figure_1(pickle_file_path,image_file_path,
     axs_cl2.set_yticklabels([])
     axs_cl3.set_yticklabels([])
     axs_cl_list = [axs_cl1,axs_cl2,axs_cl3]
-    #label_axis(axs_cl_list,"D")
+    label_axis(axs_cl_list,"D")
 
 
     handles, labels = axs_cl2.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     axs_cl2.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.6, 0.95),
+               bbox_to_anchor =(0.8, 1),
                ncol = 1,title="Voltage trace",
                loc='upper center',frameon=False)#,loc='lower center'    
 
