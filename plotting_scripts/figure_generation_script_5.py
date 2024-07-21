@@ -613,6 +613,8 @@ def plot_figure_5(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_5.png"
+    outpath = f"{outdir}/figure_5.svg"
+    outpath = f"{outdir}/figure_5.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)

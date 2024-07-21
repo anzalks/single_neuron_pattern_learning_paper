@@ -78,7 +78,7 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
 def label_axis(axis_list,letter_label):
     for axs_no, axs in enumerate(axis_list):
         axs_no = axs_no+1
-        axs.text(-0.075,1.1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
+        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
                       fontsize=16, fontweight='bold', ha='center', va='center')
 
 #def gama_fit(expt,alp,bet,gam):
@@ -420,7 +420,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
                                          sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
-    #label_axis(axs_ex_sm_l_list, "A")
+    label_axis(axs_ex_sm_l_list, "A")
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
     axs_ex_sm4 = fig.add_subplot(gs[3:5,0:2])
@@ -433,7 +433,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #axs_ex_sm5.set_title("non-learners")
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
-    #label_axis(axs_ex_sm_nl_list,"B")
+    label_axis(axs_ex_sm_nl_list,"B")
 
 
 
@@ -447,6 +447,8 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_7.png"
+    outpath = f"{outdir}/figure_7.svg"
+    outpath = f"{outdir}/figure_7.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)

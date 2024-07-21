@@ -49,6 +49,8 @@ def set_plot_properties():
     plt.rcParams['ytick.labelsize'] = 11
     plt.rcParams['legend.fontsize'] = 11
     plt.rcParams['legend.title_fontsize'] = 11
+    plt.rcParams['svg.fonttype'] = 'none'
+    plt.rcParams['text.usetex'] = False
 """    
     plt.rcParams['axes.grid'] = True
     plt.rcParams['grid.alpha'] = 0.5

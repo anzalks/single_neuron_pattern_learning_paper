@@ -252,6 +252,8 @@ def plot_figure_1(pickle_file_path,image_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_1.png"
+    outpath = f"{outdir}/figure_1.svg"
+    outpath = f"{outdir}/figure_1.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
