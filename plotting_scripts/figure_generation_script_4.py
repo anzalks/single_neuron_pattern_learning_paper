@@ -596,7 +596,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                         fontsize=16, fontweight='bold', ha='center',
                         va='center')
     axs_points_lr = fig.add_subplot(gs[11:15,0:4])
-    axs_points_nl = fig.add_subplot(gs[11:15,4:9])
+    axs_points_nl = fig.add_subplot(gs[11:15,5:9])
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
                                axs_points_lr,axs_points_nl)
     move_axis([axs_points_lr,axs_points_nl],0,-0.15,1)
@@ -611,8 +611,8 @@ def plot_figure_4(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_4.png"
-    outpath = f"{outdir}/figure_4.svg"
-    outpath = f"{outdir}/figure_4.pdf"
+    #outpath = f"{outdir}/figure_4.svg"
+    #outpath = f"{outdir}/figure_4.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
