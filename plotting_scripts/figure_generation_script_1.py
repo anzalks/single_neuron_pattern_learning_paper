@@ -185,39 +185,39 @@ def plot_figure_1(pickle_file_path,image_file_path,
     axs_pat3=fig.add_subplot(gs[0:1,6:7])
     plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,0)
     
-    axs_fl1=fig.add_subplot(gs[1:3,2:4])
-    axs_fl2=fig.add_subplot(gs[1:3,4:6])
-    axs_fl3=fig.add_subplot(gs[1:3,6:8])
+    axs_fl1=fig.add_subplot(gs[3:5,2:4])
+    axs_fl2=fig.add_subplot(gs[3:5,4:6])
+    axs_fl3=fig.add_subplot(gs[3:5,6:8])
     ylim = (-0.7,0.3) # in mV
     xlim = 150 # in mseconds
     ylabel="field response (mV)"
     plot_trace_raw_all_pats(cell_data,"field_trace(mV)", ylim, xlim,
                             ylabel,axs_fl1,axs_fl2,axs_fl3)
     axs_fl1.set_xlabel(None)
-    axs_fl2.set_xlabel(None)
     axs_fl3.set_xlabel(None)
-    axs_fl1.set_xticklabels([])
-    axs_fl2.set_xticklabels([])
-    axs_fl3.set_xticklabels([])
+    
+    
+    
+    
     axs_fl2.set_ylabel(None)
     axs_fl3.set_ylabel(None)
     axs_fl2.set_yticklabels([])
     axs_fl3.set_yticklabels([])
     axs_fl_list = [axs_fl1,axs_fl2,axs_fl3]
-    label_axis(axs_fl_list,"C")
+    label_axis(axs_fl_list,"D")
 
-    axs_inset = fig.add_subplot(gs[1:3,2:4])
+    axs_inset = fig.add_subplot(gs[3:5,2:4])
     ylim = (-0.7,0.3)
     xlim = 15
     inset_plot_traces(cell_data,"field_trace(mV)",ylim,xlim, 
                       axs_inset,0,0.08,0.08,0.3)
 
-    axs_inset = fig.add_subplot(gs[1:3,4:6])
+    axs_inset = fig.add_subplot(gs[3:5,4:6])
     ylim = (-0.7,0.3)
     xlim = 15
     inset_plot_traces(cell_data,"field_trace(mV)",ylim,xlim, 
                       axs_inset,1,0.08,0.08,0.3)
-    axs_inset = fig.add_subplot(gs[1:3,6:8])
+    axs_inset = fig.add_subplot(gs[3:5,6:8])
     ylim = (-0.7,0.3)
     xlim = 15
     inset_plot_traces(cell_data,"field_trace(mV)",ylim,xlim, 
@@ -225,22 +225,26 @@ def plot_figure_1(pickle_file_path,image_file_path,
 
 
 
-    axs_cl1=fig.add_subplot(gs[3:5,2:4])
-    axs_cl2=fig.add_subplot(gs[3:5,4:6])
-    axs_cl3=fig.add_subplot(gs[3:5,6:8])
+    axs_cl1=fig.add_subplot(gs[1:3,2:4])
+    axs_cl2=fig.add_subplot(gs[1:3,4:6])
+    axs_cl3=fig.add_subplot(gs[1:3,6:8])
     ylim = (-2,4) # in mV
     xlim = 150 # in mseconds
     ylabel="cell response (mV)"
     plot_trace_raw_all_pats(cell_data,"cell_trace(mV)", ylim, xlim,
                             ylabel,axs_cl1,axs_cl2,axs_cl3)
     axs_cl1.set_xlabel(None)
+    axs_cl2.set_xlabel(None)
     axs_cl3.set_xlabel(None)
+    axs_cl1.set_xticklabels([])
+    axs_cl2.set_xticklabels([])
+    axs_cl3.set_xticklabels([])
     axs_cl2.set_ylabel(None)
     axs_cl3.set_ylabel(None)
     axs_cl2.set_yticklabels([])
     axs_cl3.set_yticklabels([])
     axs_cl_list = [axs_cl1,axs_cl2,axs_cl3]
-    label_axis(axs_cl_list,"D")
+    label_axis(axs_cl_list,"C")
 
 
     handles, labels = axs_cl2.get_legend_handles_labels()
@@ -252,8 +256,8 @@ def plot_figure_1(pickle_file_path,image_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_1.png"
-    outpath = f"{outdir}/figure_1.svg"
-    outpath = f"{outdir}/figure_1.pdf"
+    #outpath = f"{outdir}/figure_1.svg"
+    #outpath = f"{outdir}/figure_1.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
