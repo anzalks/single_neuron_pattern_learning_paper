@@ -94,8 +94,8 @@ def int_to_roman(num):
     syb = [
         "M", "CM", "D", "CD",
         "C", "XC", "L", "XL",
-        "X", "IX", "V", "IV",
-        "I"
+        "X", "iX", "V", "iV",
+        "i"
         ]
     roman_num = ''
     i = 0

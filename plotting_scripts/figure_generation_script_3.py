@@ -59,8 +59,8 @@ def int_to_roman(num):
     syb = [
         "M", "CM", "D", "CD",
         "C", "XC", "L", "XL",
-        "X", "IX", "V", "IV",
-        "I"
+        "X", "IX", "V", "iV",
+        "i"
         ]
     roman_num = ''
     i = 0
@@ -128,12 +128,27 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
         axs_pat.set_title(pattern,fontsize=10)
 
 
-def plot_pie_cell_dis(fig,axs,cell_dist,cell_dist_key):
+
+def plot_pie_cell_dis(fig, axs, cell_dist, cell_dist_key):
     palette_color = sns.color_palette('colorblind')
-    axs.pie(cell_dist,labels=cell_dist_key,
-            colors=palette_color,startangle=210,
-            labeldistance=1.15,autopct='%.0f%%')
     
+    # Create the pie chart and get references to text objects
+    wedges, texts, autotexts = axs.pie(cell_dist, 
+                                       labels=cell_dist_key,
+                                       colors=palette_color,
+                                       startangle=210, 
+                                       labeldistance=1.15, 
+                                       autopct='%.0f%%')
+
+    # Change the color of the text inside the pie chart to white
+    for autotext in autotexts:
+        autotext.set_color('white')  # Set the color to white
+
+    # Optionally, adjust the text size if needed
+    for text in autotexts:
+        text.set_fontsize(12)  # Example size adjustment
+
+    return axs
     
 
 def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
@@ -255,7 +270,7 @@ def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
     annotator =Annotator(axs,[anotp_list], data=learners_df, 
                          x="pre_post_status",y=field_to_plot,order=order)
     annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-    #annotator.annotate()
+    annotator.annotate()
     axs.set_ylabel(ylabel)
     axs.set_xlabel("time points\n(mins)")
     axs.set_xticklabels(["pre","30 mins"])
@@ -378,15 +393,18 @@ def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
             pat_0_vals= frms[(frms["frame_id"]=="pattern_0")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
             sns.kdeplot(data = pat_0_vals, cumulative = True,
                         label = "trained pattern", ax=axs,
-                        color=bpf.CB_color_cycle[2],linewidth=3)
+                        color=bpf.CB_color_cycle[2],linewidth=3,
+                        linestyle='-')
             pat_1_vals= frms[(frms["frame_id"]=="pattern_1")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
             sns.kdeplot(data = pat_1_vals, cumulative = True,
                         label="overlapping pattern", ax=axs,
-                        color=bpf.CB_color_cycle[4],linewidth=3)
+                        color=bpf.CB_color_cycle[4],linewidth=3,
+                        linestyle='--')
             pat_2_vals= frms[(frms["frame_id"]=="pattern_2")&(frms["pre_post_status"]=="post_3")]["max_trace %"].to_numpy()
             sns.kdeplot(data = pat_2_vals, cumulative = True, 
                         label="non-overlapping pattern", ax=axs,
-                        color=bpf.CB_color_cycle[5],linewidth=3)
+                        color=bpf.CB_color_cycle[5],linewidth=3,
+                        linestyle=':')
     axs.set_xlim(-50,350)
     axs.set_title(cell_type)
     axs.set_xlabel("% change in response\nto patterns")
@@ -692,7 +710,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_pat2 = fig.add_subplot(gs[1,2:3])
     axs_pat3 = fig.add_subplot(gs[2,2:3])
     plot_patterns(axs_pat1,axs_pat2,axs_pat3,0,0,2)
-    axs_pat1.text(0,1.35,'B',transform=axs_pat1.transAxes,    
+    axs_pat1.text(0,1.35,'C',transform=axs_pat1.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot distribution epsp for learners and non-leaners
@@ -701,14 +719,14 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                                              sc_data_dict["an_cells"],
                                              "max_trace",fig,axs_dist1,
                                              )    
-    axs_dist1.text(0.05,1,'D',transform=axs_dist1.transAxes,    
+    axs_dist1.text(0.05,1,'B',transform=axs_dist1.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_dist1],0,0.05,1)
     
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
-    axs_pie.text(-0.025,0.85,'E',transform=axs_pie.transAxes,    
+    axs_pie.text(-0.025,0.85,'D',transform=axs_pie.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_pie],-0.075,0.115,1)
     
@@ -716,7 +734,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_fi = fig.add_subplot(gs[4:6,0:2])
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
     move_axis([axs_fi],-0.05,0,1)
-    axs_fi.text(0.1,1,'F',transform=axs_fi.transAxes,    
+    axs_fi.text(0.1,1,'E',transform=axs_fi.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot cell property comparison
@@ -725,9 +743,9 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,0,1)
-    axs_inr.text(0.1,1,'G',transform=axs_inr.transAxes,    
+    axs_inr.text(0.1,1,'F',transform=axs_inr.transAxes,    
                 fontsize=16, fontweight='bold', ha='center', va='center')
-    axs_rmp.text(0.1,1,'H',transform=axs_rmp.transAxes,    
+    axs_rmp.text(0.1,1,'G',transform=axs_rmp.transAxes,    
                 fontsize=16, fontweight='bold', ha='center', va='center')
     
     
@@ -746,7 +764,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
     axs_mini_list = [axs_mini_amp,axs_mini_comp_amp,
                      axs_mini_freq,axs_mini_comp_freq]
-    label_axis(axs_mini_list,"I")    
+    label_axis(axs_mini_list,"H")    
     
     #plot CDF for cells
     axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
@@ -758,13 +776,13 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_cdf_list = [axs_cdf1,axs_cdf2]
     #label_axis(axs_cdf_list,"J")
     move_axis(axs_cdf_list,-0.05,0.05,1)
-    label_axis(axs_cdf_list,"J")
+    label_axis(axs_cdf_list,"I")
 
     #plot training timing details
     axs_trn = fig.add_subplot(gs[9:10,6:8])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0.05,1)
-    axs_trn.text(0.1,1,'K',transform=axs_trn.transAxes,    
+    axs_trn.text(0.1,1,'J',transform=axs_trn.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     #handles, labels = plt.gca().get_legend_handles_labels()
