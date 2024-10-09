@@ -27,6 +27,8 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 import baisic_plot_fuctnions_and_features as bpf
+from PIL import ImageDraw, ImageFont 
+
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -40,6 +42,135 @@ time_to_plot = 0.15 # in s
 class Args: pass
 args_ = Args()
 
+
+
+def add_scale_bar_with_magnification(image_opened, scale_length_um, magnification, image_width_px, FoV_5x, bar_position=(50, 50), scale_bar_thickness=5, font_size=24):
+    """
+    Adds a white scale bar to a microscope image using Pillow and returns the image object.
+    
+    Parameters:
+    - image_opened: PIL Image object (already opened image).
+    - scale_length_um: float, length of the scale bar in micrometers.
+    - magnification: float, magnification of the microscope (e.g., 40x, 100x).
+    - image_width_px: int, width of the image in pixels.
+    - FoV_5x: float, field of view at 5x magnification in micrometers.
+    - bar_position: tuple (x, y), position of the scale bar's bottom-left corner.
+    - scale_bar_thickness: int, thickness of the scale bar in pixels.
+    - font_size: int, size of the font for the scale text.
+    
+    Returns:
+    - Image object with the scale bar.
+    """
+    # Draw on the image
+    draw = pillow.ImageDraw.Draw(image_opened)
+    
+    # Calculate the field of view (FoV) at the given magnification relative to 5x
+    FoV_magnification = FoV_5x * (5 / magnification)  # FoV in micrometers at the given magnification
+    
+    # Calculate pixels per micrometer at this magnification
+    pixels_per_um = image_width_px / FoV_magnification
+    
+    # Calculate scale bar length in pixels
+    scale_bar_length_px = int(scale_length_um * pixels_per_um)
+    
+    # Set position of the scale bar
+    bar_x = bar_position[0]  # X position in pixels
+    bar_y = image_opened.height - bar_position[1]  # Y position in pixels (from the bottom)
+    
+    # Draw the scale bar (a white rectangle)
+    draw.rectangle(
+        [bar_x, bar_y - scale_bar_thickness, bar_x + scale_bar_length_px, bar_y],
+        fill="white"
+    )
+    
+    # Add scale text
+    scale_text = f"{scale_length_um} μm"
+    
+    # Use a TrueType font if available
+    try:
+        # Specify the path to a TrueType font (use Arial as an example)
+        font_path = "/Library/Fonts/Arial.ttf"
+        font = pillow.ImageFont.truetype(font_path, font_size)
+    except IOError:
+        print("TrueType font not found. Using default bitmap font.")
+        font = pillow.ImageFont.load_default()
+
+    # Get the bounding box for the text
+    bbox = draw.textbbox((0, 0), scale_text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    
+    # Draw the text slightly above the scale bar
+    draw.text(
+        (bar_x, bar_y - scale_bar_thickness - text_height - 5),  # Position slightly above the scale bar
+        scale_text,
+        fill="white",
+        font=font
+    )
+    
+    return image_opened
+
+
+def add_labels_to_image(image, text_list, coordinates_list, font_size=20,
+                        font_color=(255, 255, 255)):
+    """
+    Adds text labels to an image at specified coordinates.
+    
+    :param image: Image object returned by PIL.Image.open.
+    :param text_list: List of strings to add to the image as labels.
+    :param coordinates_list: List of tuples with (x, y) coordinates for each text label.
+    :param font_size: Font size of the labels. Default is 20.
+    :param font_color: Font color of the labels as an RGB tuple. Default is red (255, 0, 0).
+    :return: Image object with text labels added.
+    """
+    # Make the image editable
+    draw = ImageDraw.Draw(image)
+    
+    # Define a font (you can specify a font file if available, else it will use default)
+    try:
+        # Specify the path to a TrueType font (use Arial as an example)
+        font_path = "/Library/Fonts/Arial.ttf"
+        font = pillow.ImageFont.truetype(font_path, font_size)
+    except IOError:
+        print("TrueType font not found. Using default bitmap font.")
+        font = pillow.ImageFont.load_default()
+    # Add text labels at specified coordinates
+    for text, (x, y) in zip(text_list, coordinates_list):
+        draw.text((x, y), text, font=font, fill=font_color)
+    
+    return image
+
+
+def int_to_roman(num):
+    # Helper function to convert integer to Roman numeral
+    val = [
+        1000, 900, 500, 400,
+        100, 90, 50, 40,
+        10, 9, 5, 4,
+        1
+        ]
+    syb = [
+        "M", "CM", "D", "CD",
+        "C", "XC", "L", "XL",
+        "X", "IX", "V", "IV",
+        "i"
+        ]
+    roman_num = ''
+    i = 0
+    while  num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syb[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
+def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
+    for axs_no, axs in enumerate(axis_list):
+        roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
+        axs.text(xpos, ypos, f'{letter_label}{roman_no}', 
+                 transform=axs.transAxes, fontsize=fontsize, 
+                 fontweight=fontweight, ha='center', va='center')
+
 def plot_image(image,axs_img,xoffset,yoffset,pltscale):
     axs_img.imshow(image, cmap='gray')
     pos = axs_img.get_position()  # Get the original position
@@ -49,27 +180,21 @@ def plot_image(image,axs_img,xoffset,yoffset,pltscale):
     axs_img.set_position(new_pos)
     axs_img.axis('off')
 
-def label_axis(axis_list,letter_label):
-    for axs_no, axs in enumerate(axis_list):
-        axs_no = axs_no+1
-        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
-                      fontsize=16, fontweight='bold', ha='center', va='center')
-
 def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset):
     pattern_list = ["trained pattern","Overlapping pattern",
                     "Non-overlapping pattern"]
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,1.5)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,1.5)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,1.5)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -157,7 +282,39 @@ def plot_figure_1(pickle_file_path,image_file_path,
     cell_data.reset_index()
     sampling_rate = int(cell_data["sampling_rate(Hz)"].unique())
     image= pillow.Image.open(image_file_path)
-    proj_img = pillow.Image.open(projection_image).convert('L')
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    image= add_scale_bar_with_magnification(image, 500, 5, 1024, 2000, 
+                                            bar_position=(50, 50),
+                                            scale_bar_thickness=20,
+                                            font_size=55)
+    text_list = ["CA1", "CA3", "Field", "Patch"]  # Example texts
+    coordinates_list = [(900, 350), (700, 700), (550, 850), (1125, 600)]  # Example coordinates (x, y)
+    image = add_labels_to_image(image, text_list,
+                                coordinates_list,font_size=55)
+
+    proj_img = pillow.Image.open(projection_image)#.convert('L')
+    if proj_img.mode != "RGB":
+        image = proj_img.convert("RGB")
+
+
+    proj_img= add_scale_bar_with_magnification(proj_img, 50, 40, 1024, 2200, 
+                                            bar_position=(50, 50),
+                                            scale_bar_thickness=20,
+                                            font_size=55)
+
+    text_list = ["Field"]  # Example texts
+    coordinates_list = [(620, 425)]  # Example coordinates (x, y)
+    proj_img = add_labels_to_image(proj_img, text_list,
+                                   coordinates_list,font_size=55)
+
+
+
+
+
+
+
     # Define the width and height ratios
     width_ratios = [4, 4, 2, 2, 2, 
                     2, 2, 2, 2]  # Adjust these values as needed
@@ -178,7 +335,6 @@ def plot_figure_1(pickle_file_path,image_file_path,
     plot_image(proj_img,axs_proj,0.02, -0.175,0.75)
     axs_proj.text(0.05,1.1,'B',transform=axs_proj.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')
-
     
     axs_pat1=fig.add_subplot(gs[0:1,2:3])
     axs_pat2=fig.add_subplot(gs[0:1,4:5])
@@ -195,9 +351,6 @@ def plot_figure_1(pickle_file_path,image_file_path,
                             ylabel,axs_fl1,axs_fl2,axs_fl3)
     axs_fl1.set_xlabel(None)
     axs_fl3.set_xlabel(None)
-    
-    
-    
     
     axs_fl2.set_ylabel(None)
     axs_fl3.set_ylabel(None)

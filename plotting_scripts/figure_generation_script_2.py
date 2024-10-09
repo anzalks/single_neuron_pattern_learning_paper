@@ -28,6 +28,7 @@ import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 import baisic_plot_fuctnions_and_features as bpf
+from matplotlib.lines import Line2D
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -65,15 +66,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,1.2)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,1.2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,1.2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -84,11 +85,36 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
         axs_pat.axis('off')
         axs_pat.set_title(pattern,fontsize=10)
     
-def label_axis(axis_list,letter_label):
+def int_to_roman(num):
+    # Helper function to convert integer to Roman numeral
+    val = [
+        1000, 900, 500, 400,
+        100, 90, 50, 40,
+        10, 9, 5, 4,
+        1
+        ]
+    syb = [
+        "M", "CM", "D", "CD",
+        "C", "XC", "L", "XL",
+        "X", "IX", "V", "IV",
+        "i"
+        ]
+    roman_num = ''
+    i = 0
+    while  num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syb[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
+def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
-        axs_no = axs_no+1
-        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
-                      fontsize=16, fontweight='bold', ha='center', va='center')
+        roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
+        axs.text(xpos, ypos, f'{letter_label}{roman_no}', 
+                 transform=axs.transAxes, fontsize=fontsize, 
+                 fontweight=fontweight, ha='center', va='center')
+
 
 def plot_raw_trace_time_points(single_cell_df,
                                deselect_list,fig,gs):
@@ -192,97 +218,224 @@ def norm_values(cell_list,val_to_plot):
                     cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
     return cell_list
                  
-def plot_cell_type_features(cell_list,pattern_number, fig, axs_slp,val_to_plot,plt_color):
+
+
+
+def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot, plt_color):
     if pattern_number == "pattern_0":
         pat_type = "trained"
     elif pattern_number == "pattern_1":
         pat_type = "overlapping"
     else:
         pat_type = "untrained"
-    #y_lim=(-50,300)
-    y_lim = (-50,500)
-    pat_num=int(pattern_number.split("_")[-1])
-    num_cells= len(cell_list["cell_ID"].unique())
-    #cell_type =get_variable_name(cell_list)
+
+    y_lim = (-50, 500)
+    pat_num = int(pattern_number.split("_")[-1])
+    num_cells = len(cell_list["cell_ID"].unique())
     pfd = cell_list.groupby(by="frame_id")
+    
     for c, pat in pfd:
         if c != pattern_number:
             continue
-
         else:
-            #pat = pat[(pat["pre_post_status"]!="post_5")]#&(pat["pre_post_status"]!="post_4")]#&(cell["pre_post_status"]!="post_3")]
-            #order = np.array(('pre','post_0','post_1','post_2','post_3','post_4'),dtype=object)
-            order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
-            #print(f"pat = &&&&&&&{pat}%%%%%%%%%%%%%")
-            g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
-                            order=order,ax=axs_slp,color=bpf.CB_color_cycle[2],
-                            alpha=0.6,size=5, label='single cell')#alpha=0.8,
-            sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
-                          errorbar="se",order=order,capsize=0.1,ax=axs_slp,
-                          color=plt_color, linestyles='dotted',scale = 0.8,
-                         label="average of\nall cells")
-            #palette="pastel",hue="cell_ID")
-            if g.legend_ is not None:
-                    g.legend_.remove()
-            g.set_title(None)
-            #"""
+            order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
+            
+            # Create the stripplot for individual cells (with legend label)
+            stripplot = sns.stripplot(
+                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+                order=order, ax=axs_slp, color=bpf.CB_color_cycle[2],
+                alpha=0.6, size=5, label='single cell'
+            )
+            
+            # Create the pointplot for the average of all cells (no automatic legend)
+            sns.pointplot(
+                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+                errorbar="se", order=order, capsize=0.1, ax=axs_slp,
+                color=plt_color, linestyles='dotted', scale=0.8
+            )
+            
+            # Create a custom marker for the point plot in the legend (instead of a line)
+            pointplot_handle = Line2D([], [], marker='o', color=plt_color, linestyle='', label='average of\nall cells')
+
+            # Set title, limits, and aesthetics
+            stripplot.set_title(None)
+            axs_slp.axhline(100, ls=':', color="k", alpha=0.4)
+            stripplot.set(ylim=y_lim)
+            stripplot.set_xticklabels(time_points, rotation=30)
+            
+            # Collect p-values for annotations (if needed)
             pvalList = []
             anotp_list = []
             for i in order[1:]:
-                posti ="post{i}"
-                #non parametric, paired and small sample size, hence used Wilcoxon signed-rank test
-                #Wilcoxon signed-rank test
-                posti= spst.wilcoxon(pat[pat["pre_post_status"]=='pre'][f"{val_to_plot}"],pat[pat["pre_post_status"]==i][f"{val_to_plot}"],
-                                     zero_method="wilcox", correction=True)
+                posti = spst.wilcoxon(
+                    pat[pat["pre_post_status"] == 'pre'][f"{val_to_plot}"],
+                    pat[pat["pre_post_status"] == i][f"{val_to_plot}"],
+                    zero_method="wilcox", correction=True
+                )
                 pvalList.append(posti.pvalue)
-                anotp_list.append(("pre",i))
-            annotator = Annotator(axs_slp,anotp_list,data=pat, 
-                                  x="pre_post_status",
-                                  y=f"{val_to_plot}",
-                                  order=order,
-                                 fontsize=8)
-            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
-            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
-            #annotator.annotate()
+                anotp_list.append(("pre", i))
 
-            #"""
-            axs_slp.axhline(100, ls=':',color="k", alpha=0.4)
-            if pat_num==0:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
+            # Annotate with p-values
+            annotator = Annotator(axs_slp, anotp_list, data=pat,
+                                  x="pre_post_status", y=f"{val_to_plot}",
+                                  order=order, fontsize=8)
+            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+            annotator.annotate()
+            # Adjust axis labels and despine
+            if pat_num == 0:
+                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel("% change in\nEPSP amplitude")
                 axs_slp.set_xlabel(None)
-                #axs[pat_num].set_yticks([])
-            elif pat_num==1:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
+            elif pat_num == 1:
+                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel(None)
                 axs_slp.set_xlabel("time points (mins)")
-            elif pat_num==2:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
+            elif pat_num == 2:
+                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
                 axs_slp.set_xlabel(None)
                 axs_slp.set_ylabel(None)
-                handles, labels = g.get_legend_handles_labels()
-                by_label = dict(zip(labels, handles))
-                axs_slp.legend(by_label.values(), by_label.keys(), 
-                               bbox_to_anchor =(0.6, 1),
-                               ncol = 1,title="cell response",
-                               loc='upper center',frameon=False)
 
+                # Get the handles and labels for the stripplot
+                handles1, labels1 = stripplot.get_legend_handles_labels()
+
+                # Remove duplicate "single cell" entries
+                handles1_labels_dict = dict(zip(labels1, handles1))  # Ensure unique entries
+                handles = list(handles1_labels_dict.values()) + [pointplot_handle]
+                labels = list(handles1_labels_dict.keys()) + ['average of\nall cells']
+
+                # Combine legends and add them to the plot
+                axs_slp.legend(
+                    handles, labels,
+                    bbox_to_anchor=(0.8, 0.9),  # Adjust the legend position
+                    ncol=1, title="cell response",
+                    loc='upper center',
+                    handletextpad=0.2,  # Reduce space between marker and text
+                    labelspacing=0.2,  # Reduce vertical space between entries
+                    fancybox=True,  # Enable fancy box with rounded corners
+                    framealpha=0.7,  # Set the transparency of the legend background
+                    facecolor='white'  # Set the background color to white
+                )
 
             else:
-                #g.legend_.remove()
-                pass 
-            g.set(ylim=y_lim)
-            g.set_xticklabels(time_points,rotation=30)
-    #handles, labels = g.get_legend_handles_labels()
-    #by_label = dict(zip(labels, handles))
-    #axs_slp.legend(by_label.values(), by_label.keys(), 
-    #               bbox_to_anchor =(0.1, 0.8),
-    #               ncol = 6,title="cell response",
-    #               loc='upper center',frameon=False)
-            #g.legend_.remove()
+                pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             
         
             
@@ -438,8 +591,8 @@ def plot_figure_2(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_2.png"
-    outpath = f"{outdir}/figure_2.svg"
-    outpath = f"{outdir}/figure_2.pdf"
+    #outpath = f"{outdir}/figure_2.svg"
+    #outpath = f"{outdir}/figure_2.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)

@@ -43,16 +43,41 @@ time_points = ["pre","0", "10", "20","30" ]
 selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
                         #'post_4','post_5']
 cell_dist=[8,10,4]
-cell_dist_key = ["leaners","non-learners","cells not\ncosidered"]
+cell_dist_key = ["learners","non-learners","cells not\nconsidered"]
 
 class Args: pass
 args_ = Args()
 
-def label_axis(axis_list,letter_label):
+def int_to_roman(num):
+    # Helper function to convert integer to Roman numeral
+    val = [
+        1000, 900, 500, 400,
+        100, 90, 50, 40,
+        10, 9, 5, 4,
+        1
+        ]
+    syb = [
+        "M", "CM", "D", "CD",
+        "C", "XC", "L", "XL",
+        "X", "IX", "V", "IV",
+        "I"
+        ]
+    roman_num = ''
+    i = 0
+    while  num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syb[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
+def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
-        axs_no = axs_no+1
-        axs.text(0.1,1,f'{letter_label}{axs_no}',transform=axs.transAxes,    
-                      fontsize=16, fontweight='bold', ha='center', va='center')
+        roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
+        axs.text(xpos, ypos, f'{letter_label}{roman_no}', 
+                 transform=axs.transAxes, fontsize=fontsize, 
+                 fontweight=fontweight, ha='center', va='center')
+
 
 def move_axis(axs_list,xoffset,yoffset,pltscale):
     for axs in axs_list:
@@ -107,7 +132,7 @@ def plot_pie_cell_dis(fig,axs,cell_dist,cell_dist_key):
     palette_color = sns.color_palette('colorblind')
     axs.pie(cell_dist,labels=cell_dist_key,
             colors=palette_color,startangle=210,
-            labeldistance=1,autopct='%.0f%%')
+            labeldistance=1.15,autopct='%.0f%%')
     
     
 
@@ -752,8 +777,8 @@ def plot_figure_3(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_3.png"
-    outpath = f"{outdir}/figure_3.svg"
-    outpath = f"{outdir}/figure_3.pdf"
+    #outpath = f"{outdir}/figure_3.svg"
+    #outpath = f"{outdir}/figure_3.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)

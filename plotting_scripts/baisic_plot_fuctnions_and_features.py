@@ -98,7 +98,7 @@ def get_variable_name(variable):
 
 
 
-def create_grid_image(first_spot_grid_point, spot_proportional_size, image_size=(1024, 480), grid_size=(24, 24), num_spots=5, spot_color=(0, 255, 255)):
+def create_grid_image(first_spot_grid_point, spot_proportional_size=1.5, image_size=(1024, 480), grid_size=(24, 24), num_spots=5, spot_color=(0, 255, 255)):
     """
     Creates a custom grid image with bright spots starting from a specified grid point.
 
