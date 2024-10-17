@@ -7,7 +7,8 @@ __email__            = "anzalks@ncbs.res.in"
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
-from PIL import Image, ImageDraw
+import PIL as pillow
+from PIL import Image, ImageDraw, ImageFont 
 
 
 pre_color = "000000" #pre_color black 
@@ -142,3 +143,99 @@ def create_grid_image(first_spot_grid_point, spot_proportional_size=1.5, image_s
         draw.rectangle([x, y, x + spot_width, y + spot_height], fill=spot_color)
 
     return image
+
+def create_grid_points_with_text(first_spot_grid_points, spot_proportional_size=0.5, image_size=(300, 100), grid_size=(24, 24), spot_color=(0, 255, 255), padding=30, background_color=(255, 255, 255), text_color=(0, 0, 0), font_size=20, show_text=True, num_columns=3, txt_spacing=20, min_padding_above_text=10):
+    """
+    Creates a single image composed of multiple individual images arranged in multiple rows. Optionally, text is shown above each spot.
+
+    Parameters:
+    - first_spot_grid_points (list of int): A list of grid points for the bright spots on the x-axis for each individual image.
+    - spot_proportional_size (int): The proportional size of the bright spots (number of grid cells).
+    - image_size (tuple): The size of each individual image (width, height).
+    - grid_size (tuple): The size of the grid (columns, rows).
+    - spot_color (tuple): The color of the bright spots (R, G, B).
+    - padding (int): The padding (in pixels) to add between each image.
+    - background_color (tuple): The background color for the padding (default: white).
+    - text_color (tuple): The color of the text (default: black).
+    - font_size (int): Font size for the text label on each rectangle.
+    - show_text (bool): Whether or not to display the text above each spot.
+    - num_columns (int): Number of images to display in each row.
+    - txt_spacing (int): Additional space between the text and the image.
+    - min_padding_above_text (int): Minimum space to maintain between the top of the text and the top of the image.
+    
+    Returns:
+    - PIL.Image: The combined image with all individual images arranged in multiple rows.
+    """
+
+    num_images = len(first_spot_grid_points)
+    num_rows = (num_images + num_columns - 1) // num_columns  # Calculate how many rows are needed
+
+    # Calculate the total height of the image, including padding and space for text
+    text_height = font_size + txt_spacing + min_padding_above_text
+    combined_image_height = (image_size[1] + (text_height if show_text else 0)) * num_rows + padding * (num_rows + 1)
+    combined_image_width = image_size[0] * num_columns + padding * (num_columns + 1)
+
+    # Create the base combined image
+    combined_image = Image.new("RGB", (combined_image_width, combined_image_height), background_color)
+    
+    # Use a TrueType font if available
+    try:
+        # Specify the path to a TrueType font (use Arial as an example)
+        font_path = "/Library/Fonts/Arial.ttf"
+        font = pillow.ImageFont.truetype(font_path, font_size)
+    except IOError:
+        print("TrueType font not found. Using default bitmap font.")
+        font = pillow.ImageFont.load_default()
+
+    for idx, spot_grid_point in enumerate(first_spot_grid_points):
+        # Create each individual image with one cyan rectangle
+        image = Image.new("RGB", image_size, (0, 0, 0))
+        draw = ImageDraw.Draw(image)
+
+        # Calculate grid cell size
+        grid_cell_width = image_size[0] // grid_size[0]
+        grid_cell_height = image_size[1] // grid_size[1]
+
+        # Calculate the size of the bright spot based on the proportional size
+        spot_width = int(grid_cell_width * spot_proportional_size)
+        spot_height = int(grid_cell_height * spot_proportional_size)
+
+        # Ensure the starting grid point keeps the spot inside the image
+        spot_grid_point_adjusted = min(spot_grid_point, grid_size[0] - 1)
+
+        # Calculate the starting position for the bright spot on the x-axis
+        first_spot_x = spot_grid_point_adjusted * grid_cell_width
+        y = (image_size[1] - spot_height) // 2
+
+        # Add a single bright spot at the defined grid point
+        draw.rectangle([first_spot_x, y, first_spot_x + spot_width, y + spot_height], fill=spot_color)
+
+        # Calculate the x and y position for this image in the combined grid
+        col = idx % num_columns  # Current column
+        row = idx // num_columns  # Current row
+        
+        x_position = col * image_size[0] + padding * (col + 1)
+        y_position = row * (image_size[1] + text_height if show_text else 0) + padding * (row + 1)
+
+        # Paste the individual image into the combined image
+        combined_image.paste(image, (x_position, y_position))
+
+        # Conditionally add text if show_text is True
+        if show_text:
+            # Use index + 1 as the text label
+            text = f"{idx + 1}"  # This will use the index (0-based) + 1
+
+            # Use textbbox to get the bounding box of the text
+            draw_combined = ImageDraw.Draw(combined_image)
+            text_bbox = draw_combined.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+
+            # Calculate text size and position it centered in the padding area above the rectangle
+            text_x = x_position + (image_size[0] - text_width) // 2
+            text_y = max(min_padding_above_text, y_position - (padding // 2 + txt_spacing))  # Ensure text is within bounds
+
+            # Draw the text label, ensuring it doesn't go beyond the top of the image
+            draw_combined.text((text_x, text_y), text, fill=text_color, font=font)
+
+    return combined_image
