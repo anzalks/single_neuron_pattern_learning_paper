@@ -82,7 +82,33 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
         axs_pat.set_position(new_pat_pos)
         axs_pat.axis('off')
         axs_pat.set_title(pattern,fontsize=10)
-    
+
+def plot_points(axs_points_img,xoffset,yoffset,zoom):
+    first_spot_grid_points = [1, 3, 5, 7, 9, 
+                              11, 13, 
+                              16, 18, 20, 22, 24]
+    points_img = bpf.create_grid_points_with_text(first_spot_grid_points,
+                                                  spot_proportional_size=2,
+                                                  image_size=(300, 200),
+                                                  grid_size=(24, 24), 
+                                                  spot_color=(0,255,255),
+                                                  padding=30, 
+                                                  background_color=(255,255,255),
+                                                  text_color=(0, 0, 0), 
+                                                  font_size=150,
+                                                  show_text=True, 
+                                                  num_columns=12,
+                                                  txt_spacing=100,
+                                                  min_padding_above_text=300)
+
+    axs_points_img.imshow(points_img)
+    axs_points_img.axis('off')
+    axs_points_img.set_title("Distribution of points in the ROI\n(point number)")
+    pat_pos = axs_points_img.get_position()
+    new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width*zoom,
+                   pat_pos.height*zoom]
+    axs_points_img.set_position(new_pat_pos)
+
 def int_to_roman(num):
     # Helper function to convert integer to Roman numeral
     val = [
@@ -94,8 +120,8 @@ def int_to_roman(num):
     syb = [
         "M", "CM", "D", "CD",
         "C", "XC", "L", "XL",
-        "X", "IX", "V", "IV",
-        "I"
+        "X", "iX", "V", "iV",
+        "i"
         ]
     roman_num = ''
     i = 0
@@ -268,30 +294,28 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
                    y_lim,x_label,cell_type,line_color,strp_color
                   )
     
-def plot_response_summary_bar(sc_data_dict,fig,axs):
+def plot_response_summary_bar(sc_data_dict, fig, axs):
     order = ["pre", "post_3"]
-    learners = sc_data_dict["ap_cells"]["cell_ID"].unique
+    
+    # Normalize values for learners
     learners_df = sc_data_dict["ap_cells"]
-    learners_df= norm_values(learners_df,"min_trace")
+    learners_df = norm_values(learners_df, "max_trace")
     learners_df = learners_df[learners_df["pre_post_status"].isin(["post_3"])]
-    pat_df_learners = learners_df[learners_df["frame_id"].isin(["pattern_0",
-                                                                "pattern_1",
-                                                                "pattern_2"])]
+    pat_df_learners = learners_df[learners_df["frame_id"].isin(["pattern_0", "pattern_1", "pattern_2"])]
 
-    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique
+    # Normalize values for non-learners
     non_learners_df = sc_data_dict["an_cells"]
-    non_learners_df= norm_values(non_learners_df,"min_trace")
+    non_learners_df = norm_values(non_learners_df, "max_trace")
     non_learners_df = non_learners_df[non_learners_df["pre_post_status"].isin(["post_3"])]
-    pat_df_non_learners = non_learners_df[non_learners_df["frame_id"].isin(["pattern_0", "pattern_1",
-                                                      "pattern_2"])]
+    pat_df_non_learners = non_learners_df[non_learners_df["frame_id"].isin(["pattern_0", "pattern_1", "pattern_2"])]
 
     # Add a column to distinguish between learners and non-learners
     pat_df_learners['group'] = 'learners'
     pat_df_non_learners['group'] = 'non_learners'
 
     # Create the combined column for x-axis
-    pat_df_learners['combined'] = 'learners_' + pat_df_learners['frame_id'] +"_" + pat_df_learners['pre_post_status']
-    pat_df_non_learners['combined'] = 'non_learners_' + pat_df_non_learners['frame_id'] + "_" +pat_df_non_learners['pre_post_status']
+    pat_df_learners['combined'] = 'learners_' + pat_df_learners['frame_id'] + "_" + pat_df_learners['pre_post_status']
+    pat_df_non_learners['combined'] = 'non_learners_' + pat_df_non_learners['frame_id'] + "_" + pat_df_non_learners['pre_post_status']
 
     # Define the order of the combined x-axis categories
     combined_order = ['learners_pattern_0_post_3', 
@@ -301,53 +325,62 @@ def plot_response_summary_bar(sc_data_dict,fig,axs):
                       'non_learners_pattern_1_post_3',
                       'non_learners_pattern_2_post_3']
 
-#    x_labels = [None, 'trained\npattern', None,'overlapping\npattern',None,
-#               'non-overlapping\npattern',
-#                None, 'trained\npattern', None,'overlapping\npattern',None,
-#                'non-overlapping\npattern'
-#               ]
-    x_labels = ['trained', 'overlapping',
-               'non\noverlapping',
-                'trained', 'overlapping',
-                'non\noverlapping',
-               ]
+    x_labels = ['trained', 'overlapping', 'non\noverlapping',
+                'trained', 'overlapping', 'non\noverlapping']
 
-
-    #x_labels = ['trained\npattern', None,'overlapping\npattern',None,
-    #           'non-overlapping\npattern',
-    #            None, 'trained\npattern', None,'overlapping\npattern',None,
-    #            'non-overlapping\npattern', None
-    #           ]
     # Concatenate the two DataFrames
     combined_df = pd.concat([pat_df_learners, pat_df_non_learners])
 
     # Define the color palette
-    palette = {"learners": bpf.CB_color_cycle[0], 
-               "non_learners":bpf.CB_color_cycle[1]}
-
-    # Plotting with seaborn
-
-    # Plot 'pre' bars
-    #sns.barplot(data=combined_df[combined_df["pre_post_status"] == "pre"],
-    #            x="combined", y="max_trace", hue="group", order=combined_order,
-    #            palette=palette, alpha=0.5,ax=axs,errorbar=None)
+    palette = {"learners": bpf.CB_color_cycle[0], "non_learners": bpf.CB_color_cycle[1]}
 
     # Plot 'post_3' bars
-    sns.barplot(data=combined_df[combined_df["pre_post_status"] == "post_3"],
-                x="combined", y="min_trace", hue="group", order=combined_order,
-                palette=palette,alpha=1,ax=axs,ci=None)
-    #for label in axs.get_xticklabels():
-    #    label.set_position((label.get_position()[0] + 0.5, label.get_position()[1]))  # Adjust the offset value as needed
+    bars = sns.barplot(data=combined_df[combined_df["pre_post_status"] == "post_3"],
+                       x="combined", y="max_trace", hue="group", order=combined_order,
+                       palette=palette, alpha=1, ax=axs, ci=None)
 
-    axs.set_xticklabels(x_labels)
-    axs.set_xticklabels(axs.get_xticklabels(),rotation=90, ha="right")
+    # Move non-learners (orange) bars slightly to the left and preserve the error bars position
+    bar_positions = []
+    for i, patch in enumerate(bars.patches):
+        bar_x = patch.get_x() + patch.get_width() / 2
+        bar_positions.append(bar_x)  # Save original position for error bars
+
+        # Shift non-learners bars (orange ones) by checking the patch color
+        if i >= len(combined_order) // 2:  # Assumes non-learners bars are the second half
+            patch.set_x(patch.get_x() - 0.15)  # Move the bar slightly to the left
+
+    # Align error bars by using the saved original positions for learners
+    grouped = combined_df.groupby(['combined', 'group'])['max_trace'].agg(['mean', 'sem']).reset_index()
+
+    # Independent control for shifting non-learners' error bars
+    non_learners_error_shift = -0.25  # Adjust this value to shift non-learners' error bars independently
+
+    for i, row in enumerate(grouped.itertuples()):
+        if "non_learners" in row.combined:
+            # Shift the non-learners' error bar by applying a shift to the original position
+            axs.errorbar(bar_positions[i] - non_learners_error_shift, row.mean, yerr=row.sem, fmt='none', c='black', capsize=5)
+        else:
+            # Keep learners' error bars at their original positions
+            axs.errorbar(bar_positions[i], row.mean, yerr=row.sem, fmt='none', c='black', capsize=5)
+
+    # Customize x-axis labels and shift learners' labels to the left
+    axs.set_xticklabels(x_labels, rotation=90, ha="center")
+    
+    # Shift only learners' x-tick labels to the left
+    tick_labels = axs.get_xticklabels()
+    learners_shift = -1  # Adjust this value to move learners' labels to the left
+    for i, label in enumerate(tick_labels):
+        if i < len(combined_order) // 2:  # Learners labels are in the first half
+            label.set_position((label.get_position()[0] + learners_shift, label.get_position()[1]))
+
     axs.spines[['right', 'top']].set_visible(False)
-    #axs.tick_params(axis='x', pad=5)
-    axs.axhline(100,linestyle=":",color="k",alpha=0.6)
-    axs.legend_.remove()
-    axs.set_ylabel("% change in\nEPSP AHP")
+    axs.axhline(100, linestyle=":", color="k", alpha=0.6)  # Dashed baseline
+
+    # Customize labels
+    axs.set_ylabel("% change in\nEPSP amplitude")
     axs.set_xlabel(None)
-    #axs.set_ylim(-2,10,)
+    axs.xaxis.set_ticks_position('none')
+    axs.legend_.remove()
 
 def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
                                axs_lr,axs_nl):
@@ -521,13 +554,17 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
             x= pat_data[pat_data["pre_post_status"]=="pre"]["min_trace"]
             y=norm_df[(norm_df["group"]==lrn)&(norm_df["frame_id"]==pat)&(norm_df["pre_post_status"]=="post_3")]["min_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
-    axs.axline([-5, -50], [5, 500],alpha=0.5,color='k', linestyle=":")
+    #axs.axline([-5, -50], [5, 500],alpha=0.5,color='k', linestyle=":")
+    ylim = (-50,500)
+    xlim = (-2,0.5)
     axs.set_ylim(-50,500)
-    axs.set_xlim(-5,5)
+    axs.set_xlim(-2,0.5)
     axs.set_aspect(0.02)
     axs.spines[['right', 'top']].set_visible(False)
     axs.set_ylabel("% EPSP AHP post")
     axs.set_xlabel("EPSP AHP pre (mV)")
+    axs.set_aspect(abs((xlim[1]-xlim[0]) / (ylim[1]-ylim[0])))
+    #axs.set_aspect('equal')
     #axs.legend(loc='upper center', bbox_to_anchor=(1.2, 1),frameon=False, 
     #              ncol=1)
 
@@ -558,13 +595,14 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
                      1, 1, 1, 1, 1,
-                     1]  # Adjust these values as needed
+                     1, 1, 1, 1, 1
+                     ]  # Adjust these values as needed
     width_ratios = [1, 1, 1, 1, 1, 
                     1, 1, 1, 1, 1, 
                     1, 1]# Adjust these values as needed
 
-    fig = plt.figure(figsize=(14,10))
-    gs = GridSpec(16, 12,width_ratios=width_ratios,
+    fig = plt.figure(figsize=(14,16))
+    gs = GridSpec(20, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.4, hspace=0.5)
@@ -578,9 +616,9 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0.01,1)
 
     #plot distribution epsp for learners and non-leaners
-    axs_ex_pat1 = fig.add_subplot(gs[2:5,0:3])
-    axs_ex_pat2 = fig.add_subplot(gs[2:5,3:6])
-    axs_ex_pat3 = fig.add_subplot(gs[2:5,6:9])
+    axs_ex_pat1 = fig.add_subplot(gs[2:7,0:3])
+    axs_ex_pat2 = fig.add_subplot(gs[2:7,3:6])
+    axs_ex_pat3 = fig.add_subplot(gs[2:7,6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
                                                 "min_trace",fig,axs_ex_pat1,
                                                 axs_ex_pat2,axs_ex_pat3,
@@ -590,9 +628,9 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     label_axis(axs_ex_list,"A")
 
 
-    axs_in_pat1 = fig.add_subplot(gs[5:9,0:3])
-    axs_in_pat2 = fig.add_subplot(gs[5:9,3:6])
-    axs_in_pat3 = fig.add_subplot(gs[5:9,6:9])
+    axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[7:12,3:6])
+    axs_in_pat3 = fig.add_subplot(gs[7:12,6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
                                                 "min_trace",fig,axs_in_pat1,
                                                 axs_in_pat2,axs_in_pat3,
@@ -601,32 +639,29 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
     label_axis(axs_in_list,"B")
 
-    axs_bar = fig.add_subplot(gs[9:11,0:3])
+    axs_bar = fig.add_subplot(gs[12:14,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.05,1)
     axs_bar.text(0.05,1,'C',transform=axs_bar.transAxes,    
                  fontsize=16, fontweight='bold', ha='center',
                  va='center')
 
-    axs_comp_peaks = fig.add_subplot(gs[9:11,4:6])
-    plot_peak_comp_pre_post(sc_data_dict,fig,axs_comp_peaks)
-    move_axis([axs_comp_peaks],-0.025,-0.1,1.75)
-    axs_comp_peaks.text(0.1,1,'D',transform=axs_comp_peaks.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center',
-                 va='center')
-    axs_comp_per = fig.add_subplot(gs[9:11,6:9])
+    axs_comp_per = fig.add_subplot(gs[16:18,0:3])
     plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
-    move_axis([axs_comp_per],0.025,-0.1,1.75)
-    axs_comp_per.text(0.1,1,'E',transform=axs_comp_per.transAxes,    
+    move_axis([axs_comp_per],-0.0545,-0.075,1.75)
+    axs_comp_per.text(-0.05,1.05,'D',transform=axs_comp_per.transAxes,    
                         fontsize=16, fontweight='bold', ha='center',
                         va='center')
-    axs_points_lr = fig.add_subplot(gs[11:15,0:4])
-    axs_points_nl = fig.add_subplot(gs[11:15,5:9])
+    axs_points_img = fig.add_subplot(gs[12:13,4:9])
+    plot_points(axs_points_img,-0.075,-0.08,zoom=2)
+
+    axs_points_lr = fig.add_subplot(gs[13:16,4:9])
+    axs_points_nl = fig.add_subplot(gs[16:19,4:9])
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
                                axs_points_lr,axs_points_nl)
-    axs_points_list = [axs_points_lr,axs_points_nl]
-    move_axis(axs_points_list,0,-0.15,1)
-    label_axis(axs_points_list,"F")
+    move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
+    label_axis([axs_points_lr,axs_points_nl],"E")
+
     #label_axis([axs_points_lr,axs_points_nl],"F")
     #handles, labels = plt.gca().get_legend_handles_labels()
     #by_label = dict(zip(labels, handles))
@@ -638,8 +673,8 @@ def plot_figure_5(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_5.png"
-    outpath = f"{outdir}/figure_5.svg"
-    outpath = f"{outdir}/figure_5.pdf"
+    #outpath = f"{outdir}/figure_5.svg"
+    #outpath = f"{outdir}/figure_5.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
