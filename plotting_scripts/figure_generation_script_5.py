@@ -132,6 +132,15 @@ def int_to_roman(num):
         i += 1
     return roman_num
 
+def plot_image(image,axs_img,xoffset,yoffset,pltscale):
+    axs_img.imshow(image, cmap='gray')
+    pos = axs_img.get_position()  # Get the original position
+    new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+               pos.height*pltscale]
+    # Shrink the plot
+    axs_img.set_position(new_pos)
+    axs_img.axis('off')
+
 def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
         roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
@@ -572,6 +581,7 @@ def plot_peak_perc_comp(sc_data_dict,fig,axs):
 
 
 def plot_figure_5(extracted_feature_pickle_file_path,
+                  PSH_illustration_path,
                   all_trial_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
@@ -591,76 +601,97 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     sc_data_df = pd.concat([sc_data_dict["ap_cells"],
                             sc_data_dict["an_cells"]]).reset_index(drop=True)
     print(f"sc data : {sc_data_df['cell_ID'].unique()}")
+    
+    psh_illust= pillow.Image.open(PSH_illustration_path)
+    # Check if the image has an alpha channel (transparency)
+    if psh_illust.mode == 'RGBA':
+        # Create a white background using the correct Image class method
+        white_bg = pillow.Image.new("RGB", psh_illust.size, (255, 255, 255))
+        # Paste the image on top of the white background, handling transparency
+        white_bg.paste(psh_illust, mask=psh_illust.split()[3])  # 3 is the alpha channel
+        psh_illust = white_bg
+
+    # If the image is not RGB, convert it to RGB
+    if psh_illust.mode != "RGB":
+        psh_illust = psh_illust.convert("RGB")
+
+    
     # Define the width and height ratios
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
                      1, 1, 1, 1, 1,
-                     1, 1, 1, 1, 1
+                     1, 1, 1, 1, 1,
+                     1, 1
                      ]  # Adjust these values as needed
     width_ratios = [1, 1, 1, 1, 1, 
                     1, 1, 1, 1, 1, 
                     1, 1]# Adjust these values as needed
 
     fig = plt.figure(figsize=(14,16))
-    gs = GridSpec(20, 12,width_ratios=width_ratios,
+    gs = GridSpec(22, 12,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.4, hspace=0.5)
 
 
-
+    #plot illustration of PSH
+    axs_illu = fig.add_subplot(gs[0:2,1:3])
+    plot_image(psh_illust,axs_illu,0,0,1.5)
+    axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    
     #plot patterns
-    axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
-    axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
-    axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0.01,1)
+    axs_pat_1 = fig.add_subplot(gs[2:3,1:2])
+    axs_pat_2 = fig.add_subplot(gs[2:3,4:5])
+    axs_pat_3 = fig.add_subplot(gs[2:3,7:8])
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.01,1)
 
     #plot distribution epsp for learners and non-leaners
-    axs_ex_pat1 = fig.add_subplot(gs[2:7,0:3])
-    axs_ex_pat2 = fig.add_subplot(gs[2:7,3:6])
-    axs_ex_pat3 = fig.add_subplot(gs[2:7,6:9])
+    axs_ex_pat1 = fig.add_subplot(gs[4:9,0:3])
+    axs_ex_pat2 = fig.add_subplot(gs[4:9,3:6])
+    axs_ex_pat3 = fig.add_subplot(gs[4:9,6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
                                                 "min_trace",fig,axs_ex_pat1,
                                                 axs_ex_pat2,axs_ex_pat3,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"A")
+    label_axis(axs_ex_list,"B")
 
 
-    axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
-    axs_in_pat2 = fig.add_subplot(gs[7:12,3:6])
-    axs_in_pat3 = fig.add_subplot(gs[7:12,6:9])
+    axs_in_pat1 = fig.add_subplot(gs[9:14,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[9:14,3:6])
+    axs_in_pat3 = fig.add_subplot(gs[9:14,6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
                                                 "min_trace",fig,axs_in_pat1,
                                                 axs_in_pat2,axs_in_pat3,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"B")
+    label_axis(axs_in_list,"C")
 
-    axs_bar = fig.add_subplot(gs[12:14,0:3])
+    axs_bar = fig.add_subplot(gs[14:16,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.05,1)
-    axs_bar.text(0.05,1,'C',transform=axs_bar.transAxes,    
+    axs_bar.text(0.05,1,'D',transform=axs_bar.transAxes,    
                  fontsize=16, fontweight='bold', ha='center',
                  va='center')
 
-    axs_comp_per = fig.add_subplot(gs[16:18,0:3])
+    axs_comp_per = fig.add_subplot(gs[18:20,0:3])
     plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
     move_axis([axs_comp_per],-0.0545,-0.075,1.75)
-    axs_comp_per.text(-0.05,1.05,'D',transform=axs_comp_per.transAxes,    
+    axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
                         fontsize=16, fontweight='bold', ha='center',
                         va='center')
-    axs_points_img = fig.add_subplot(gs[12:13,4:9])
+    axs_points_img = fig.add_subplot(gs[14:15,4:9])
     plot_points(axs_points_img,-0.075,-0.08,zoom=2)
 
-    axs_points_lr = fig.add_subplot(gs[13:16,4:9])
-    axs_points_nl = fig.add_subplot(gs[16:19,4:9])
+    axs_points_lr = fig.add_subplot(gs[15:18,4:9])
+    axs_points_nl = fig.add_subplot(gs[18:21,4:9])
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
                                axs_points_lr,axs_points_nl)
     move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
-    label_axis([axs_points_lr,axs_points_nl],"E")
+    label_axis([axs_points_lr,axs_points_nl],"F")
 
     #label_axis([axs_points_lr,axs_points_nl],"F")
     #handles, labels = plt.gca().get_legend_handles_labels()
@@ -720,15 +751,16 @@ def main():
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
     scpath = Path(args.sortedcell_path)
-    illustration_path = Path(args.illustration_path)
+    PSH_illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_5'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_5(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)
-    print(f"illustration path: {illustration_path}")
+    plot_figure_5(pklpath,PSH_illustration_path,
+                  all_trial_df_path,scpath,cell_stat_path,globoutdir)
+    #print(f"illustration path: {illustration_path}")
 
 
 

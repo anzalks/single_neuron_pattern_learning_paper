@@ -86,8 +86,8 @@ def int_to_roman(num):
     syb = [
         "M", "CM", "D", "CD",
         "C", "XC", "L", "XL",
-        "X", "IX", "V", "IV",
-        "I"
+        "X", "iX", "V", "iV",
+        "i"
         ]
     roman_num = ''
     i = 0
@@ -273,7 +273,8 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot,
     #axs.xaxis.set_tick_params(labelsize=14,width=1.5,length=5)
     #axs.yaxis.set_tick_params(labelsize=14,width=1.5,length=5)
     axs.set_xticklabels(["pre","30"])
-
+    axs.set_xlim(-0.25,1.5)
+    axs.set_ylim(-0.25,3)
     if pattern_num=="pattern_0":
         axs.set_ylabel("Field response\n(mV)", fontsize=14)
     else:
@@ -289,49 +290,185 @@ def plot_field_response_pairs(df_cells,feature,timepoint,cell_grp_type,nomr_stat
     plot_raw_points(df_cells,"pattern_1",feature,timepoint, cell_grp_type, fig, axs2)
     plot_raw_points(df_cells,"pattern_2",feature,timepoint, cell_grp_type, fig, axs3)
 
-def plot_minf_compare_all_pat(df_cells,sc_data_dict,fig,axs):
-    learners=sc_data_dict["ap_cells"]["cell_ID"].unique()
-    non_learners=sc_data_dict["an_cells"]["cell_ID"].unique()
-    cell_grp= df_cells.groupby(by="cell_ID")
-    order=np.array(["post_3"])
-    cells_ =[]
+#def plot_minf_compare_all_pat(df_cells,sc_data_dict,fig,axs):
+#    learners=sc_data_dict["ap_cells"]["cell_ID"].unique()
+#    non_learners=sc_data_dict["an_cells"]["cell_ID"].unique()
+#    cell_grp= df_cells.groupby(by="cell_ID")
+#    order=np.array(["post_3"])
+#    cells_ =[]
+#    for c, cell in cell_grp:
+#        cell["min_f_norm"] = cell["min_field"]
+#        pat_grp = cell.groupby(by="frame_id")
+#        for pa, pat in pat_grp:
+#            if "pattern" in pa:
+#                #print(pa)
+#                pat_num = int(pa.split("_")[-1])
+#                pps = pat["pre_post_status"].unique()
+#                pre_minf_resp = float(pat[pat["pre_post_status"]=="pre"]["min_field"])
+#                #print(f"pre_minf_resp={np.abs(pre_minf_resp)}")
+#                for p in pps:
+#                    cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]= np.abs(pat[pat["pre_post_status"]==f"{p}"]["min_field"])/np.abs(pre_minf_resp)*100
+#                    field_raw = cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]
+#                    #print(f'pps= {p}:::: field: {field_raw}')
+#                    pl_dat = cell[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}")]
+#                    replaced_ =  cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]
+#            else:
+#                continue
+#            cell=cell[cell["frame_status"]!="point"]
+#            cells_.append(cell)            
+#    all_cell_df= pd.concat(cells_)
+#    cell_grp= all_cell_df.groupby(by="cell_ID") 
+#    learners_all_pat =  all_cell_df[(all_cell_df["cell_ID"].isin(learners))&(all_cell_df["pre_post_status"]=="post_3")]
+#    print(learners_all_pat)
+#    non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners))&(all_cell_df["pre_post_status"]=="post_3")]
+#    sns.pointplot(data=learners_all_pat,x="frame_id",y="min_field",
+#                  color=bpf.CB_color_cycle[0], ax=axs,errorbar='sd',
+#                  capsize=0.15)
+#    sns.pointplot(data=non_learners_all_pat,x="frame_id",y="min_field",
+#                  color=bpf.CB_color_cycle[1], ax=axs,errorbar='sd',
+#                  capsize=0.15)
+#    axs.spines[['right', 'top']].set_visible(False)
+#    axs.set_xticklabels(["trained\npattern","overlapping\npattern",
+#                        "non-overlapping\npattern"
+#                        ],rotation=30)
+#    axs.set_ylabel("% change in field")
+#    axs.set_xlabel("patterns")
+
+
+
+def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
+    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
+    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
+    cell_grp = df_cells.groupby(by="cell_ID")
+    order = np.array(["post_3"])
+    cells_ = []
+
+    # Process the data and normalize 'min_field' values
     for c, cell in cell_grp:
         cell["min_f_norm"] = cell["min_field"]
         pat_grp = cell.groupby(by="frame_id")
         for pa, pat in pat_grp:
             if "pattern" in pa:
-                #print(pa)
                 pat_num = int(pa.split("_")[-1])
                 pps = pat["pre_post_status"].unique()
-                pre_minf_resp = float(pat[pat["pre_post_status"]=="pre"]["min_field"])
-                #print(f"pre_minf_resp={np.abs(pre_minf_resp)}")
+                pre_minf_resp = float(pat[pat["pre_post_status"] == "pre"]["min_field"])
                 for p in pps:
-                    cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]= np.abs(pat[pat["pre_post_status"]==f"{p}"]["min_field"])/np.abs(pre_minf_resp)*100
-                    field_raw = cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]
-                    #print(f'pps= {p}:::: field: {field_raw}')
-                    pl_dat = cell[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}")]
-                    replaced_ =  cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]
+                    cell.loc[(cell["frame_id"] == f"{pa}") & (cell["pre_post_status"] == f"{p}"), "min_field"] = (
+                        np.abs(pat[pat["pre_post_status"] == f"{p}"]["min_field"]) / np.abs(pre_minf_resp) * 100
+                    )
             else:
                 continue
-            cell=cell[cell["frame_status"]!="point"]
-            cells_.append(cell)            
-    all_cell_df= pd.concat(cells_)
-    cell_grp= all_cell_df.groupby(by="cell_ID") 
-    learners_all_pat =  all_cell_df[(all_cell_df["cell_ID"].isin(learners))&(all_cell_df["pre_post_status"]=="post_3")]
-    print(learners_all_pat)
-    non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners))&(all_cell_df["pre_post_status"]=="post_3")]
-    sns.pointplot(data=learners_all_pat,x="frame_id",y="min_field",
-                  color=bpf.CB_color_cycle[0], ax=axs,errorbar='sd',
-                  capsize=0.15)
-    sns.pointplot(data=non_learners_all_pat,x="frame_id",y="min_field",
-                  color=bpf.CB_color_cycle[1], ax=axs,errorbar='sd',
-                  capsize=0.15)
+            cell = cell[cell["frame_status"] != "point"]
+            cells_.append(cell)
+
+    # Combine all processed cells
+    all_cell_df = pd.concat(cells_)
+    cell_grp = all_cell_df.groupby(by="cell_ID")
+    
+    # Separate learners and non-learners for 'post_3'
+    learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(learners)) & (all_cell_df["pre_post_status"] == "post_3")]
+    non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners)) & (all_cell_df["pre_post_status"] == "post_3")]
+
+    # Plot learners and non-learners
+    sns.pointplot(data=learners_all_pat, x="frame_id", y="min_field",
+                  color=bpf.CB_color_cycle[0], ax=axs, errorbar='sd', capsize=0.15)
+    sns.pointplot(data=non_learners_all_pat, x="frame_id", y="min_field",
+                  color=bpf.CB_color_cycle[1], ax=axs, errorbar='sd', capsize=0.15)
+
+    # Set x and y labels and customize the plot
     axs.spines[['right', 'top']].set_visible(False)
-    axs.set_xticklabels(["trained\npattern","overlapping\npattern",
-                        "non-overlapping\npattern"
-                        ],rotation=30)
+    axs.set_xticklabels(["trained\npattern", "overlapping\npattern", "non-overlapping\npattern"], rotation=30)
     axs.set_ylabel("% change in field")
     axs.set_xlabel("patterns")
+
+    # Check the actual values in the "frame_id" column
+    print(all_cell_df["frame_id"].unique())  # This will show the actual values
+
+    # Perform Mann-Whitney U test for each pattern
+    patterns = all_cell_df["frame_id"].unique()  # Use actual unique pattern names from data
+    p_values = []
+    for pattern in patterns:
+        learners_data = learners_all_pat[learners_all_pat["frame_id"] == pattern]["min_field"]
+        non_learners_data = non_learners_all_pat[non_learners_all_pat["frame_id"] == pattern]["min_field"]
+        stat_test = spst.mannwhitneyu(learners_data, non_learners_data, alternative='two-sided')
+        p_values.append(stat_test.pvalue)
+
+    # Create a custom Annotator for the significance levels
+    annotator = Annotator(axs, [(patterns[0], patterns[0]),
+                                (patterns[1], patterns[1]),
+                                (patterns[2], patterns[2])],
+                          data=all_cell_df, x="frame_id", y="min_field")
+    
+    # Set custom annotations using p-value converted to asterisks and annotate
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(p) for p in p_values])
+    annotator.annotate()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -444,8 +581,8 @@ def plot_figure_6(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_6.png"
-    outpath = f"{outdir}/figure_6.svg"
-    outpath = f"{outdir}/figure_6.pdf"
+    #outpath = f"{outdir}/figure_6.svg"
+    #outpath = f"{outdir}/figure_6.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)

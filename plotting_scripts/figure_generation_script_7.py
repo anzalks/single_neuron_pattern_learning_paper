@@ -86,8 +86,8 @@ def int_to_roman(num):
     syb = [
         "M", "CM", "D", "CD",
         "C", "XC", "L", "XL",
-        "X", "IX", "V", "IV",
-        "I"
+        "X", "iX", "V", "iV",
+        "i"
         ]
     roman_num = ''
     i = 0
@@ -97,6 +97,15 @@ def int_to_roman(num):
             num -= val[i]
         i += 1
     return roman_num
+
+def plot_image(image,axs_img,xoffset,yoffset,pltscale):
+    axs_img.imshow(image, cmap='gray')
+    pos = axs_img.get_position()  # Get the original position
+    new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+               pos.height*pltscale]
+    # Shrink the plot
+    axs_img.set_position(new_pos)
+    axs_img.axis('off')
 
 def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
@@ -145,9 +154,9 @@ def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,
     axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
     #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10)
     axs.set_aspect(0.6)
-    axs.text(0.5,0.9,f'γ post = {np.around(param[-1],1)}',transform=axs.transAxes,    
+    axs.text(0.5,0.9,f'γ_post = {np.around(param[-1],1)}',transform=axs.transAxes,    
              fontsize=12, ha='center', va='center')
-    axs.text(0.5,0.7,f'γ pre = {np.around(param_pre[-1],1)}',transform=axs.transAxes,
+    axs.text(0.5,0.7,f'γ_pre = {np.around(param_pre[-1],1)}',transform=axs.transAxes,
              fontsize=12, ha='center', va='center')
     
     return x, y
@@ -227,10 +236,10 @@ def plot_expected_vs_observed_all_trials(alltrial_Df,
                                          color=color, label=pp, alpha=0.8,
                                          linewidth=1,marker=".")
                     axs[pat_num].spines[['right', 'top']].set_visible(False)
-                    axs[pat_num].set_xlim(-1,12)
-                    axs[pat_num].set_ylim(-1,12)
-                    axs[pat_num].set_xticks(np.arange(-1,12,4))
-                    axs[pat_num].set_yticks(np.arange(-1,12,4))
+                    axs[pat_num].set_xlim(-0.5,12)
+                    axs[pat_num].set_ylim(-0.5,12)
+                    axs[pat_num].set_xticks(np.arange(-0.5,12,4))
+                    axs[pat_num].set_yticks(np.arange(-0.5,12,4))
                     
                     if pat_num==0:
                         axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
@@ -390,6 +399,7 @@ def plot_initial_final_wt(feature_extracted_data,sc_data_dict,fig,axs):
 
 
 def plot_figure_7(extracted_feature_pickle_file_path,
+                  sum_illustration_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
                   all_trials_path,
@@ -409,6 +419,20 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     sc_data_df = pd.concat([sc_data_dict["ap_cells"],
                             sc_data_dict["an_cells"]]).reset_index(drop=True)
     print(f"sc data : {sc_data_df['cell_ID'].unique()}")
+
+    sum_illust= pillow.Image.open(sum_illustration_path)
+    # Check if the image has an alpha channel (transparency)
+    if sum_illust.mode == 'RGBA':
+        # Create a white background using the correct Image class method
+        white_bg = pillow.Image.new("RGB", sum_illust.size, (255, 255, 255))
+        # Paste the image on top of the white background, handling transparency
+        white_bg.paste(sum_illust, mask=sum_illust.split()[3])  # 3 is the alpha channel
+        sum_illust = white_bg
+
+    # If the image is not RGB, convert it to RGB
+    if sum_illust.mode != "RGB":
+        sum_illust = sum_illust.convert("RGB")
+    
     # Define the width and height ratios
     height_ratios = [1, 1, 1, 1, 1, 
                      1, 1, 1, 1, 1,
@@ -427,30 +451,35 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
 
 
+    #plot sumamtion illustration
+    axs_illu = fig.add_subplot(gs[0:3,1:4])
+    plot_image(sum_illust,axs_illu,-0.03,0.02,2)
+    axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     #plot patterns
-    axs_pat_1 = fig.add_subplot(gs[0:1,0:1])
-    axs_pat_2 = fig.add_subplot(gs[0:1,2:3])
-    axs_pat_3 = fig.add_subplot(gs[0:1,4:5])
+    axs_pat_1 = fig.add_subplot(gs[3:4,0:1])
+    axs_pat_2 = fig.add_subplot(gs[3:4,2:3])
+    axs_pat_3 = fig.add_subplot(gs[3:4,4:5])
 
     plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0.05,0.03,1)
 
 
 
     #plot summation for learners and leaners
-    axs_ex_sm1 = fig.add_subplot(gs[1:3,0:2])
-    axs_ex_sm2 = fig.add_subplot(gs[1:3,2:4])
-    axs_ex_sm3 = fig.add_subplot(gs[1:3,4:6])
+    axs_ex_sm1 = fig.add_subplot(gs[4:6,0:2])
+    axs_ex_sm2 = fig.add_subplot(gs[4:6,2:4])
+    axs_ex_sm3 = fig.add_subplot(gs[4:6,4:6])
     plot_expected_vs_observed_all_trials(alltrial_Df,
                                          feature_extracted_data,
                                          sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
-    label_axis(axs_ex_sm_l_list, "A")
+    label_axis(axs_ex_sm_l_list, "B")
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
-    axs_ex_sm4 = fig.add_subplot(gs[3:5,0:2])
-    axs_ex_sm5 = fig.add_subplot(gs[3:5,2:4])
-    axs_ex_sm6 = fig.add_subplot(gs[3:5,4:6])
+    axs_ex_sm4 = fig.add_subplot(gs[6:8,0:2])
+    axs_ex_sm5 = fig.add_subplot(gs[6:8,2:4])
+    axs_ex_sm6 = fig.add_subplot(gs[6:8,4:6])
     plot_expected_vs_observed_all_trials(alltrial_Df,
                                          feature_extracted_data,
                                          sc_data_dict,"non-learners",
@@ -458,7 +487,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #axs_ex_sm5.set_title("non-learners")
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
-    label_axis(axs_ex_sm_nl_list,"B")
+    label_axis(axs_ex_sm_nl_list,"C")
 
 
 
@@ -472,8 +501,8 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_7.png"
-    outpath = f"{outdir}/figure_7.svg"
-    outpath = f"{outdir}/figure_7.pdf"
+    #outpath = f"{outdir}/figure_7.svg"
+    #outpath = f"{outdir}/figure_7.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
@@ -517,15 +546,16 @@ def main():
     args = parser.parse_args()
     pklpath = Path(args.pikl_path)
     scpath = Path(args.sortedcell_path)
-    illustration_path = Path(args.illustration_path)
+    sum_illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
     all_trials_path= Path(args.alltrials_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_7'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_7(pklpath,scpath,cell_stat_path,all_trials_path,globoutdir)
-    print(f"illustration path: {illustration_path}")
+    plot_figure_7(pklpath,sum_illustration_path,
+                  scpath,cell_stat_path,all_trials_path,globoutdir)
+    #print(f"illustration path: {illustration_path}")
 
 
 
