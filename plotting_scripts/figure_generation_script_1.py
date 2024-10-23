@@ -44,16 +44,85 @@ args_ = Args()
 
 
 
-def add_scale_bar_with_magnification(image_opened, scale_length_um, magnification, image_width_px, FoV_5x, bar_position=(50, 50), scale_bar_thickness=5, font_size=24):
+#def add_scale_bar_with_magnification(image_opened, scale_length_um, magnification, image_width_px, FoV_5x, bar_position=(50, 50), scale_bar_thickness=5, font_size=24):
+#    """
+#    Adds a white scale bar to a microscope image using Pillow and returns the image object.
+#    
+#    Parameters:
+#    - image_opened: PIL Image object (already opened image).
+#    - scale_length_um: float, length of the scale bar in micrometers.
+#    - magnification: float, magnification of the microscope (e.g., 40x, 100x).
+#    - image_width_px: int, width of the image in pixels.
+#    - FoV_5x: float, field of view at 5x magnification in micrometers.
+#    - bar_position: tuple (x, y), position of the scale bar's bottom-left corner.
+#    - scale_bar_thickness: int, thickness of the scale bar in pixels.
+#    - font_size: int, size of the font for the scale text.
+#    
+#    Returns:
+#    - Image object with the scale bar.
+#    """
+#    # Draw on the image
+#    draw = pillow.ImageDraw.Draw(image_opened)
+#    
+#    # Calculate the field of view (FoV) at the given magnification relative to 5x
+#    FoV_magnification = FoV_5x * (5 / magnification)  # FoV in micrometers at the given magnification
+#    
+#    # Calculate pixels per micrometer at this magnification
+#    pixels_per_um = image_width_px / FoV_magnification
+#    
+#    # Calculate scale bar length in pixels
+#    scale_bar_length_px = int(scale_length_um * pixels_per_um)
+#    
+#    # Set position of the scale bar
+#    bar_x = bar_position[0]  # X position in pixels
+#    bar_y = image_opened.height - bar_position[1]  # Y position in pixels (from the bottom)
+#    
+#    # Draw the scale bar (a white rectangle)
+#    draw.rectangle(
+#        [bar_x, bar_y - scale_bar_thickness, bar_x + scale_bar_length_px, bar_y],
+#        fill="white"
+#    )
+#    
+#    # Add scale text
+#    scale_text = f"{scale_length_um} μm"
+#    
+#    # Use a TrueType font if available
+#    try:
+#        # Specify the path to a TrueType font (use Arial as an example)
+#        font_path = "/Library/Fonts/Arial.ttf"
+#        font = pillow.ImageFont.truetype(font_path, font_size)
+#    except IOError:
+#        print("TrueType font not found. Using default bitmap font.")
+#        font = pillow.ImageFont.load_default()
+#
+#    # Get the bounding box for the text
+#    bbox = draw.textbbox((0, 0), scale_text, font=font)
+#    text_width = bbox[2] - bbox[0]
+#    text_height = bbox[3] - bbox[1]
+#    
+#    # Draw the text slightly above the scale bar
+#    draw.text(
+#        (bar_x, bar_y - scale_bar_thickness - text_height - 5),  # Position slightly above the scale bar
+#        scale_text,
+#        fill="white",
+#        font=font
+#    )
+#    
+#    return image_opened
+
+
+
+
+def add_scale_bar_with_magnification(image_opened, scale_length_um, magnification, image_width_px, 
+                                     bar_position=(50, 50), scale_bar_thickness=5, font_size=24):
     """
     Adds a white scale bar to a microscope image using Pillow and returns the image object.
     
     Parameters:
     - image_opened: PIL Image object (already opened image).
     - scale_length_um: float, length of the scale bar in micrometers.
-    - magnification: float, magnification of the microscope (e.g., 40x, 100x).
+    - magnification: float, magnification of the microscope (e.g., 5x, 40x).
     - image_width_px: int, width of the image in pixels.
-    - FoV_5x: float, field of view at 5x magnification in micrometers.
     - bar_position: tuple (x, y), position of the scale bar's bottom-left corner.
     - scale_bar_thickness: int, thickness of the scale bar in pixels.
     - font_size: int, size of the font for the scale text.
@@ -61,17 +130,17 @@ def add_scale_bar_with_magnification(image_opened, scale_length_um, magnificatio
     Returns:
     - Image object with the scale bar.
     """
+    # Base um_per_pixel at 40x magnification
+    um_per_pixel_40x = 0.1961  # micrometers per pixel at 40x
+
+    # Calculate um_per_pixel for the given magnification
+    um_per_pixel = (40 / magnification) * um_per_pixel_40x
+
+    # Calculate scale bar length in pixels
+    scale_bar_length_px = int(scale_length_um / um_per_pixel)
+    
     # Draw on the image
     draw = pillow.ImageDraw.Draw(image_opened)
-    
-    # Calculate the field of view (FoV) at the given magnification relative to 5x
-    FoV_magnification = FoV_5x * (5 / magnification)  # FoV in micrometers at the given magnification
-    
-    # Calculate pixels per micrometer at this magnification
-    pixels_per_um = image_width_px / FoV_magnification
-    
-    # Calculate scale bar length in pixels
-    scale_bar_length_px = int(scale_length_um * pixels_per_um)
     
     # Set position of the scale bar
     bar_x = bar_position[0]  # X position in pixels
@@ -94,21 +163,207 @@ def add_scale_bar_with_magnification(image_opened, scale_length_um, magnificatio
     except IOError:
         print("TrueType font not found. Using default bitmap font.")
         font = pillow.ImageFont.load_default()
-
-    # Get the bounding box for the text
-    bbox = draw.textbbox((0, 0), scale_text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
     
-    # Draw the text slightly above the scale bar
-    draw.text(
-        (bar_x, bar_y - scale_bar_thickness - text_height - 5),  # Position slightly above the scale bar
-        scale_text,
-        fill="white",
-        font=font
-    )
+    # Add text near the scale bar
+    text_x = bar_x
+    text_y = bar_y - scale_bar_thickness - font_size - 10  # Adding some spacing between bar and text
+    draw.text((text_x, text_y), scale_text, font=font, fill="white")
     
     return image_opened
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#def add_scale_bar_with_magnification(image_opened, magnification, image_width_px, bar_position=(50, 50), scale_bar_thickness=5, font_size=24):
+#    """
+#    Adds a white scale bar to a microscope image using Pillow and returns the image object.
+#
+#    Parameters:
+#    - image_opened: PIL Image object (already opened image).
+#    - magnification: float, magnification of the microscope (e.g., 4x, 40x).
+#    - image_width_px: int, width of the image in pixels.
+#    - bar_position: tuple (x, y), position of the scale bar's bottom-left corner.
+#    - scale_bar_thickness: int, thickness of the scale bar in pixels.
+#    - font_size: int, size of the font for the scale text.
+#
+#    Returns:
+#    - Image object with the scale bar.
+#    """
+#    # Previously calculated µm per pixel for 4x and 40x
+#    if magnification == 40:
+#        um_per_pixel = 0.1961  # µm per pixel at 40x
+#    elif magnification == 4:
+#        um_per_pixel = 1.961  # µm per pixel at 4x
+#    else:
+#        raise ValueError("Unsupported magnification. Please use 4x or 40x.")
+#
+#    # Draw on the image
+#    draw = ImageDraw.Draw(image_opened)
+#    
+#    # Set scale length (100 µm for example)
+#    scale_length_um = 100  # You can adjust the scale length based on the image
+#    
+#    # Calculate scale bar length in pixels
+#    scale_bar_length_px = int(scale_length_um / um_per_pixel)
+#    
+#    # Set position of the scale bar
+#    bar_x = bar_position[0]  # X position in pixels
+#    bar_y = image_opened.height - bar_position[1]  # Y position in pixels (from the bottom)
+#    
+#    # Draw the scale bar (a white rectangle)
+#    draw.rectangle(
+#        [bar_x, bar_y - scale_bar_thickness, bar_x + scale_bar_length_px, bar_y],
+#        fill="white"
+#    )
+#    
+#    # Add scale text
+#    scale_text = f"{scale_length_um} μm"
+#    
+#    # Use a TrueType font if available
+#    try:
+#        # Specify the path to a TrueType font (use Arial as an example)
+#        font_path = "/Library/Fonts/Arial.ttf"  # Adjust the path as per your environment
+#        font = ImageFont.truetype(font_path, font_size)
+#    except IOError:
+#        print("TrueType font not found. Using default bitmap font.")
+#        font = ImageFont.load_default()
+#
+#    # Get the bounding box for the text
+#    bbox = draw.textbbox((0, 0), scale_text, font=font)
+#    text_width = bbox[2] - bbox[0]
+#    text_height = bbox[3] - bbox[1]
+#    
+#    # Draw the text slightly above the scale bar
+#    draw.text(
+#        (bar_x, bar_y - scale_bar_thickness - text_height - 5),  # Position slightly above the scale bar
+#        scale_text,
+#        fill="white",
+#        font=font
+#    )
+#    
+#    return image_opened
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def add_labels_to_image(image, text_list, coordinates_list, font_size=20,
@@ -285,7 +540,10 @@ def plot_figure_1(pickle_file_path,image_file_path,
     if image.mode != "RGB":
         image = image.convert("RGB")
 
-    image= add_scale_bar_with_magnification(image, 500, 5, 1024, 2000, 
+    image= add_scale_bar_with_magnification(image_opened=image,
+                                            magnification=4,
+                                            scale_length_um=500, 
+                                            image_width_px=1024, 
                                             bar_position=(50, 50),
                                             scale_bar_thickness=20,
                                             font_size=55)
@@ -299,10 +557,13 @@ def plot_figure_1(pickle_file_path,image_file_path,
         image = proj_img.convert("RGB")
 
 
-    proj_img= add_scale_bar_with_magnification(proj_img, 50, 40, 1024, 2200, 
-                                            bar_position=(50, 50),
-                                            scale_bar_thickness=20,
-                                            font_size=55)
+    proj_img= add_scale_bar_with_magnification(image_opened=proj_img, 
+                                               magnification=40,
+                                               scale_length_um=50,
+                                               image_width_px=1024, 
+                                               bar_position=(50, 50),
+                                               scale_bar_thickness=20,
+                                               font_size=55)
 
     text_list = ["Field"]  # Example texts
     coordinates_list = [(620, 425)]  # Example coordinates (x, y)
