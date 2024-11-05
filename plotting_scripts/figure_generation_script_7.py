@@ -453,7 +453,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
     #plot sumamtion illustration
     axs_illu = fig.add_subplot(gs[0:3,1:4])
-    plot_image(sum_illust,axs_illu,-0.03,0.02,2)
+    plot_image(sum_illust,axs_illu,-0.07,0.02,2)
     axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
                  fontsize=16, fontweight='bold', ha='center', va='center')
     #plot patterns

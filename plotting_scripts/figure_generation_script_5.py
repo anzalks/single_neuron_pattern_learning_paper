@@ -64,15 +64,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,1.5)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,1.5)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,1.5)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -88,10 +88,10 @@ def plot_points(axs_points_img,xoffset,yoffset,zoom):
                               11, 13, 
                               16, 18, 20, 22, 24]
     points_img = bpf.create_grid_points_with_text(first_spot_grid_points,
-                                                  spot_proportional_size=2,
+                                                  spot_proportional_size=3,
                                                   image_size=(300, 200),
                                                   grid_size=(24, 24), 
-                                                  spot_color=(0,255,255),
+                                                  spot_color=(0,0,0),
                                                   padding=30, 
                                                   background_color=(255,255,255),
                                                   text_color=(0, 0, 0), 
