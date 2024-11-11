@@ -1194,7 +1194,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     plot_image(illustration,axs_img, 0,0,1)
     axs_img.text(0,1,'A',transform=axs_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
-    move_axis([axs_img],-0.075,0.025,1.3)
+    move_axis([axs_img],-0.08,0.0225,1.3)
 
     #plot EPSP classification for learner & non-learner
     learner_cell_df = learner_cell_df[~learner_cell_df["frame_status"].isin(deselect_list)]
@@ -1206,7 +1206,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_pat1 = fig.add_subplot(gs[0,2:3])
     axs_pat2 = fig.add_subplot(gs[1,2:3])
     axs_pat3 = fig.add_subplot(gs[2,2:3])
-    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0,0,2)
+    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.035,0,2)
     axs_pat1.text(0,1.35,'C',transform=axs_pat1.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
