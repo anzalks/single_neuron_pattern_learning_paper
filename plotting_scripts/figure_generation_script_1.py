@@ -407,7 +407,7 @@ def int_to_roman(num):
     syb = [
         "M", "CM", "D", "CD",
         "C", "XC", "L", "XL",
-        "X", "IX", "V", "IV",
+        "X", "iX", "V", "iV",
         "i"
         ]
     roman_num = ''
@@ -441,15 +441,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(0,1.5)
+            pat_fr = bpf.create_grid_image(0,1.45)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(4,1.5)
+            pat_fr = bpf.create_grid_image(4,1.45)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = bpf.create_grid_image(17,1.5)
+            pat_fr = bpf.create_grid_image(17,1.45)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -577,13 +577,14 @@ def plot_figure_1(pickle_file_path,image_file_path,
 
 
     # Define the width and height ratios
-    width_ratios = [4, 4, 2, 2, 2, 
-                    2, 2, 2, 2]  # Adjust these values as needed
-    height_ratios = [1, 1, 1,1, 1
+    width_ratios = [1, 1, 1, 1, 1, 
+                    1, 1, 1, 1]  # Adjust these values as needed
+    height_ratios = [1, 1, 1, 1, 1,
+                     1, 1
                     ]       # Adjust these values as needed
 
     fig = plt.figure(figsize=(14,6))
-    gs = GridSpec(5, 9,width_ratios=width_ratios, 
+    gs = GridSpec(7, 9,width_ratios=width_ratios, 
                   height_ratios=height_ratios,figure=fig)
     gs.update(wspace=0.3, hspace=0.3)
 
