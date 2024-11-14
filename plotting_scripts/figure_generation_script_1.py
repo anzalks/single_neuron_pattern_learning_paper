@@ -351,6 +351,14 @@ def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweigh
                  transform=axs.transAxes, fontsize=fontsize, 
                  fontweight=fontweight, ha='center', va='center')
 
+def move_axis(axs_list,xoffset,yoffset,pltscale):
+    for axs in axs_list:
+        pos = axs.get_position()  # Get the original position
+        new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+                   pos.height*pltscale]
+        # Shrink the plot
+        axs.set_position(new_pos)
+
 def plot_image(image,axs_img,xoffset,yoffset,pltscale):
     axs_img.imshow(image, cmap='gray')
     pos = axs_img.get_position()  # Get the original position
@@ -411,8 +419,11 @@ def plot_trace_raw_all_pats(cell_data,field_to_plot,ylim,xlim,
         axs[axs_no].set_xlabel("time (ms)")
         axs[axs_no].set_ylabel(ylabel)
 
-def inset_plot_traces(cell_data,field_to_plot,ylim,xlim,
-                      axs, pat_num,xoffset,yoffset,pltscale):
+def inset_plot_traces(cell_data,field_to_plot,
+                      axs, pat_num,
+                      ylim=(-0.7,0.3),xlim=15,
+                      xoffset=0.08,yoffset=0.015,
+                      pltscale=0.35):
     sampling_rate = int(cell_data["sampling_rate(Hz)"].unique())
     pattern_grps = cell_data.groupby(by="frame_id")
     for pat,pat_data in pattern_grps:
@@ -823,12 +834,12 @@ def plot_figure_1(pickle_file_path,
     gs.update(wspace=0.3, hspace=0.3)
 
     axs_img = fig.add_subplot(gs[0:2, 0:2])
-    plot_image(image,axs_img,-0.01,-0.175,1.01)
+    plot_image(image,axs_img,-0.02,-0.025,1.1)
     axs_img.text(0.05,1.1,'A',transform=axs_img.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')
    
     axs_proj = fig.add_subplot(gs[2:4,0:2])
-    plot_image(proj_img,axs_proj,0.02, -0.175,0.75)
+    plot_image(proj_img,axs_proj,-0.025,-0.025,0.9)
     axs_proj.text(0.05,1.1,'B',transform=axs_proj.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')
     
@@ -853,26 +864,26 @@ def plot_figure_1(pickle_file_path,
     axs_fl2.set_yticklabels([])
     axs_fl3.set_yticklabels([])
     axs_fl_list = [axs_fl1,axs_fl2,axs_fl3]
-    label_axis(axs_fl_list,"D")
+    label_axis(axs_fl_list,"D", xpos=-0.1, ypos=1.1)
+    move_axis(axs_fl_list,xoffset=0,yoffset=-0.025,pltscale=1)
 
     axs_inset = fig.add_subplot(gs[3:5,2:4])
     ylim = (-0.7,0.3)
     xlim = 15
-    inset_plot_traces(cell_data,"field_trace(mV)",ylim,xlim, 
-                      axs_inset,0,0.08,0.08,0.3)
+    inset_plot_traces(cell_data,"field_trace(mV)",
+                      axs_inset,0)
 
     axs_inset = fig.add_subplot(gs[3:5,4:6])
     ylim = (-0.7,0.3)
     xlim = 15
-    inset_plot_traces(cell_data,"field_trace(mV)",ylim,xlim, 
-                      axs_inset,1,0.08,0.08,0.3)
+    inset_plot_traces(cell_data,"field_trace(mV)",
+                      axs_inset,1)
+
     axs_inset = fig.add_subplot(gs[3:5,6:8])
     ylim = (-0.7,0.3)
     xlim = 15
-    inset_plot_traces(cell_data,"field_trace(mV)",ylim,xlim, 
-                      axs_inset,2,0.08,0.08,0.3)
-
-
+    inset_plot_traces(cell_data,"field_trace(mV)",
+                      axs_inset,2)
 
     axs_cl1=fig.add_subplot(gs[1:3,2:4])
     axs_cl2=fig.add_subplot(gs[1:3,4:6])
@@ -893,7 +904,7 @@ def plot_figure_1(pickle_file_path,
     axs_cl2.set_yticklabels([])
     axs_cl3.set_yticklabels([])
     axs_cl_list = [axs_cl1,axs_cl2,axs_cl3]
-    label_axis(axs_cl_list,"C")
+    label_axis(axs_cl_list,"C",xpos=-0.1, ypos=1.1)
 
 
     handles, labels = axs_cl2.get_legend_handles_labels()
@@ -904,11 +915,16 @@ def plot_figure_1(pickle_file_path,
                loc='upper center',frameon=False)#,loc='lower center'    
     
     axs_cell = fig.add_subplot(gs[6:9,0:2])
-    axs_field = fig.add_subplot(gs[6:9,2:4])
+    move_axis([axs_cell],xoffset=0.05,yoffset=0,pltscale=1)
+    axs_field = fig.add_subplot(gs[6:9,3:5])
+    move_axis([axs_field],xoffset=-0.025,yoffset=0,pltscale=1)
     plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)
+    label_axis([axs_cell,axs_field],"E",xpos=-0.1, ypos=1)
 
-    axs_stat_dist = fig.add_subplot(gs[6:9,5:7])   
+    axs_stat_dist = fig.add_subplot(gs[6:9,6:8])   
     plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_stat_dist)
+    axs_stat_dist.text(-0.1,1,'F',transform=axs_stat_dist.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_1.png"
