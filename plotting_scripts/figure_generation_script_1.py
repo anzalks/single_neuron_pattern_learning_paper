@@ -422,7 +422,7 @@ def plot_trace_raw_all_pats(cell_data,field_to_plot,ylim,xlim,
 def inset_plot_traces(cell_data,field_to_plot,
                       axs, pat_num,
                       ylim=(-0.7,0.3),xlim=15,
-                      xoffset=0.08,yoffset=0.015,
+                      xoffset=0.15,yoffset=0.015,
                       pltscale=0.35):
     sampling_rate = int(cell_data["sampling_rate(Hz)"].unique())
     pattern_grps = cell_data.groupby(by="frame_id")
@@ -526,10 +526,134 @@ def inset_plot_traces(cell_data,field_to_plot,
 #    # Improve layout
 #    fig.tight_layout()
 
-##noramlised to mean across trials, once grouped with cells and frame IDs
+
+def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field, axs_cell_t, axs_field_t):
+    """
+    Plot bar distributions of `max_trace`, `min_field`, `max_trace_t`, and `min_field_t`
+    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
+    
+    Parameters:
+    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+    - fig (plt.Figure): Figure object.
+    - axs_cell (plt.Axes): Axis for `max_trace` plot.
+    - axs_field (plt.Axes): Axis for `min_field` plot.
+    - axs_cell_t (plt.Axes): Axis for `max_trace_t` plot.
+    - axs_field_t (plt.Axes): Axis for `min_field_t` plot.
+    """
+    
+    # Check if required columns exist in the DataFrame
+    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
+                     'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
+    if not all(col in feature_extracted_df.columns for col in required_cols):
+        raise ValueError("Input DataFrame is missing required columns.")
+    
+    # Step 1: Filter data for 'pre' status
+    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+    
+    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
+    mean_combined_df = filtered_df[
+        filtered_df['trial_no'].isin([0, 1, 2])
+    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field', 'max_trace_t', 'min_field_t']].mean().reset_index()
+    
+    # Step 3: Merge the combined mean back to the original filtered data
+    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
+    
+    # Step 4: Normalize the columns using the combined mean
+    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
+    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+    merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
+    merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
+    
+    # Helper function to plot bar distributions without y-axis normalization
+    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
+        if len(data) > 1:
+            # Plot the histogram as a bar plot (without normalizing the counts)
+            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
+            ax.set_xlabel(f'Normalized\n{label}')
+            
+            if show_ylabel:
+                ax.set_ylabel('Count')
+            if remove_ytick_labels:
+                ax.set_yticklabels([])  # Remove only the y-axis tick labels
+            
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            return n.max(), bins  # Return the maximum count and bins for x-axis scaling
+        else:
+            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+            return 0, None
+
+    # Step 5: Plot bar distributions for each feature on their respective axes
+    max_count_cell, bins_cell = plot_bar_distribution(
+        axs_cell, 
+        merged_df['max_trace'], 
+        color='black', 
+        label='EPSP', 
+        title='EPSP', 
+        show_ylabel=True
+    )
+    
+    max_count_field, bins_field = plot_bar_distribution(
+        axs_field, 
+        merged_df['min_field'], 
+        color='black', 
+        label='LFP', 
+        title='LFP', 
+        show_ylabel=False, 
+        remove_ytick_labels=True
+    )
+    
+    max_count_cell_t, bins_cell_t = plot_bar_distribution(
+        axs_cell_t, 
+        merged_df['max_trace_t'], 
+        color='black', 
+        label='EPSP (t)', 
+        title='EPSP (t)', 
+        show_ylabel=True
+    )
+    
+    max_count_field_t, bins_field_t = plot_bar_distribution(
+        axs_field_t, 
+        merged_df['min_field_t'], 
+        color='black', 
+        label='LFP (t)', 
+        title='LFP (t)', 
+        show_ylabel=False, 
+        remove_ytick_labels=True
+    )
+    
+    # Step 6: Set the same x-axis limits for `max_trace` and `min_field`
+    if bins_cell is not None and bins_field is not None:
+        combined_xlim_cell = (
+            min(bins_cell.min(), bins_field.min()), 
+            max(bins_cell.max(), bins_field.max())
+        )
+        axs_cell.set_xlim(combined_xlim_cell)
+        axs_field.set_xlim(combined_xlim_cell)
+    
+    # Step 7: Set the same x-axis limits for `max_trace_t` and `min_field_t`
+    if bins_cell_t is not None and bins_field_t is not None:
+        combined_xlim_cell_t = (
+            min(bins_cell_t.min(), bins_field_t.min()), 
+            max(bins_cell_t.max(), bins_field_t.max())
+        )
+        axs_cell_t.set_xlim(combined_xlim_cell_t)
+        axs_field_t.set_xlim(combined_xlim_cell_t)
+    
+    # Step 8: Set the same y-axis limits for each pair of plots
+    max_count_1 = max(max_count_cell, max_count_field)
+    axs_cell.set_ylim(0, max_count_1 * 1.01)
+    axs_field.set_ylim(0, max_count_1 * 1.01)
+    
+    max_count_2 = max(max_count_cell_t, max_count_field_t)
+    axs_cell_t.set_ylim(0, max_count_2 * 1.01)
+    axs_field_t.set_ylim(0, max_count_2 * 1.01)
+
+
+##everything works but plots only EPSP and field amplitudes
 #def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
 #    """
-#    Plot normalized KDE distributions of `max_trace` and `min_field`
+#    Plot bar distributions of `max_trace` and `min_field`
 #    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
 #    
 #    Parameters:
@@ -559,142 +683,60 @@ def inset_plot_traces(cell_data,field_to_plot,
 #    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
 #    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
 #    
-#    # Helper function to compute and plot normalized KDE
-#    def plot_normalized_kde(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
+#    # Helper function to plot bar distributions without y-axis normalization
+#    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
 #        if len(data) > 1:
-#            kde = gaussian_kde(data)
-#            x_vals = np.linspace(min(data), max(data), 1000)
-#            kde_vals = kde(x_vals)
+#            # Plot the histogram as a bar plot (without normalizing the counts)
+#            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
+#            ax.set_xlabel(f'Normalized\n{label}')
 #            
-#            # Normalize KDE peak to 1
-#            max_val = np.max(kde_vals)
-#            if max_val != 0:
-#                kde_vals /= max_val
+#            if show_ylabel:
+#                ax.set_ylabel('Count')
+#            if remove_ytick_labels:
+#                ax.set_yticklabels([])  # Remove only the y-axis tick labels
 #            
-#            # Plot the normalized KDE
-#            ax.fill_between(x_vals, kde_vals, color=color, alpha=0.3)
-#            ax.plot(x_vals, kde_vals, color=color, linewidth=1)
+#            ax.spines['top'].set_visible(False)
+#            ax.spines['right'].set_visible(False)
+#            #ax.set_title(title)
+#            
+#            return n.max()  # Return the maximum count for y-axis scaling
 #        else:
 #            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
-#        
-#        ax.set_ylim(0, 1)
-#        ax.set_xlabel(f'Normalized\n{label}')
-#        if show_ylabel:
-#            ax.set_ylabel('Normalized KDE')
-#        if remove_ytick_labels:
-#            ax.set_yticklabels([])  # Remove only the y-axis tick labels
-#        ax.spines['top'].set_visible(False)
-#        ax.spines['right'].set_visible(False)
-#        ax.set_title(title)
-#    
-#    # Step 5: Plot KDE for `max_trace` on axs_cell with title "EPSP"
-#    plot_normalized_kde(
+#            return 0
+#
+#    # Step 5: Plot bar distribution for `max_trace` on axs_cell with title "EPSP"
+#    max_count_cell = plot_bar_distribution(
 #        axs_cell, 
 #        merged_df['max_trace'], 
-#        color='blue', 
+#        color='black', 
 #        label='EPSP', 
 #        title='EPSP', 
 #        show_ylabel=True
 #    )
 #    
-#    # Step 6: Plot KDE for `min_field` on axs_field with title "LFP" and no y-tick labels
-#    plot_normalized_kde(
+#    # Step 6: Plot bar distribution for `min_field` on axs_field with title "LFP" and no y-tick labels
+#    max_count_field = plot_bar_distribution(
 #        axs_field, 
 #        merged_df['min_field'], 
-#        color='orange', 
+#        color='black', 
 #        label='LFP', 
 #        title='LFP', 
 #        show_ylabel=False, 
 #        remove_ytick_labels=True
 #    )
-
-
-def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
-    """
-    Plot bar distributions of `max_trace` and `min_field`
-    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
-    
-    Parameters:
-    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
-    - fig (plt.Figure): Figure object.
-    - axs_cell (plt.Axes): Axis for `max_trace` plot.
-    - axs_field (plt.Axes): Axis for `min_field` plot.
-    """
-    
-    # Check if required columns exist in the DataFrame
-    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
-    if not all(col in feature_extracted_df.columns for col in required_cols):
-        raise ValueError("Input DataFrame is missing required columns.")
-    
-    # Step 1: Filter data for 'pre' status
-    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
-    
-    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
-    mean_combined_df = filtered_df[
-        filtered_df['trial_no'].isin([0, 1, 2])
-    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
-    
-    # Step 3: Merge the combined mean back to the original filtered data
-    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
-    
-    # Step 4: Normalize `max_trace` and `min_field` using the combined mean
-    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
-    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
-    
-    # Helper function to plot bar distributions without y-axis normalization
-    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
-        if len(data) > 1:
-            # Plot the histogram as a bar plot (without normalizing the counts)
-            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
-            ax.set_xlabel(f'Normalized\n{label}')
-            
-            if show_ylabel:
-                ax.set_ylabel('Count')
-            if remove_ytick_labels:
-                ax.set_yticklabels([])  # Remove only the y-axis tick labels
-            
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            #ax.set_title(title)
-            
-            return n.max()  # Return the maximum count for y-axis scaling
-        else:
-            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
-            return 0
-
-    # Step 5: Plot bar distribution for `max_trace` on axs_cell with title "EPSP"
-    max_count_cell = plot_bar_distribution(
-        axs_cell, 
-        merged_df['max_trace'], 
-        color='black', 
-        label='EPSP', 
-        title='EPSP', 
-        show_ylabel=True
-    )
-    
-    # Step 6: Plot bar distribution for `min_field` on axs_field with title "LFP" and no y-tick labels
-    max_count_field = plot_bar_distribution(
-        axs_field, 
-        merged_df['min_field'], 
-        color='black', 
-        label='LFP', 
-        title='LFP', 
-        show_ylabel=False, 
-        remove_ytick_labels=True
-    )
-    
-    # Step 7: Set the same x-axis limits for both plots
-    combined_xlim = (
-        min(axs_cell.get_xlim()[0], axs_field.get_xlim()[0]), 
-        max(axs_cell.get_xlim()[1], axs_field.get_xlim()[1])
-    )
-    axs_cell.set_xlim(combined_xlim)
-    axs_field.set_xlim(combined_xlim)
-    
-    # Step 8: Set the same y-axis limits for both plots
-    max_count = max(max_count_cell, max_count_field)
-    axs_cell.set_ylim(0, max_count * 1.01)
-    axs_field.set_ylim(0, max_count * 1.01)
+#    
+#    # Step 7: Set the same x-axis limits for both plots
+#    combined_xlim = (
+#        min(axs_cell.get_xlim()[0], axs_field.get_xlim()[0]), 
+#        max(axs_cell.get_xlim()[1], axs_field.get_xlim()[1])
+#    )
+#    axs_cell.set_xlim(combined_xlim)
+#    axs_field.set_xlim(combined_xlim)
+#    
+#    # Step 8: Set the same y-axis limits for both plots
+#    max_count = max(max_count_cell, max_count_field)
+#    axs_cell.set_ylim(0, max_count * 1.01)
+#    axs_field.set_ylim(0, max_count * 1.01)
 
 
 def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax):
@@ -823,34 +865,36 @@ def plot_figure_1(pickle_file_path,
 
     # Define the width and height ratios
     width_ratios = [1, 1, 1, 1, 1, 
-                    1, 1, 1, 1]  # Adjust these values as needed
+                    1, 1, 1, 1, 1
+                   ]  # Adjust these values as needed
     height_ratios = [1, 1, 1, 1, 1,
                      1, 1, 1
                     ]       # Adjust these values as needed
 
     fig = plt.figure(figsize=(14,8))
-    gs = GridSpec(8, 9,width_ratios=width_ratios, 
+    gs = GridSpec(8, 10,width_ratios=width_ratios, 
                   height_ratios=height_ratios,figure=fig)
     gs.update(wspace=0.3, hspace=0.3)
 
-    axs_img = fig.add_subplot(gs[0:2, 0:2])
-    plot_image(image,axs_img,-0.02,-0.025,1.1)
+    axs_img = fig.add_subplot(gs[0:3, 0:3])
+    plot_image(image,axs_img,-0.05,0,1.05)
     axs_img.text(0.05,1.1,'A',transform=axs_img.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')
    
-    axs_proj = fig.add_subplot(gs[2:4,0:2])
-    plot_image(proj_img,axs_proj,-0.025,-0.025,0.9)
+    axs_proj = fig.add_subplot(gs[2:5,0:3])
+    plot_image(proj_img,axs_proj,-0.045,-0.085,1)
     axs_proj.text(0.05,1.1,'B',transform=axs_proj.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')
     
-    axs_pat1=fig.add_subplot(gs[0:1,2:3])
-    axs_pat2=fig.add_subplot(gs[0:1,4:5])
-    axs_pat3=fig.add_subplot(gs[0:1,6:7])
+    axs_pat1=fig.add_subplot(gs[0:1,2:4])
+    axs_pat2=fig.add_subplot(gs[0:1,4:6])
+    axs_pat3=fig.add_subplot(gs[0:1,6:9])
     plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,0)
-    
-    axs_fl1=fig.add_subplot(gs[3:5,2:4])
-    axs_fl2=fig.add_subplot(gs[3:5,4:6])
-    axs_fl3=fig.add_subplot(gs[3:5,6:8])
+    move_axis([axs_pat1,axs_pat2],xoffset=0.04,yoffset=0,pltscale=1)
+
+    axs_fl1=fig.add_subplot(gs[3:5,3:5])
+    axs_fl2=fig.add_subplot(gs[3:5,5:7])
+    axs_fl3=fig.add_subplot(gs[3:5,7:9])
     ylim = (-0.7,0.3) # in mV
     xlim = 150 # in mseconds
     ylabel="field response (mV)"
@@ -885,9 +929,9 @@ def plot_figure_1(pickle_file_path,
     inset_plot_traces(cell_data,"field_trace(mV)",
                       axs_inset,2)
 
-    axs_cl1=fig.add_subplot(gs[1:3,2:4])
-    axs_cl2=fig.add_subplot(gs[1:3,4:6])
-    axs_cl3=fig.add_subplot(gs[1:3,6:8])
+    axs_cl1=fig.add_subplot(gs[1:3,3:5])
+    axs_cl2=fig.add_subplot(gs[1:3,5:7])
+    axs_cl3=fig.add_subplot(gs[1:3,7:9])
     ylim = (-2,4) # in mV
     xlim = 150 # in mseconds
     ylabel="cell response (mV)"
@@ -915,15 +959,22 @@ def plot_figure_1(pickle_file_path,
                loc='upper center',frameon=False)#,loc='lower center'    
     
     axs_cell = fig.add_subplot(gs[6:9,0:2])
-    move_axis([axs_cell],xoffset=0.05,yoffset=0,pltscale=1)
-    axs_field = fig.add_subplot(gs[6:9,3:5])
-    move_axis([axs_field],xoffset=-0.025,yoffset=0,pltscale=1)
-    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)
-    label_axis([axs_cell,axs_field],"E",xpos=-0.1, ypos=1)
+    #move_axis([axs_cell],xoffset=0.05,yoffset=0,pltscale=1)
+    axs_field = fig.add_subplot(gs[6:9,2:4])
+    #move_axis([axs_field],xoffset=-0.025,yoffset=0,pltscale=1)
+    axs_cell_t =fig.add_subplot(gs[6:9,4:6]) 
+    axs_field_t=fig.add_subplot(gs[6:9,6:8]) 
 
-    axs_stat_dist = fig.add_subplot(gs[6:9,6:8])   
+
+    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field,axs_cell_t,axs_field_t)
+    label_axis([axs_cell,axs_field,axs_cell_t,
+                axs_field_t],"E",xpos=-0.1, ypos=1)
+    #label_axis([axs_cell_t,axs_field_t],"F",xpos=-0.1, ypos=1)
+
+
+    axs_stat_dist = fig.add_subplot(gs[6:9,8:9])   
     plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_stat_dist)
-    axs_stat_dist.text(-0.1,1,'F',transform=axs_stat_dist.transAxes,    
+    axs_stat_dist.text(-0.2,1,'F',transform=axs_stat_dist.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     plt.tight_layout()

@@ -8,6 +8,7 @@ All scripts that's associated with the pattern learning paper
 
 "figure 2"
 !python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -r /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_inR.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_1.jpg -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg
+-m /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_3.png
 
 
 "figure 3"
