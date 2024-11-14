@@ -219,8 +219,6 @@ def norm_values(cell_list,val_to_plot):
     return cell_list
                  
 
-
-
 def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot, plt_color):
     if pattern_number == "pattern_0":
         pat_type = "trained"
@@ -229,16 +227,27 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
     else:
         pat_type = "untrained"
 
-    y_lim = (-50, 500)
+    y_lim = (-50,700)
+    time_points_= ["pre","0", "10", "20","30" ]
     pat_num = int(pattern_number.split("_")[-1])
     num_cells = len(cell_list["cell_ID"].unique())
     pfd = cell_list.groupby(by="frame_id")
-    
+
+    # Set a fixed y-axis limit for consistency across all plots
+    axs_slp.set_ylim(y_lim)
+
+    # Set a common base_y and step_y for all annotations
+    base_y = 270  # Absolute y-axis position for the first annotation
+    step_y = 40   # Spacing between each annotation
+
+    # Define time points for x-tick labels
+    time_point_list = ["pre", "post_0", "post_1", "post_2", "post_3"]
+
     for c, pat in pfd:
         if c != pattern_number:
             continue
         else:
-            order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
+            order = np.array(time_point_list, dtype=object)
             
             # Create the stripplot for individual cells (with legend label)
             stripplot = sns.stripplot(
@@ -261,8 +270,11 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
             stripplot.set_title(None)
             axs_slp.axhline(100, ls=':', color="k", alpha=0.4)
             stripplot.set(ylim=y_lim)
-            stripplot.set_xticklabels(time_points, rotation=30)
-            
+
+            # Set the custom x-ticks and labels based on time_points
+            axs_slp.set_xticks(range(len(time_point_list)))  # Ensure correct positions for the labels
+            axs_slp.set_xticklabels(time_points, rotation=30)  # Map time_points as x-tick labels
+
             # Collect p-values for annotations (if needed)
             pvalList = []
             anotp_list = []
@@ -275,23 +287,34 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
                 pvalList.append(posti.pvalue)
                 anotp_list.append(("pre", i))
 
-            # Annotate with p-values
-            annotator = Annotator(axs_slp, anotp_list, data=pat,
-                                  x="pre_post_status", y=f"{val_to_plot}",
-                                  order=order, fontsize=8)
-            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
-            annotator.annotate()
+            # Manually add annotations using matplotlib
+            for idx, (pval, pair) in enumerate(zip(pvalList, anotp_list)):
+                x1, x2 = pair
+                x1_pos = order.tolist().index(x1)
+                x2_pos = order.tolist().index(x2)
+
+                # Draw the annotation line
+                axs_slp.plot([x1_pos, x2_pos], [base_y + idx * step_y] * 2, color='black', linewidth=1)
+
+                # Add the p-value text above the line
+                annotation_text = bpf.convert_pvalue_to_asterisks(pval)
+                axs_slp.text(
+                    (x1_pos + x2_pos) / 2, base_y + idx * step_y + 2, 
+                    annotation_text, ha='center', va='bottom', fontsize=8
+                )
+
             # Adjust axis labels and despine
             if pat_num == 0:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+                sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel("% change in\nEPSP amplitude")
                 axs_slp.set_xlabel(None)
             elif pat_num == 1:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+                sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel(None)
+                axs_slp.set_yticklabels([])
                 axs_slp.set_xlabel("time points (mins)")
             elif pat_num == 2:
-                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+                sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_xlabel(None)
                 axs_slp.set_ylabel(None)
 
@@ -316,124 +339,203 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
                     facecolor='white'  # Set the background color to white
                 )
 
-            else:
-                pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return axs_slp
+
+
+#def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot, plt_color):
+#    if pattern_number == "pattern_0":
+#        pat_type = "trained"
+#    elif pattern_number == "pattern_1":
+#        pat_type = "overlapping"
+#    else:
+#        pat_type = "untrained"
+#
+#    y_lim = (-50, 700)
+#    pat_num = int(pattern_number.split("_")[-1])
+#    num_cells = len(cell_list["cell_ID"].unique())
+#    pfd = cell_list.groupby(by="frame_id")
+#    
+#    for c, pat in pfd:
+#        if c != pattern_number:
+#            continue
+#        else:
+#            order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
+#            
+#            # Create the stripplot for individual cells (with legend label)
+#            sns.stripplot(
+#                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+#                order=order, ax=axs_slp, color=bpf.CB_color_cycle[2],
+#                alpha=0.6, size=5, label='single cell'
+#            )
+#            
+#            # Create the pointplot for the average of all cells (no automatic legend)
+#            sns.pointplot(
+#                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+#                errorbar="se", order=order, capsize=0.1, ax=axs_slp,
+#                color=plt_color, linestyles='dotted', scale=0.8
+#            )
+#            
+#            # Create a custom marker for the point plot in the legend (instead of a line)
+#            pointplot_handle = Line2D([], [], marker='o', color=plt_color, linestyle='', label='average of\nall cells')
+#
+#            # Set title and aesthetics
+#            axs_slp.axhline(100, ls=':', color="k", alpha=0.4)
+#            axs_slp.set_xticklabels(time_points, rotation=30)
+#            
+#            # Collect p-values for annotations (if needed)
+#            pvalList = []
+#            anotp_list = []
+#            for i in order[1:]:
+#                posti = spst.wilcoxon(
+#                    pat[pat["pre_post_status"] == 'pre'][f"{val_to_plot}"],
+#                    pat[pat["pre_post_status"] == i][f"{val_to_plot}"],
+#                    zero_method="wilcox", correction=True
+#                )
+#                pvalList.append(posti.pvalue)
+#                anotp_list.append(("pre", i))
+#
+#            # Annotate with p-values
+#            annotator = Annotator(axs_slp, anotp_list, data=pat,
+#                                  x="pre_post_status", y=f"{val_to_plot}",
+#                                  order=order, fontsize=8)
+#            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+#            annotator.annotate()
+#
+#            # Adjust axis labels and despine
+#            if pat_num == 0:
+#                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+#                axs_slp.set_ylabel("% change in\nEPSP amplitude")
+#                axs_slp.set_xlabel(None)
+#            elif pat_num == 1:
+#                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+#                axs_slp.set_ylabel(None)
+#                axs_slp.set_xlabel("time points (mins)")
+#            elif pat_num == 2:
+#                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+#                axs_slp.set_xlabel(None)
+#                axs_slp.set_ylabel(None)
+#
+#                # Get the handles and labels for the stripplot
+#                handles1, labels1 = axs_slp.get_legend_handles_labels()
+#
+#                # Remove duplicate "single cell" entries
+#                handles1_labels_dict = dict(zip(labels1, handles1))  # Ensure unique entries
+#                handles = list(handles1_labels_dict.values()) + [pointplot_handle]
+#                labels = list(handles1_labels_dict.keys()) + ['average of\nall cells']
+#
+#                # Combine legends and add them to the plot
+#                axs_slp.legend(
+#                    handles, labels,
+#                    bbox_to_anchor=(0.8, 0.9),  # Adjust the legend position
+#                    ncol=1, title="cell response",
+#                    loc='upper center',
+#                    handletextpad=0.2,  # Reduce space between marker and text
+#                    labelspacing=0.2,  # Reduce vertical space between entries
+#                    fancybox=True,  # Enable fancy box with rounded corners
+#                    framealpha=0.7,  # Set the transparency of the legend background
+#                    facecolor='white'  # Set the background color to white
+#                )
+#
+#    # Set consistent y-axis limits after all plotting is done
+#    axs_slp.set_ylim(y_lim)
+
+#def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot, plt_color):
+#    if pattern_number == "pattern_0":
+#        pat_type = "trained"
+#    elif pattern_number == "pattern_1":
+#        pat_type = "overlapping"
+#    else:
+#        pat_type = "untrained"
+#
+#    y_lim = (-50, 500)
+#    pat_num = int(pattern_number.split("_")[-1])
+#    num_cells = len(cell_list["cell_ID"].unique())
+#    pfd = cell_list.groupby(by="frame_id")
+#    
+#    for c, pat in pfd:
+#        if c != pattern_number:
+#            continue
+#        else:
+#            order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
+#            
+#            # Create the stripplot for individual cells (with legend label)
+#            stripplot = sns.stripplot(
+#                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+#                order=order, ax=axs_slp, color=bpf.CB_color_cycle[2],
+#                alpha=0.6, size=5, label='single cell'
+#            )
+#            
+#            # Create the pointplot for the average of all cells (no automatic legend)
+#            sns.pointplot(
+#                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+#                errorbar="se", order=order, capsize=0.1, ax=axs_slp,
+#                color=plt_color, linestyles='dotted', scale=0.8
+#            )
+#            
+#            # Create a custom marker for the point plot in the legend (instead of a line)
+#            pointplot_handle = Line2D([], [], marker='o', color=plt_color, linestyle='', label='average of\nall cells')
+#
+#            # Set title, limits, and aesthetics
+#            stripplot.set_title(None)
+#            axs_slp.axhline(100, ls=':', color="k", alpha=0.4)
+#            stripplot.set(ylim=y_lim)
+#            stripplot.set_xticklabels(time_points, rotation=30)
+#            
+#            # Collect p-values for annotations (if needed)
+#            pvalList = []
+#            anotp_list = []
+#            for i in order[1:]:
+#                posti = spst.wilcoxon(
+#                    pat[pat["pre_post_status"] == 'pre'][f"{val_to_plot}"],
+#                    pat[pat["pre_post_status"] == i][f"{val_to_plot}"],
+#                    zero_method="wilcox", correction=True
+#                )
+#                pvalList.append(posti.pvalue)
+#                anotp_list.append(("pre", i))
+#
+#            # Annotate with p-values
+#            annotator = Annotator(axs_slp, anotp_list, data=pat,
+#                                  x="pre_post_status", y=f"{val_to_plot}",
+#                                  order=order, fontsize=8)
+#            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+#            annotator.annotate()
+#            # Adjust axis labels and despine
+#            if pat_num == 0:
+#                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+#                axs_slp.set_ylabel("% change in\nEPSP amplitude")
+#                axs_slp.set_xlabel(None)
+#            elif pat_num == 1:
+#                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+#                axs_slp.set_ylabel(None)
+#                axs_slp.set_xlabel("time points (mins)")
+#            elif pat_num == 2:
+#                sns.despine(fig=None, ax=axs_slp, top=True, right=True)
+#                axs_slp.set_xlabel(None)
+#                axs_slp.set_ylabel(None)
+#
+#                # Get the handles and labels for the stripplot
+#                handles1, labels1 = stripplot.get_legend_handles_labels()
+#
+#                # Remove duplicate "single cell" entries
+#                handles1_labels_dict = dict(zip(labels1, handles1))  # Ensure unique entries
+#                handles = list(handles1_labels_dict.values()) + [pointplot_handle]
+#                labels = list(handles1_labels_dict.keys()) + ['average of\nall cells']
+#
+#                # Combine legends and add them to the plot
+#                axs_slp.legend(
+#                    handles, labels,
+#                    bbox_to_anchor=(0.8, 0.9),  # Adjust the legend position
+#                    ncol=1, title="cell response",
+#                    loc='upper center',
+#                    handletextpad=0.2,  # Reduce space between marker and text
+#                    labelspacing=0.2,  # Reduce vertical space between entries
+#                    fancybox=True,  # Enable fancy box with rounded corners
+#                    framealpha=0.7,  # Set the transparency of the legend background
+#                    facecolor='white'  # Set the background color to white
+#                )
+#
+#            else:
+#                pass
 
 
             
@@ -566,12 +668,12 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                                                  fig,axs_slp1,axs_slp2,
                                                  axs_slp3)
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    label_axis(axs_slp_list,"C")
+    label_axis(axs_slp_list,"C",xpos=-0.1, ypos=1.1)
 
 
     axs_inr = fig.add_subplot(gs[9:10,3:6])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    axs_inr.text(0.035,1,'E',transform=axs_inr.transAxes,    
+    axs_inr.text(-0.05,1,'E',transform=axs_inr.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
