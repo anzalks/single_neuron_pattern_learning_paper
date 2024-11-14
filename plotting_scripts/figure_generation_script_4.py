@@ -139,7 +139,7 @@ def int_to_roman(num):
         i += 1
     return roman_num
 
-def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
+def label_axis(axis_list, letter_label, xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
         roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
         axs.text(xpos, ypos, f'{letter_label}{roman_no}', 
@@ -843,18 +843,19 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     # Customize axes for learners
     axs_lr.set_ylim(-50, 500)
     axs_lr.set_ylabel("% change in\nEPSP amplitude")
-    axs_lr.set_xlabel("point no.")
+    axs_lr.set_xlabel(None)
     axs_lr.spines[['right', 'top']].set_visible(False)
-    axs_lr.set_xticklabels(x_ticklabels)
+    axs_lr.set_xticklabels([])#x_ticklabels)
     axs_lr.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
 
     # Customize axes for non-learners
     axs_nl.set_ylim(-50, 500)
     axs_nl.set_xlabel("point no.")
+    axs_nl.set_ylabel("% change in\nEPSP amplitude")
     axs_nl.spines[['right', 'top']].set_visible(False)
     axs_nl.set_xticklabels(x_ticklabels)
-    axs_nl.set_ylabel(None)
-    axs_nl.set_yticklabels([])
+    #axs_nl.set_ylabel(None)
+    #axs_nl.set_yticklabels([])
     axs_nl.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
 
 #def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
@@ -1327,8 +1328,8 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
             ax.set_yticklabels([])
         
         # Legend customization
-        ax.legend(loc='center', bbox_to_anchor=(0.5, 1.2), frameon=True,
-                  ncol=1)
+        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.1), 
+                  frameon=True,ncol=1)
 
 def plot_figure_4(extracted_feature_pickle_file_path,
                   all_trial_path,
@@ -1384,7 +1385,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"A")
+    label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
 
 
     axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -1396,7 +1397,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"B")
+    label_axis(axs_in_list,"B", xpos=0.1, ypos=0.9)
 
     axs_bar = fig.add_subplot(gs[12:14,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
@@ -1416,6 +1417,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     #plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
     plot_peak_perc_comp(sc_data_dict, fig, axs_comp_per_1, axs_comp_per_2)
     move_axis([axs_comp_per_1,axs_comp_per_2],-0.0545,-0.075,1.75)
+    label_axis([axs_comp_per_1,axs_comp_per_2],"D", xpos=-0.2, ypos=1.1)
     #axs_comp_per.text(-0.05,1.05,'D',transform=axs_comp_per.transAxes,    
     #                    fontsize=16, fontweight='bold', ha='center',
     #                    va='center')
@@ -1428,7 +1430,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
                                axs_points_lr,axs_points_nl)
     move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
-    label_axis([axs_points_lr,axs_points_nl],"E")
+    label_axis([axs_points_lr,axs_points_nl],"E", xpos=-0.05, ypos=1.05)
 
 
 
