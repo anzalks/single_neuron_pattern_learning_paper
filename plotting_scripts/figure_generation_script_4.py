@@ -302,7 +302,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
                 axs.set_ylabel(None)
                 axs.set_yticklabels([])
             
-            axs.set_xticklabels(order, rotation=0)
+            axs.set_xticklabels(time_points, rotation=0)
 
             # Remove legend if present
             if axs.get_legend() is not None:
@@ -401,7 +401,7 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
     elif cell_type=="dep_cells":
         strp_color = bpf.CB_color_cycle[1]
         line_color = bpf.CB_color_cycle[5]
-        y_lim = (-10,350)
+        y_lim = (-5,300)
         x_label = "time points (mins)"
     else:
         print("uncagerised cell")
