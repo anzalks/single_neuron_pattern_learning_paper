@@ -28,6 +28,9 @@ import argparse
 from matplotlib.gridspec import GridSpec
 import baisic_plot_fuctnions_and_features as bpf
 from PIL import ImageDraw, ImageFont 
+from scipy.stats import gaussian_kde
+
+from scipy.stats import levene
 
 
 # plot features are defines in bpf
@@ -288,84 +291,6 @@ def add_scale_bar_with_magnification(image_opened, scale_length_um, magnificatio
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def add_labels_to_image(image, text_list, coordinates_list, font_size=20,
                         font_color=(255, 255, 255)):
     """
@@ -527,11 +452,326 @@ def inset_plot_traces(cell_data,field_to_plot,ylim,xlim,
 
 
 
+#def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
+#    """
+#    Plot normalized KDE distributions of `max_trace` and `min_field` 
+#    after normalizing their mean to 1.
+#    
+#    Parameters:
+#    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+#    - fig (plt.Figure): Figure object.
+#    - axs_cell (plt.Axes): Axis for `max_trace` plot.
+#    - axs_field (plt.Axes): Axis for `min_field` plot.
+#    """
+#    
+#    # Check if required columns exist in the DataFrame
+#    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
+#    if not all(col in feature_extracted_df.columns for col in required_cols):
+#        raise ValueError("Input DataFrame is missing required columns.")
+#    
+#    # Step 1: Filter data for 'pre' status
+#    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+#    
+#    # Step 2: Calculate the mean for trials 0, 1, and 2, grouped by cell_ID and frame_id
+#    means_df = filtered_df[
+#        filtered_df['trial_no'].isin([0, 1, 2])
+#    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
+#    
+#    # Step 3: Normalize `max_trace` and `min_field` such that their mean is 1
+#    means_df['max_trace'] /= means_df['max_trace'].mean() if means_df['max_trace'].mean() != 0 else 1
+#    means_df['min_field'] /= means_df['min_field'].mean() if means_df['min_field'].mean() != 0 else 1
+#
+#    # Helper function to compute and plot normalized KDE
+#    def plot_normalized_kde(ax, data, color, label):
+#        if len(data) > 1:
+#            kde = gaussian_kde(data)
+#            x_vals = np.linspace(min(data), max(data), 1000)
+#            kde_vals = kde(x_vals)
+#            
+#            # Normalize KDE peak to 1
+#            max_val = np.max(kde_vals)
+#            if max_val != 0:
+#                kde_vals /= max_val
+#            
+#            # Plot the normalized KDE
+#            ax.fill_between(x_vals, kde_vals, color=color, alpha=0.3)
+#            ax.plot(x_vals, kde_vals, color=color, linewidth=1)
+#        else:
+#            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+#        
+#        ax.set_ylim(0, 1)
+#        ax.set_xlabel(f'Normalized Mean {label}')
+#        ax.set_ylabel('Normalized Density')
+#        ax.spines['top'].set_visible(False)
+#        ax.spines['right'].set_visible(False)
+#        ax.set_title(f'Normalized Distribution of {label}')
+#    
+#    # Step 4: Plot KDE for `max_trace` on axs_cell
+#    plot_normalized_kde(axs_cell, means_df['max_trace'], color='blue', label='max_trace')
+#    
+#    # Step 5: Plot KDE for `min_field` on axs_field
+#    plot_normalized_kde(axs_field, means_df['min_field'], color='orange', label='min_field')
+#    
+#    # Improve layout
+#    fig.tight_layout()
 
-def plot_figure_1(pickle_file_path,image_file_path,
+##noramlised to mean across trials, once grouped with cells and frame IDs
+#def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
+#    """
+#    Plot normalized KDE distributions of `max_trace` and `min_field`
+#    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
+#    
+#    Parameters:
+#    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+#    - fig (plt.Figure): Figure object.
+#    - axs_cell (plt.Axes): Axis for `max_trace` plot.
+#    - axs_field (plt.Axes): Axis for `min_field` plot.
+#    """
+#    
+#    # Check if required columns exist in the DataFrame
+#    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
+#    if not all(col in feature_extracted_df.columns for col in required_cols):
+#        raise ValueError("Input DataFrame is missing required columns.")
+#    
+#    # Step 1: Filter data for 'pre' status
+#    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+#    
+#    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
+#    mean_combined_df = filtered_df[
+#        filtered_df['trial_no'].isin([0, 1, 2])
+#    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
+#    
+#    # Step 3: Merge the combined mean back to the original filtered data
+#    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
+#    
+#    # Step 4: Normalize `max_trace` and `min_field` using the combined mean
+#    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
+#    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+#    
+#    # Helper function to compute and plot normalized KDE
+#    def plot_normalized_kde(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
+#        if len(data) > 1:
+#            kde = gaussian_kde(data)
+#            x_vals = np.linspace(min(data), max(data), 1000)
+#            kde_vals = kde(x_vals)
+#            
+#            # Normalize KDE peak to 1
+#            max_val = np.max(kde_vals)
+#            if max_val != 0:
+#                kde_vals /= max_val
+#            
+#            # Plot the normalized KDE
+#            ax.fill_between(x_vals, kde_vals, color=color, alpha=0.3)
+#            ax.plot(x_vals, kde_vals, color=color, linewidth=1)
+#        else:
+#            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+#        
+#        ax.set_ylim(0, 1)
+#        ax.set_xlabel(f'Normalized\n{label}')
+#        if show_ylabel:
+#            ax.set_ylabel('Normalized KDE')
+#        if remove_ytick_labels:
+#            ax.set_yticklabels([])  # Remove only the y-axis tick labels
+#        ax.spines['top'].set_visible(False)
+#        ax.spines['right'].set_visible(False)
+#        ax.set_title(title)
+#    
+#    # Step 5: Plot KDE for `max_trace` on axs_cell with title "EPSP"
+#    plot_normalized_kde(
+#        axs_cell, 
+#        merged_df['max_trace'], 
+#        color='blue', 
+#        label='EPSP', 
+#        title='EPSP', 
+#        show_ylabel=True
+#    )
+#    
+#    # Step 6: Plot KDE for `min_field` on axs_field with title "LFP" and no y-tick labels
+#    plot_normalized_kde(
+#        axs_field, 
+#        merged_df['min_field'], 
+#        color='orange', 
+#        label='LFP', 
+#        title='LFP', 
+#        show_ylabel=False, 
+#        remove_ytick_labels=True
+#    )
+
+
+def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
+    """
+    Plot bar distributions of `max_trace` and `min_field`
+    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
+    
+    Parameters:
+    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+    - fig (plt.Figure): Figure object.
+    - axs_cell (plt.Axes): Axis for `max_trace` plot.
+    - axs_field (plt.Axes): Axis for `min_field` plot.
+    """
+    
+    # Check if required columns exist in the DataFrame
+    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
+    if not all(col in feature_extracted_df.columns for col in required_cols):
+        raise ValueError("Input DataFrame is missing required columns.")
+    
+    # Step 1: Filter data for 'pre' status
+    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+    
+    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
+    mean_combined_df = filtered_df[
+        filtered_df['trial_no'].isin([0, 1, 2])
+    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
+    
+    # Step 3: Merge the combined mean back to the original filtered data
+    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
+    
+    # Step 4: Normalize `max_trace` and `min_field` using the combined mean
+    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
+    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+    
+    # Helper function to plot bar distributions without y-axis normalization
+    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
+        if len(data) > 1:
+            # Plot the histogram as a bar plot (without normalizing the counts)
+            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
+            ax.set_xlabel(f'Normalized\n{label}')
+            
+            if show_ylabel:
+                ax.set_ylabel('Count')
+            if remove_ytick_labels:
+                ax.set_yticklabels([])  # Remove only the y-axis tick labels
+            
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            #ax.set_title(title)
+            
+            return n.max()  # Return the maximum count for y-axis scaling
+        else:
+            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+            return 0
+
+    # Step 5: Plot bar distribution for `max_trace` on axs_cell with title "EPSP"
+    max_count_cell = plot_bar_distribution(
+        axs_cell, 
+        merged_df['max_trace'], 
+        color='black', 
+        label='EPSP', 
+        title='EPSP', 
+        show_ylabel=True
+    )
+    
+    # Step 6: Plot bar distribution for `min_field` on axs_field with title "LFP" and no y-tick labels
+    max_count_field = plot_bar_distribution(
+        axs_field, 
+        merged_df['min_field'], 
+        color='black', 
+        label='LFP', 
+        title='LFP', 
+        show_ylabel=False, 
+        remove_ytick_labels=True
+    )
+    
+    # Step 7: Set the same x-axis limits for both plots
+    combined_xlim = (
+        min(axs_cell.get_xlim()[0], axs_field.get_xlim()[0]), 
+        max(axs_cell.get_xlim()[1], axs_field.get_xlim()[1])
+    )
+    axs_cell.set_xlim(combined_xlim)
+    axs_field.set_xlim(combined_xlim)
+    
+    # Step 8: Set the same y-axis limits for both plots
+    max_count = max(max_count_cell, max_count_field)
+    axs_cell.set_ylim(0, max_count * 1.01)
+    axs_field.set_ylim(0, max_count * 1.01)
+
+
+def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax):
+    """
+    Plot bar distributions of `max_trace` and `min_field` on a single axis,
+    and display the p-value from Levene's test for equality of variances.
+    
+    Parameters:
+    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+    - fig (plt.Figure): Figure object.
+    - ax (plt.Axes): Axis for the combined plot.
+    """
+    
+    # Check if required columns exist in the DataFrame
+    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
+    if not all(col in feature_extracted_df.columns for col in required_cols):
+        raise ValueError("Input DataFrame is missing required columns.")
+    
+    # Step 1: Filter data for 'pre' status
+    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+    
+    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
+    mean_combined_df = filtered_df[
+        filtered_df['trial_no'].isin([0, 1, 2])
+    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
+    
+    # Step 3: Merge the combined mean back to the original filtered data
+    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
+    
+    # Step 4: Normalize `max_trace` and `min_field` using the combined mean
+    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
+    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+    
+    # Step 5: Create a DataFrame for plotting
+    data_to_plot = pd.DataFrame({
+        'Normalised Mean': np.concatenate([merged_df['max_trace'].dropna(), merged_df['min_field'].dropna()]),
+        'Category': ['EPSP'] * len(merged_df['max_trace'].dropna()) + ['LFP'] * len(merged_df['min_field'].dropna())
+    })
+    
+    # Step 6: Perform Levene's test to compare variances
+    stat, p_value = levene(merged_df['max_trace'].dropna(), merged_df['min_field'].dropna())
+    pval_list = [p_value]  # Create a list for annotation
+    
+    # Convert p-value to asterisks using your custom function
+    annotations = [bpf.convert_pvalue_to_asterisks(p) for p in pval_list]
+    
+    # Step 7: Create the box plot on a single axis
+    sns.boxplot(
+        data=data_to_plot, 
+        x='Category', 
+        y='Normalised Mean', 
+        ax=ax, 
+        boxprops=dict(facecolor='grey', edgecolor='darkgrey'),
+        medianprops=dict(color='black'),
+        whiskerprops=dict(color='darkgrey'),
+        capprops=dict(color='darkgrey'),
+        flierprops=dict(markerfacecolor='black', marker='o', 
+                        markersize=3, linestyle='none',alpha=0.4)
+    )
+    
+    # Remove right and top spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    # Add y-axis label
+    ax.set_ylabel('Normalised\nmean')
+    
+    # Set x-axis label to "Variance" and remove the title
+    ax.set_xlabel('Variance')
+    ax.set_xticklabels(['EPSP', 'LFP'])
+    
+    # Step 8: Use `statannotations.Annotator` for annotation
+    pairs = [('EPSP', 'LFP')]  # Specify the pairs to annotate
+    annotator = Annotator(ax, pairs, data=data_to_plot, x='Category', y='Normalised Mean')
+    annotator.set_custom_annotations(annotations)
+    annotator.annotate()
+    
+    # Adjust y-limits for better visibility of annotations
+    ax.set_ylim(0, data_to_plot['Normalised Mean'].max() * 1.2)
+
+def plot_figure_1(pickle_file_path,
+                  all_trials_path,
+                  image_file_path,
                   projection_image,
                   outdir,cell_to_plot=cell_to_plot):
     cell_data = pd.read_pickle(pickle_file_path)
+    alltrial_Df=pd.read_pickle(all_trials_path)
+    print(f"dataframe:{alltrial_Df.columns}...........")
     deselect_lsit = ["no_frame","inR"]
     cell_data = cell_data[(cell_data["cell_ID"]==cell_to_plot)&(~cell_data["frame_id"].isin(deselect_lsit))]
     cell_data.reset_index()
@@ -570,21 +810,15 @@ def plot_figure_1(pickle_file_path,image_file_path,
     proj_img = add_labels_to_image(proj_img, text_list,
                                    coordinates_list,font_size=55)
 
-
-
-
-
-
-
     # Define the width and height ratios
     width_ratios = [1, 1, 1, 1, 1, 
                     1, 1, 1, 1]  # Adjust these values as needed
     height_ratios = [1, 1, 1, 1, 1,
-                     1, 1
+                     1, 1, 1
                     ]       # Adjust these values as needed
 
-    fig = plt.figure(figsize=(14,6))
-    gs = GridSpec(7, 9,width_ratios=width_ratios, 
+    fig = plt.figure(figsize=(14,8))
+    gs = GridSpec(8, 9,width_ratios=width_ratios, 
                   height_ratios=height_ratios,figure=fig)
     gs.update(wspace=0.3, hspace=0.3)
 
@@ -668,6 +902,13 @@ def plot_figure_1(pickle_file_path,image_file_path,
                bbox_to_anchor =(0.8, 1),
                ncol = 1,title="Voltage trace",
                loc='upper center',frameon=False)#,loc='lower center'    
+    
+    axs_cell = fig.add_subplot(gs[6:9,0:2])
+    axs_field = fig.add_subplot(gs[6:9,2:4])
+    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)
+
+    axs_stat_dist = fig.add_subplot(gs[6:9,5:7])   
+    plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_stat_dist)
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_1.png"
@@ -696,7 +937,11 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to the image file showing projections'
                        )
-
+    parser.add_argument('--alltrials-path', '-t'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with all trials'
+                        'all cells data in pickle'
+                       )
 
     parser.add_argument('--outdir-path','-o'
                         ,required = False, default ='./', type=str
@@ -707,11 +952,13 @@ def main():
     pklpath = Path(args.pikl_path)
     illustration_path = Path(args.illustration_path)
     projection_path = Path(args.projection_image)
+    all_trials_path= Path(args.alltrials_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_1'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_1(pklpath,illustration_path,projection_path,globoutdir)
+    plot_figure_1(pklpath, all_trials_path, illustration_path,
+                  projection_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
