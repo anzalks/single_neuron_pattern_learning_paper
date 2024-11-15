@@ -527,7 +527,8 @@ def inset_plot_traces(cell_data,field_to_plot,
 #    fig.tight_layout()
 
 
-def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field, axs_cell_t, axs_field_t):
+def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
+    #, axs_cell_t, axs_field_t):
     """
     Plot bar distributions of `max_trace`, `min_field`, `max_trace_t`, and `min_field_t`
     after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
@@ -603,24 +604,24 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field, axs_cell_t,
         remove_ytick_labels=True
     )
     
-    max_count_cell_t, bins_cell_t = plot_bar_distribution(
-        axs_cell_t, 
-        merged_df['max_trace_t'], 
-        color='black', 
-        label='EPSP (t)', 
-        title='EPSP (t)', 
-        show_ylabel=True
-    )
-    
-    max_count_field_t, bins_field_t = plot_bar_distribution(
-        axs_field_t, 
-        merged_df['min_field_t'], 
-        color='black', 
-        label='LFP (t)', 
-        title='LFP (t)', 
-        show_ylabel=False, 
-        remove_ytick_labels=True
-    )
+    #max_count_cell_t, bins_cell_t = plot_bar_distribution(
+    #    axs_cell_t, 
+    #    merged_df['max_trace_t'], 
+    #    color='black', 
+    #    label='EPSP (t)', 
+    #    title='EPSP (t)', 
+    #    show_ylabel=True
+    #)
+    #
+    #max_count_field_t, bins_field_t = plot_bar_distribution(
+    #    axs_field_t, 
+    #    merged_df['min_field_t'], 
+    #    color='black', 
+    #    label='LFP (t)', 
+    #    title='LFP (t)', 
+    #    show_ylabel=False, 
+    #    remove_ytick_labels=True
+    #)
     
     # Step 6: Set the same x-axis limits for `max_trace` and `min_field`
     if bins_cell is not None and bins_field is not None:
@@ -631,23 +632,23 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field, axs_cell_t,
         axs_cell.set_xlim(combined_xlim_cell)
         axs_field.set_xlim(combined_xlim_cell)
     
-    # Step 7: Set the same x-axis limits for `max_trace_t` and `min_field_t`
-    if bins_cell_t is not None and bins_field_t is not None:
-        combined_xlim_cell_t = (
-            min(bins_cell_t.min(), bins_field_t.min()), 
-            max(bins_cell_t.max(), bins_field_t.max())
-        )
-        axs_cell_t.set_xlim(combined_xlim_cell_t)
-        axs_field_t.set_xlim(combined_xlim_cell_t)
+    ## Step 7: Set the same x-axis limits for `max_trace_t` and `min_field_t`
+    #if bins_cell_t is not None and bins_field_t is not None:
+    #    combined_xlim_cell_t = (
+    #        min(bins_cell_t.min(), bins_field_t.min()), 
+    #        max(bins_cell_t.max(), bins_field_t.max())
+    #    )
+    #    axs_cell_t.set_xlim(combined_xlim_cell_t)
+    #    axs_field_t.set_xlim(combined_xlim_cell_t)
     
     # Step 8: Set the same y-axis limits for each pair of plots
     max_count_1 = max(max_count_cell, max_count_field)
     axs_cell.set_ylim(0, max_count_1 * 1.01)
     axs_field.set_ylim(0, max_count_1 * 1.01)
     
-    max_count_2 = max(max_count_cell_t, max_count_field_t)
-    axs_cell_t.set_ylim(0, max_count_2 * 1.01)
-    axs_field_t.set_ylim(0, max_count_2 * 1.01)
+    #max_count_2 = max(max_count_cell_t, max_count_field_t)
+    #axs_cell_t.set_ylim(0, max_count_2 * 1.01)
+    #axs_field_t.set_ylim(0, max_count_2 * 1.01)
 
 
 ##everything works but plots only EPSP and field amplitudes
@@ -958,21 +959,21 @@ def plot_figure_1(pickle_file_path,
                ncol = 1,title="Voltage trace",
                loc='upper center',frameon=False)#,loc='lower center'    
     
-    axs_cell = fig.add_subplot(gs[6:9,0:2])
+    axs_cell = fig.add_subplot(gs[6:9,1:3])
     #move_axis([axs_cell],xoffset=0.05,yoffset=0,pltscale=1)
-    axs_field = fig.add_subplot(gs[6:9,2:4])
+    axs_field = fig.add_subplot(gs[6:9,3:5])
     #move_axis([axs_field],xoffset=-0.025,yoffset=0,pltscale=1)
-    axs_cell_t =fig.add_subplot(gs[6:9,4:6]) 
-    axs_field_t=fig.add_subplot(gs[6:9,6:8]) 
+    #axs_cell_t =fig.add_subplot(gs[6:9,4:6]) 
+    #axs_field_t=fig.add_subplot(gs[6:9,6:8]) 
 
 
-    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field,axs_cell_t,axs_field_t)
-    label_axis([axs_cell,axs_field,axs_cell_t,
-                axs_field_t],"E",xpos=-0.1, ypos=1)
+    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)#,axs_cell_t,axs_field_t)
+    label_axis([axs_cell,axs_field,
+               ],"E",xpos=-0.1, ypos=1)
     #label_axis([axs_cell_t,axs_field_t],"F",xpos=-0.1, ypos=1)
 
 
-    axs_stat_dist = fig.add_subplot(gs[6:9,8:9])   
+    axs_stat_dist = fig.add_subplot(gs[6:9,6:8])   
     plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_stat_dist)
     axs_stat_dist.text(-0.2,1,'F',transform=axs_stat_dist.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')

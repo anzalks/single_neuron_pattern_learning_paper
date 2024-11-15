@@ -216,14 +216,37 @@ def plot_raw_trace_time_points(single_cell_df,
                         axs_trace.set_title(time_points[idx+1])
                 else:
                     axs_trace.set_title(None)
-            if (pat_num==2)and(idx==1):
+            
+            if (pat_num == 2) and (idx == 1):
                 axs_trace.set_xlabel("time (ms)")
+                
+                # Collect handles and labels for the legend
                 handles, labels = plt.gca().get_legend_handles_labels()
                 by_label = dict(zip(labels, handles))
-                axs_trace.legend(by_label.values(), by_label.keys(), 
-                           bbox_to_anchor =(0.1, -1),
-                           ncol = 6,#title="cell response",
-                           loc='upper center',frameon=False)
+            
+                # Create custom legend handles with thicker lines
+                custom_handles = [
+                    Line2D([0], [0], color=handle.get_color(), linewidth=3, label=label) 
+                    for label, handle in by_label.items()
+                ]
+            
+                axs_trace.legend(custom_handles, by_label.keys(), 
+                                 bbox_to_anchor=(0.1, -0.95),
+                                 ncol=6,
+                                 loc='center',
+                                 frameon=False)
+
+
+
+
+            #if (pat_num==2)and(idx==1):
+            #    axs_trace.set_xlabel("time (ms)")
+            #    handles, labels = plt.gca().get_legend_handles_labels()
+            #    by_label = dict(zip(labels, handles))
+            #    axs_trace.legend(by_label.values(), by_label.keys(), 
+            #               bbox_to_anchor =(0.1, -0.95),
+            #               ncol = 6,#title="cell response",
+            #               loc='center',frameon=False)
             elif pat_num ==2:
                 axs_trace.set_xlabel(None)
             else:
@@ -596,54 +619,111 @@ def plot_field_normalised_feature_multi_patterns(cell_list,val_to_plot,
 #["cell_ID","frame_status","pre_post_status","frame_id","min_trace","max_trace","abs_area","pos_area",
 #"neg_area","onset_time","max_field","min_field","slope","intercept","min_trace_t","max_trace_t","max_field_t","min_field_t","mean_trace","mean_field","mean_ttl","mean_rmp"]
 
-def inR_sag_plot(inR_all_Cells_df,fig,axs):
-    deselect_list = ['post_4','post_5']
-    inR_all_Cells_df =inR_all_Cells_df[~inR_all_Cells_df["pre_post_status"].isin(deselect_list)] 
-    order = np.array(('pre','post_0', 'post_1', 'post_2', 'post_3'),dtype=object)
 
-    g=sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="inR",
-                    capsize=0.2,ci=('sd'),order=order,color="k",
-                    label="input\nresistance")
-    sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",
-                  capsize=0.2,ci=('sd'),order=order,
-                  color=bpf.CB_color_cycle[4], label="sag value")
-    sns.stripplot(data=inR_all_Cells_df,color=bpf.CB_color_cycle[4],
-                  x="pre_post_status",y="sag",
-                  order=order,alpha=0.2)
+def inR_sag_plot(inR_all_Cells_df, fig, axs):
+    deselect_list = ['post_4', 'post_5']
+    inR_all_Cells_df = inR_all_Cells_df[~inR_all_Cells_df["pre_post_status"].isin(deselect_list)]
+    order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
 
-    pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="pre"]["sag"]
-    post_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="post_3"]["sag"]
-    pre= spst.wilcoxon(pre_trace,post_trace,zero_method="wilcox", correction=True)
-    pvalList=pre.pvalue
-    print(pvalList)
-    anotp_list=("pre","post_3")
-    annotator = Annotator(axs,[anotp_list],data=inR_all_Cells_df, x="pre_post_status",y="sag",order=order)
-    #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
+    # Plot input resistance and sag values using pointplot
+    g1 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="inR",
+                       capsize=0.2, ci='sd', order=order, color="k")
+    g2 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="sag",
+                       capsize=0.2, ci='sd', order=order, color=bpf.CB_color_cycle[4])
+    
+    # Plot individual points using stripplot
+    sns.stripplot(data=inR_all_Cells_df, color=bpf.CB_color_cycle[4],
+                  x="pre_post_status", y="sag",
+                  order=order, alpha=0.2)
+
+    # Perform Wilcoxon test between "pre" and "post_3"
+    pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"] == "pre"]["sag"]
+    post_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"] == "post_3"]["sag"]
+    pre = spst.wilcoxon(pre_trace, post_trace, zero_method="wilcox", correction=True)
+    pvalList = pre.pvalue
+    print(f"p-value: {pvalList}")
+    anotp_list = ("pre", "post_3")
+    annotator = Annotator(axs, [anotp_list], data=inR_all_Cells_df, x="pre_post_status", y="sag", order=order)
     annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
-    if axs.legend_ is not None:
-        axs.legend_.remove()
 
-    #sns.move_legend(axs, "upper left", bbox_to_anchor=(1, 1))
-    #axs.set_ylim(-10,250)
-    axs.set_xticklabels(time_points)
-    sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
+    # Manually create legend entries
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='k', label='input resistance', markersize=8, linestyle='None'),
+        Line2D([0], [0], marker='o', color=bpf.CB_color_cycle[4], label='sag value', markersize=8, linestyle='None')
+    ]
+
+    #legend_elements = [
+    #    Line2D([0], [0], color='k', label='input resistance', linewidth=2),
+    #    Line2D([0], [0], color=bpf.CB_color_cycle[4], label='sag value', linewidth=2)
+    #]
+    axs.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.05), loc='center', frameon=False)
+
+    # Set axis labels, ticks, and limits
     axs.set_ylabel("MOhms")
     axs.set_xlabel("time points (mins)")
-    handles, labels = g.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    axs.legend(by_label.values(), by_label.keys(), 
-                   bbox_to_anchor =(0.5, 1.275),
-                   ncol = 2,
-                   loc='upper center',frameon=False)
 
+    # Set x-tick labels using the original time_points variable
+    time_points = ['pre', '0', '10', '20', '30']
+    axs.set_xticklabels(time_points)
 
+    axs.set_ylim(-10, 250)
+    sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
-
+    # Adjust the position of the axis
     inr_pos = axs.get_position()
-    new_inr_pos = [inr_pos.x0, inr_pos.y0-0.04, inr_pos.width,
-                   inr_pos.height]
+    new_inr_pos = [inr_pos.x0, inr_pos.y0 - 0.04, inr_pos.width, inr_pos.height]
     axs.set_position(new_inr_pos)
+
+
+#def inR_sag_plot(inR_all_Cells_df,fig,axs):
+#    deselect_list = ['post_4','post_5']
+#    inR_all_Cells_df =inR_all_Cells_df[~inR_all_Cells_df["pre_post_status"].isin(deselect_list)] 
+#    order = np.array(('pre','post_0', 'post_1', 'post_2', 'post_3'),dtype=object)
+#
+#    g=sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="inR",
+#                    capsize=0.2,ci=('sd'),order=order,color="k",
+#                    label="input\nresistance")
+#    sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",
+#                  capsize=0.2,ci=('sd'),order=order,
+#                  color=bpf.CB_color_cycle[4], label="sag value")
+#    sns.stripplot(data=inR_all_Cells_df,color=bpf.CB_color_cycle[4],
+#                  x="pre_post_status",y="sag",
+#                  order=order,alpha=0.2)
+#
+#    pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="pre"]["sag"]
+#    post_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"]=="post_3"]["sag"]
+#    pre= spst.wilcoxon(pre_trace,post_trace,zero_method="wilcox", correction=True)
+#    pvalList=pre.pvalue
+#    print(pvalList)
+#    anotp_list=("pre","post_3")
+#    annotator = Annotator(axs,[anotp_list],data=inR_all_Cells_df, x="pre_post_status",y="sag",order=order)
+#    #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
+#    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
+#    annotator.annotate()
+#    if axs.legend_ is not None:
+#        axs.legend_.remove()
+#
+#    #sns.move_legend(axs, "upper left", bbox_to_anchor=(1, 1))
+#    #axs.set_ylim(-10,250)
+#    axs.set_xticklabels(time_points)
+#    sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
+#    axs.set_ylabel("MOhms")
+#    axs.set_xlabel("time points (mins)")
+#    handles, labels = g.get_legend_handles_labels()
+#    by_label = dict(zip(labels, handles))
+#    axs.legend(by_label.values(), by_label.keys(), 
+#                   bbox_to_anchor =(0.5, 1.275),
+#                   ncol = 2,
+#                   loc='upper center',frameon=False)
+#
+#
+#
+#
+#    inr_pos = axs.get_position()
+#    new_inr_pos = [inr_pos.x0, inr_pos.y0-0.04, inr_pos.width,
+#                   inr_pos.height]
+#    axs.set_position(new_inr_pos)
     
     
 
