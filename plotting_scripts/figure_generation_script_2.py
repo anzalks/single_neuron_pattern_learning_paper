@@ -200,10 +200,10 @@ def plot_raw_trace_time_points(single_cell_df,
                 pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
                 time = np.linspace(0,time_to_plot,len(trace))*1000
                 axs_trace.plot(time,pre_trace, color=bpf.pre_color,
-                              alpha=0.6,label="baseline response")
+                              alpha=0.6,label="pre training\nEPSP trace")
                 axs_trace.plot(time,trace,
                                color=bpf.post_late,
-                               label="post training response")
+                               label="post 30 mins of\ntraining EPSP trace")
                                #color=bpf.colorFader(bpf.post_color,
                                #                     bpf.post_late,
                                #                     (idx/len(pps_grp))))
@@ -231,7 +231,7 @@ def plot_raw_trace_time_points(single_cell_df,
                 ]
             
                 axs_trace.legend(custom_handles, by_label.keys(), 
-                                 bbox_to_anchor=(0.1, -0.95),
+                                 bbox_to_anchor=(0.1, -1.2),
                                  ncol=6,
                                  loc='center',
                                  frameon=False)
