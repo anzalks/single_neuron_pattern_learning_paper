@@ -969,7 +969,7 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
             elif pat=="pattern_2":
                 alpha=0.5
                 marker="+"
-                label = f"untrained"#_{labl}"
+                label = f"non-overlapping"#_{labl}"
             x= pat_data[pat_data["pre_post_status"]=="pre"]["max_trace"]
             y= pat_data[pat_data["pre_post_status"]=="post_3"]["max_trace"]
             axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
@@ -980,7 +980,7 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
     axs.spines[['right', 'top']].set_visible(False)
     axs.set_ylabel("EPSP amplitude post\n30 min(mV)")
     axs.set_xlabel("EPSP amplitude pre (mV)")
-    axs.legend(loc='upper center', bbox_to_anchor=(1.3, 1),frameon=False, 
+    axs.legend(loc='upper center', bbox_to_anchor=(1.4, 1),frameon=False, 
                   ncol=1)
 
 #def plot_peak_perc_comp(sc_data_dict,fig,axs):
@@ -1259,7 +1259,7 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
     pattern_info = {
         "pattern_0": {"marker": "^", "label": "trained"},
         "pattern_1": {"marker": ".", "label": "overlapping"},
-        "pattern_2": {"marker": "+", "label": "untrained"}
+        "pattern_2": {"marker": "+", "label": "non-overlapping"}
     }
     
     # Get data for learners and non-learners
@@ -1311,7 +1311,7 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
                     verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
         if pat=="pattern_2":
             # Display correlation coefficient and p-value on the plot
-            ax.text(0.05, -0.8, f"untrained\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
+            ax.text(0.05, -0.8, f"non-overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
                     transform=ax.transAxes, fontsize=10, 
                     verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
 

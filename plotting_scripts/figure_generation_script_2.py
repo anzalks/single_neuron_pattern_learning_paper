@@ -46,12 +46,53 @@ selected_time_points = ['post_0', 'post_1', 'post_2', 'post_3','pre']
 class Args: pass
 args_ = Args()
 
-def plot_image(image,axs_img,xoffset,yoffset,pltscale):
-    axs_img.imshow(image, cmap='gray')
-    pos = axs_img.get_position()  # Get the original position
-    new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
-               pos.height*pltscale]
-    # Shrink the plot
+#def plot_image(image,axs_img,xoffset,yoffset,pltscale):
+#    axs_img.imshow(image, cmap='gray')
+#    pos = axs_img.get_position()  # Get the original position
+#    new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+#               pos.height*pltscale]
+#    # Shrink the plot
+#    axs_img.set_position(new_pos)
+#    axs_img.axis('off')
+
+def plot_image(image, axs_img, xoffset=0, yoffset=0, pltscale=1):
+    """
+    Plot a Pillow Image object on the provided axes, ensuring transparent areas are white.
+    
+    Parameters:
+    - image (pillow.Image.Image): Pillow Image object.
+    - axs_img (plt.Axes): Matplotlib axis object to plot the image.
+    - xoffset (float): Horizontal offset for repositioning the image.
+    - yoffset (float): Vertical offset for repositioning the image.
+    - pltscale (float): Scaling factor for the image plot size.
+    """
+    # Ensure that the image is a Pillow Image object
+    if not isinstance(image, pillow.Image.Image):
+        raise ValueError("The input must be a Pillow Image object")
+    
+    # Check if the image has an alpha channel (RGBA mode)
+    if image.mode == 'RGBA':
+        # Create a white background in 'RGBA' mode
+        background = pillow.Image.new('RGBA', image.size, (255, 255, 255, 255))
+        # Convert the original image to 'RGBA' mode if needed
+        image = image.convert('RGBA')
+        # Alpha composite to convert transparency to white
+        image = pillow.Image.alpha_composite(background, image)
+    else:
+        # Convert other modes (like grayscale) to RGB
+        image = image.convert('RGB')
+    
+    # Convert to numpy array and normalize to [0, 1]
+    image_array = np.array(image, dtype=np.float32) / 255.0
+
+    # Plot the image on the provided axes
+    axs_img.imshow(image_array)
+    
+    # Get the original position of the axis
+    pos = axs_img.get_position()
+    new_pos = [pos.x0 + xoffset, pos.y0 + yoffset, pos.width * pltscale, pos.height * pltscale]
+    
+    # Adjust the position and scale
     axs_img.set_position(new_pos)
     axs_img.axis('off')
 
@@ -611,6 +652,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                   inR_all_Cells_df,
                   illustration_path,
                   inRillustration_path,
+                  patillustration_path,
                   outdir,cell_to_plot=cell_to_plot):
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
@@ -622,6 +664,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
     illustration = pillow.Image.open(illustration_path)
     inRillustration = pillow.Image.open(inRillustration_path)
+    patillustration = pillow.Image.open(patillustration_path)
     # Define the width and height ratios
     width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
     height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
@@ -634,19 +677,28 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     gs.update(wspace=0.2, hspace=0.2)
     #place illustration
     axs_img = fig.add_subplot(gs[:3, :6])
-    plot_image(illustration,axs_img,0,-0.01,1)
+    plot_image(illustration,axs_img,-0.1,-0.01,1)
+    
+    
 
-    axs_img.text(-0.01,0.95,'A',transform=axs_img.transAxes,    
+    axs_img.text(0,0.95,'A',transform=axs_img.transAxes,    
             fontsize=16, fontweight='bold', ha='center', va='center')
+    
+    axs_pat_ill = fig.add_subplot(gs[:3, 6:])
+    plot_image(patillustration,axs_pat_ill,-0.15,0,2)    
+    
+    axs_pat_ill.text(-0.1,0.925,'B',transform=axs_pat_ill.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     axs_vpat1=fig.add_subplot(gs[3,0])
     axs_vpat2=fig.add_subplot(gs[4,0])
     axs_vpat3=fig.add_subplot(gs[5,0])
     plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,0,2)
-    axs_vpat1.text(-0.07,1.35,'B',transform=axs_vpat1.transAxes,    
+    axs_vpat1.text(-0.07,1.35,'C',transform=axs_vpat1.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs)
+    
     #plot pattern projections 
     axs_pat1 = fig.add_subplot(gs[6,0])
     axs_pat2 = fig.add_subplot(gs[6,2])
@@ -668,18 +720,18 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                                                  fig,axs_slp1,axs_slp2,
                                                  axs_slp3)
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    label_axis(axs_slp_list,"C",xpos=-0.1, ypos=1.1)
+    label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
 
 
     axs_inr = fig.add_subplot(gs[9:10,3:6])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    axs_inr.text(-0.05,1,'E',transform=axs_inr.transAxes,    
+    axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
              fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     axs_inrill = fig.add_subplot(gs[9:10,0:3])
     plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
-    axs_inrill.text(0.01,1.1,'D',transform=axs_inrill.transAxes,    
+    axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
@@ -719,8 +771,10 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with inR data'
                        )
-
-
+    parser.add_argument('--patillustration-path', '-m'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with inR data'
+                       )
     parser.add_argument('--illustration-path', '-i'
                         , required = False,default ='./', type=str
                         , help = 'path to the image file in png format'
@@ -742,12 +796,16 @@ def main():
     scpath = Path(args.sortedcell_path)
     inR_path = Path(args.inR_path)
     illustration_path = Path(args.illustration_path)
+    patillustration_path =Path(args.patillustration_path) 
     inRillustration_path = Path(args.inRillustration_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_2'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_2(pklpath,scpath,inR_path,illustration_path,inRillustration_path,globoutdir)
+    plot_figure_2(pklpath,scpath,inR_path,illustration_path,
+                  inRillustration_path,
+                  patillustration_path,
+                  globoutdir)
     print(f"illustration path: {illustration_path}")
 
 
