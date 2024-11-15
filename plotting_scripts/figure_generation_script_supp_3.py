@@ -4,7 +4,7 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 3 of pattern learning paper.
+Generates the supplimentary figure for training data.
 Takes in the pickle file that stores all the experimental data.
 Takes in the image files with slice and pipettes showing recordin location and
 the fluroscence on CA3.
@@ -28,11 +28,9 @@ import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 import baisic_plot_fuctnions_and_features as bpf
-from matplotlib.ticker import MultipleLocator
-import statsmodels.api as sm
-from statsmodels.formula.api import glm
-from scipy.stats import ks_2samp
-import pingouin as pg
+import re
+from scipy.stats import ttest_1samp
+from scipy.stats import spearmanr
 
 
 # plot features are defines in bpf
@@ -52,6 +50,75 @@ cell_dist_key = ["learners","non-learners","cells not\nconsidered"]
 
 class Args: pass
 args_ = Args()
+
+class Args: pass
+args_ = Args()
+
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+
+def human_sort(lst):
+    return sorted(lst, key=natural_sort_key)
+def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
+    if title_row_num==1:
+        pattern_list = ["trained pattern","Overlapping pattern",
+                        "Non-overlapping pattern"]
+    else:
+        pattern_list = ["trained\npattern","Overlapping\npattern",
+                        "Non-overlapping\npattern"]
+
+    for pr_no, pattern in enumerate(pattern_list):
+        if pr_no==0:
+            axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(0,1.5)
+            axs_pat.imshow(pat_fr)
+        elif pr_no==1:
+            axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(4,1.5)
+            axs_pat.imshow(pat_fr)
+        elif pr_no ==2:
+            axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
+            pat_fr = bpf.create_grid_image(17,1.5)
+            axs_pat.imshow(pat_fr)
+        else:
+            print("exception in pattern number")
+        pat_pos = axs_pat.get_position()
+        new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width,
+                        pat_pos.height]
+        axs_pat.set_position(new_pat_pos)
+        axs_pat.axis('off')
+        axs_pat.set_title(pattern,fontsize=10)
+
+def plot_points(axs_points_img,xoffset,yoffset,zoom):
+    first_spot_grid_points = [1, 3, 5, 7, 9, 
+                              11, 13, 
+                              16, 18, 20, 22, 24]
+    points_img = bpf.create_grid_points_with_text(first_spot_grid_points,
+                                                  spot_proportional_size=3,
+                                                  image_size=(300, 200),
+                                                  grid_size=(24, 24), 
+                                                  spot_color=(0,0,0),
+                                                  padding=30, 
+                                                  background_color=(255,255,255),
+                                                  text_color=(0, 0, 0), 
+                                                  font_size=150,
+                                                  show_text=True, 
+                                                  num_columns=12,
+                                                  txt_spacing=100,
+                                                  min_padding_above_text=300)
+
+    axs_points_img.imshow(points_img)
+    axs_points_img.axis('off')
+    axs_points_img.set_title("Distribution of points in the ROI\n(point number)")
+    pat_pos = axs_points_img.get_position()
+    new_pat_pos = [pat_pos.x0+xoffset, pat_pos.y0+yoffset, pat_pos.width*zoom,
+                   pat_pos.height*zoom]
+    axs_points_img.set_position(new_pat_pos)
+
+
+
+
+
 
 def int_to_roman(num):
     # Helper function to convert integer to Roman numeral
@@ -76,7 +143,7 @@ def int_to_roman(num):
         i += 1
     return roman_num
 
-def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
+def label_axis(axis_list, letter_label, xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
         roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
         axs.text(xpos, ypos, f'{letter_label}{roman_no}', 
@@ -92,154 +159,72 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
         # Shrink the plot
         axs.set_position(new_pos)
 
+def norm_values(cell_list,val_to_plot):
+    cell_list = cell_list.copy()
+    #print(f"cell list inside func : {cell_list}")
+    cell_grp=cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p,pat in pat_grp:
+            #print(f"c:{c}, p:{p}")
+            pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
+            pp_grp = pat.groupby(by="pre_post_status")
+            for pr, pp in pp_grp:
+                norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
+                norm_val = (norm_val/pre_val)*100
+                cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
+    return cell_list
 
-def plot_image(image,axs_img,xoffset,yoffset,pltscale):
-    axs_img.imshow(image, cmap='gray')
-    pos = axs_img.get_position()  # Get the original position
-    new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
-               pos.height*pltscale]
-    # Shrink the plot
-    axs_img.set_position(new_pos)
-    axs_img.axis('off')       
-        
-
-def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
-    cell_grp=all_trial_cell_df.groupby(by="cell_ID")
-    c_df = all_trial_cell_df.copy()
-    for cell, cell_data in cell_grp:
-        pps_grp = cell_data.groupby(by="pre_post_status")
-        for pps,pps_data in pps_grp:
-            if pps=="pre":
-                pass
-            elif pps=="post_3":
-                pass
-            else:
-                pass
-            trial_grp = pps_data.groupby(by="trial_no")
-            for trial_no,trial_data in trial_grp:
-                frame_grp = trial_data.groupby(by="frame_id")
-                for frame, frame_data in frame_grp:
-                    pre_data =c_df[(c_df["cell_ID"]==cell)&(c_df["pre_post_status"]=="pre")&(c_df["trial_no"]==trial_no)&(c_df["frame_id"]==frame)][field_to_plot].to_numpy()
-                    norm_data =(frame_data[field_to_plot].to_numpy()/pre_data)*100
-                    if norm_data==0:
-                        norm_data=np.nan
-                        print(f"pre_data: {pre_data},zero is there")
-                    else:
-                        norm_data=norm_data
-                        print(f"pre_data, {pre_data} no zero")
-                    #print(f"pps:{pps}, pre: {pre_data}" )
-                    c_df[field_to_plot].iloc[(c_df["cell_ID"]==cell)&(c_df["pre_post_status"]==pps)&(c_df["trial_no"]==trial_no)&(c_df["frame_id"]==frame)]=norm_data
-    return c_df
+def del_values(cell_list,val_to_plot):
+    cell_list = cell_list.copy()
+    #print(f"cell list inside func : {cell_list}")
+    cell_grp=cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p,pat in pat_grp:
+            #print(f"c:{c}, p:{p}")
+            pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
+            pp_grp = pat.groupby(by="pre_post_status")
+            for pr, pp in pp_grp:
+                del_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
+                del_val = del_val-pre_val
+                cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=del_val
+    return cell_list
 
 
-def plot_threshold_timing(training_data, sc_data_dict, fig, axs):
-    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-    cell_grp = training_data.groupby(by="cell_ID")
-    lrns = []
-    non_lrns = []
-    
-    # Separate learners and non-learners
-    for cell, cell_data in cell_grp:
-        if cell in learners:
-            lrns.append(cell_data)
-        elif cell in non_learners:
-            non_lrns.append(cell_data)
-        else:
-            print(cell, "no selection")
-            continue
-
-    # Concatenate learners and non-learners dataframes
-    lrns = pd.concat(lrns)
-    lrns["l_stat"] = "learners"
-    non_lrns = pd.concat(non_lrns)
-    non_lrns["l_stat"] = "non\nlearners"
-    all_df = pd.concat([lrns, non_lrns])
-
-    # Set palette for learners and non-learners
-    palette = {"learners": bpf.CB_color_cycle[0], "non\nlearners": bpf.CB_color_cycle[1]}
-    
-    # Pointplot for mean +/- SD
-    sns.pointplot(data=all_df, x="l_stat", y="cell_thresh_time", hue="l_stat",
-                  palette=palette, ci="sd", capsize=0.15, dodge=True, ax=axs)
-
-    # Stripplot for individual points
-    sns.stripplot(data=all_df, x="l_stat", y="cell_thresh_time",
-                  palette=palette, alpha=0.5, ax=axs, dodge=True)
-
-    # Customize labels, limits, and hide spines
-    axs.set_ylabel("rise time from \nprojection (ms)")
-    axs.set_xlabel(None)
-    axs.set_ylim(0, 20)
-    axs.set_xlim(-0.5,1.75)
-    axs.spines[['right', 'top']].set_visible(False)
-
-    # Perform Mann-Whitney U test to compare the distributions
-    learners_data = all_df[all_df["l_stat"] == "learners"]["cell_thresh_time"]
-    non_learners_data = all_df[all_df["l_stat"] == "non\nlearners"]["cell_thresh_time"]
-    
-    # Mann-Whitney U test
-    stat_test = spst.mannwhitneyu(learners_data, non_learners_data, alternative='two-sided')
-    pval = stat_test.pvalue
-
-    # Convert p-value to asterisks
-    pval_asterisks = bpf.convert_pvalue_to_asterisks(pval)
-
-    # Annotate the p-value on the plot
-    annot = Annotator(axs, [("learners", "non\nlearners")], data=all_df,
-                      x="l_stat", y="cell_thresh_time", palette=palette)
-    
-    # Set custom annotations using the asterisks conversion and then annotate
-    annot.set_custom_annotations([pval_asterisks])
-    annot.annotate()
-
-    # Get legend handles and labels
-    handles, labels = axs.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-
-    # Set a custom legend
-    fig.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, 0.32),
-               ncol=6, loc='upper center')
-
-    # Remove the axis legend
-    axs.legend_.remove()
-
-def plot_desensitisation_field(training_data,sc_data_dict,fig,axs):
-    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-    cell_grp = training_data.groupby(by="cell_ID")
-    lrns = []
-    non_lrns = []
-
-    # Separate learners and non-learners
-    for cell, cell_data in cell_grp:
-        if cell in learners:
-            lrns.append(cell_data)
-        elif cell in non_learners:
-            non_lrns.append(cell_data)
-        else:
-            print(cell, "no selection")
-            continue
-
-    # Concatenate learners and non-learners dataframes
-    lrns = pd.concat(lrns)
-    lrns["l_stat"] = "learners"
-    non_lrns = pd.concat(non_lrns)
-    non_lrns["l_stat"] = "non\nlearners"
-    all_df = pd.concat([lrns, non_lrns])
-
-    # Set palette for learners and non-learners
-    palette = {"learners": bpf.CB_color_cycle[0], "non\nlearners": bpf.CB_color_cycle[1]}
-    sns.lineplot(data=all_df, x="l_stat", y="trace", hue="l_stat",
-                 palette=palette,ax=axs)
+def norm_values_all_trials(cell_list, val_to_plot):
+    cell_list = cell_list.copy()
+    # Group by 'cell_ID'
+    cell_grp = cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p, pat in pat_grp:
+            trial_grp = pat.groupby(by="trial_no")
+            for trial, trial_data in trial_grp:
+                pre_val = trial_data[trial_data["pre_post_status"] == "pre"][val_to_plot].values
+                if len(pre_val) == 0:
+                    continue
+                else:
+                    pre_val = pre_val[0]  # Assuming there is only one 'pre' value per group
+                    pp_grp = trial_data.groupby(by="pre_post_status")
+                    for pr, pp in pp_grp:
+                        norm_val = pp[val_to_plot].values
+                        norm_val = (norm_val / pre_val) * 100
+                        # Using vectorized operations for efficiency
+                        mask_cell_ID = cell_list["cell_ID"] == c
+                        mask_frame_id = cell_list["frame_id"] == p
+                        mask_pre_post_status = cell_list["pre_post_status"] == pr
+                        mask_trial_no = cell_list["trial_no"] == trial
+                        combined_mask = mask_cell_ID & mask_frame_id & mask_pre_post_status & mask_trial_no
+                        cell_list.loc[combined_mask, val_to_plot] = norm_val
+    return cell_list
 
 
 
 
 
 
-
-def plot_figure_3(extracted_feature_pickle_file_path,
+def plot_supp_figure_3(extracted_feature_pickle_file_path,
                   all_trails_all_Cells_path,
                   cell_categorised_pickle_file,
                   training_data_pickle_file,
@@ -329,7 +314,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_3.png"
+    outpath = f"{outdir}/supp_figure_3.png"
     #outpath = f"{outdir}/figure_3.svg"
     #outpath = f"{outdir}/figure_3.pdf"
     plt.savefig(outpath,bbox_inches='tight')
@@ -391,7 +376,7 @@ def main():
     globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_3(pklpath,alltrialspath,scpath,trainingpath,firing_properties_path,cell_stat_path,illustration_path,globoutdir)
+    plot_supp_figure_3(pklpath,alltrialspath,scpath,trainingpath,firing_properties_path,cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

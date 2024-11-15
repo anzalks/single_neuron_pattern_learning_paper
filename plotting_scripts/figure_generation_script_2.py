@@ -765,9 +765,9 @@ def plot_figure_2(extracted_feature_pickle_file_path,
             fontsize=16, fontweight='bold', ha='center', va='center')
     
     axs_pat_ill = fig.add_subplot(gs[:3, 6:])
-    plot_image(patillustration,axs_pat_ill,-0.15,0,2)    
+    plot_image(patillustration,axs_pat_ill,-0.15,-0.02,2.2)    
     
-    axs_pat_ill.text(-0.1,0.925,'B',transform=axs_pat_ill.transAxes,    
+    axs_pat_ill.text(0.01,0.9,'B',transform=axs_pat_ill.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     axs_vpat1=fig.add_subplot(gs[3,0])
