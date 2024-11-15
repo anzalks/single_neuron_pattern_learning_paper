@@ -1340,12 +1340,13 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
         ax.set_xlabel("EPSP amplitude\npre (mV)")
         
         if lrn == "learners":
-            ax.set_ylabel("% LTP post-training")
+            ax.set_ylabel("change in EPSP\namplitude post-training")
         else:
             ax.set_yticklabels([])
         
         # Legend customization
-        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.1), 
+        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.3), 
+                  handletextpad=0.05,
                   frameon=True,ncol=1)
 
 def plot_figure_4(extracted_feature_pickle_file_path,
@@ -1418,7 +1419,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
 
     axs_bar = fig.add_subplot(gs[12:14,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
-    move_axis([axs_bar],0,-0.05,1)
+    move_axis([axs_bar],0,-0.03,1)
     axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
                  fontsize=16, fontweight='bold', ha='center',
                  va='center')
