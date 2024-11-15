@@ -835,10 +835,10 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
                 # Convert p-value to asterisks
                 annotation_text = bpf.convert_pvalue_to_asterisks(p_value)
 
-                # Annotate the plot at a fixed y-axis position
-                x_pos = order.index(frame_id)
-                ax.text(x_pos, annotation_y_position, annotation_text, 
-                        ha='center', va='bottom', fontsize=8, color='black')
+                ## Annotate the plot at a fixed y-axis position
+                #x_pos = order.index(frame_id)
+                #ax.text(x_pos, annotation_y_position, annotation_text, 
+                #        ha='center', va='bottom', fontsize=8, color='black')
     
     # Customize axes for learners
     axs_lr.set_ylim(-50, 500)
