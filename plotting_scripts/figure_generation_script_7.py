@@ -28,6 +28,7 @@ import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 import baisic_plot_fuctnions_and_features as bpf
+from matplotlib.lines import Line2D
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -114,6 +115,17 @@ def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweigh
                  transform=axs.transAxes, fontsize=fontsize, 
                  fontweight=fontweight, ha='center', va='center')
 
+def move_axis(axs_list,xoffset,yoffset,pltscale):
+    for axs in axs_list:
+        pos = axs.get_position()  # Get the original position
+        new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+                   pos.height*pltscale]
+        # Shrink the plot
+        axs.set_position(new_pos)
+
+
+
+
 
 #def gama_fit(expt,alp,bet,gam):
 #    return expt-(((bet*expt)/(gam+expt))*expt)-alp
@@ -173,6 +185,8 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
     axs.text(0.5, 0.7, f'γ_pre = {np.around(param_pre[0], 1)}', transform=axs.transAxes, fontsize=12, ha='center')
     
     return x, y
+
+
 
 def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_dict, cell_type, fig, axs1, axs2, axs3):
     """
@@ -246,6 +260,97 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
     for pat_num in range(3):
         pre_responses, post_responses = response_dict[pat_num]
         eq_fit(pre_responses, post_responses, pat_num, cell_type, fig, axs[pat_num])
+
+    # Add a legend for non-learners in pattern 1
+    if cell_type == "non-learners":
+        legend_elements = [
+            Line2D([0], [0], marker='o', color='w',
+                   markerfacecolor=bpf.pre_color, 
+                   markersize=10, label='Pre training'),
+            Line2D([0], [0], marker='o', color='w', 
+                   markerfacecolor=bpf.CB_color_cycle[0],
+                   markersize=10, label='Learner\npost training'),
+            Line2D([0], [0], marker='o', color='w',
+                   markerfacecolor=bpf.CB_color_cycle[1],
+                   markersize=10, label='Non-learner\npost training')
+        ]
+        axs[1].legend(handles=legend_elements, 
+                      bbox_to_anchor=(0.5,-0.6),ncol=3,
+                      loc='center', frameon=False)
+
+
+#def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_dict, cell_type, fig, axs1, axs2, axs3):
+#    """
+#    Plots the expected vs observed responses for all trials, separated by learners and non-learners.
+#    """
+#    # Filter cells based on type
+#    if cell_type == "learners":
+#        lrn = sc_data_dict["ap_cells"]["cell_ID"].unique()
+#        alltrial_Df = alltrial_Df[alltrial_Df["cell_ID"].isin(lrn)]
+#    elif cell_type == "non-learners":
+#        nlrn = sc_data_dict["an_cells"]["cell_ID"].unique()
+#        alltrial_Df = alltrial_Df[alltrial_Df["cell_ID"].isin(nlrn)]
+#
+#    cell_grp = alltrial_Df.groupby(by='cell_ID')
+#    axs = [axs1, axs2, axs3]
+#
+#    # Initialize lists to store responses
+#    response_dict = {i: ([], []) for i in range(3)}
+#
+#    # Iterate over each cell
+#    for c, cell in cell_grp:
+#        if c == "2022_12_12_cell_5":
+#            continue
+#
+#        pp_grps = cell.groupby(by="pre_post_status")
+#        for pp, pp_data in pp_grps:
+#            if pp not in ['pre', 'post_3']:
+#                continue
+#
+#            color = bpf.pre_color if pp == "pre" else bpf.CB_color_cycle[0] if cell_type == "learners" else bpf.CB_color_cycle[1]
+#
+#            pats = pp_data[pp_data["frame_status"] == "pattern"]["frame_id"].unique()
+#            trial_grp = pp_data.groupby(by="trial_no")
+#
+#            for trial, trial_data in trial_grp:
+#                ppresp = pp_data[pp_data["trial_no"] == trial].reset_index(drop=True)
+#                for pat in pats:
+#                    pat_num = int(pat.split("_")[-1])
+#                    if pat_num not in response_dict:
+#                        continue
+#
+#                    point_list = bpf.map_points_to_patterns(pat)
+#                    pat_val = float(ppresp[ppresp["frame_id"] == pat]["max_trace"].values)
+#                    point_sum_val = np.sum(ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"])
+#
+#                    # Append to the correct list based on 'pre' or 'post' status
+#                    response_list = response_dict[pat_num][0 if pp == "pre" else 1]
+#                    response_list.append([point_sum_val, pat_val])
+#
+#                    # Plot scatter points
+#                    axs[pat_num].axline([0, 0], [1, 1], linestyle=':', color=bpf.CB_color_cycle[6], linewidth=2)
+#                    axs[pat_num].scatter(point_sum_val, pat_val, color=color, alpha=0.8, linewidth=1, marker=".")
+#                    axs[pat_num].spines[['right', 'top']].set_visible(False)
+#                    axs[pat_num].set_xlim(-0.5, 12)
+#                    axs[pat_num].set_ylim(-0.5, 12)
+#                    axs[pat_num].set_xticks(np.arange(-0.5, 12, 4))
+#                    axs[pat_num].set_yticks(np.arange(-0.5, 12, 4))
+#                    
+#                    if pat_num == 0:
+#                        axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
+#                    else:
+#                        axs[pat_num].set_yticklabels([])
+#
+#                    if cell_type == "learners":
+#                        axs[pat_num].set_xticklabels([])
+#                    else:
+#                        if pat_num == 1:
+#                            axs[pat_num].set_xlabel("expected response (mV)")
+#
+#    # Fit and plot the gamma model for each pattern
+#    for pat_num in range(3):
+#        pre_responses, post_responses = response_dict[pat_num]
+#        eq_fit(pre_responses, post_responses, pat_num, cell_type, fig, axs[pat_num])
 
 
 
@@ -583,16 +688,16 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
 
     #plot sumamtion illustration
-    axs_illu = fig.add_subplot(gs[0:3,1:4])
-    plot_image(sum_illust,axs_illu,-0.07,0.02,2)
-    axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
+    axs_illu = fig.add_subplot(gs[0:3,1:5])
+    plot_image(sum_illust,axs_illu,-0.125,0,2)
+    axs_illu.text(0.05,0.925,'A',transform=axs_illu.transAxes,
                  fontsize=16, fontweight='bold', ha='center', va='center')
     #plot patterns
     axs_pat_1 = fig.add_subplot(gs[3:4,0:1])
     axs_pat_2 = fig.add_subplot(gs[3:4,2:3])
     axs_pat_3 = fig.add_subplot(gs[3:4,4:5])
 
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0.05,0.03,1)
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0.05,0,1)
 
 
 
@@ -605,7 +710,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
                                          sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
-    label_axis(axs_ex_sm_l_list, "B")
+    label_axis(axs_ex_sm_l_list, "B", xpos=-0.1, ypos=1.08)
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
     axs_ex_sm4 = fig.add_subplot(gs[6:8,0:2])
@@ -618,7 +723,8 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #axs_ex_sm5.set_title("non-learners")
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
-    label_axis(axs_ex_sm_nl_list,"C")
+    move_axis(axs_ex_sm_nl_list,xoffset=0,yoffset=-0.01,pltscale=1) 
+    label_axis(axs_ex_sm_nl_list,"C", xpos=-0.1, ypos=1.08)
 
 
 

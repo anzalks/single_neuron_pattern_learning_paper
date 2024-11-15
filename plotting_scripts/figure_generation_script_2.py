@@ -783,7 +783,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     axs_pat1 = fig.add_subplot(gs[6,0])
     axs_pat2 = fig.add_subplot(gs[6,2])
     axs_pat3 = fig.add_subplot(gs[6,4])
-    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.03,1)
+    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.04,1)
     
     
 
