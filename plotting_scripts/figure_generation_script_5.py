@@ -260,7 +260,7 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
             if pat_num==0:
                 sns.despine(fig=None, ax=axs, top=True, right=True, 
                             left=False, bottom=False, offset=None, trim=False)
-                axs.set_ylabel("% change in\nEPSP AHP")
+                axs.set_ylabel("% change in PSH")
                 axs.set_xlabel(None)
                 #axs[pat_num].set_yticks([])
             elif pat_num==1:
@@ -360,7 +360,7 @@ def plot_response_summary_bar(sc_data_dict, fig, axs):
 
     # Formatting plot
     axs.axhline(baseline, linestyle=":", color="k", alpha=0.6)
-    axs.set_ylabel("% change in\nEPSP amplitude")
+    axs.set_ylabel("% change in\n PSH amplitude")
     axs.set_xlabel(None)
     #axs.set_xlabel("pattern type")
     
@@ -374,7 +374,7 @@ def plot_response_summary_bar(sc_data_dict, fig, axs):
 
     # Adjusting the legend
     if axs.legend_ is not None:
-        legend = axs.legend(bbox_to_anchor=(1.05, 0.9), loc='center', frameon=False)
+        legend = axs.legend(bbox_to_anchor=(1.05, 1), loc='center', frameon=False)
         legend.set_title('')
         legend.get_frame().set_alpha(0)  # Make legend background transparent
 
@@ -460,7 +460,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     
     # Customize axes for learners
     axs_lr.set_ylim(-50, 500)
-    axs_lr.set_ylabel("% change in\nEPSP amplitude")
+    axs_lr.set_ylabel("% change in\nPSH amplitude")
     axs_lr.set_xlabel(None)
     axs_lr.spines[['right', 'top']].set_visible(False)
     axs_lr.set_xticklabels([])#x_ticklabels)
@@ -528,8 +528,8 @@ def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
     axs.set_ylim(-5,5)
     axs.set_xlim(-5,5)
     axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("EPSP AHP post\n30 min(mV)")
-    axs.set_xlabel("EPSP AHP pre (mV)")
+    axs.set_ylabel("PSH post\n30 min(mV)")
+    axs.set_xlabel("PSH pre (mV)")
     axs.legend(loc='upper center', bbox_to_anchor=(1.25, 1.05),frameon=False, 
                   ncol=1)
 
@@ -575,10 +575,22 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
         corr_coeff, p_value = spearmanr(x, y)
         
         # Scatter plot
-        ax.scatter(x, y, color=color, alpha=0.9, 
-                   marker=pattern_info[pat]["marker"], 
-                   label=pattern_info[pat]["label"])
-        
+        if pat== "pattern_0":
+            ax.scatter(x, y, color=color, alpha=0.9, 
+                       marker=pattern_info[pat]["marker"],
+                       facecolors='none',
+                       label=pattern_info[pat]["label"])
+        else:
+            ax.scatter(x, y, color=color, alpha=0.9, 
+                       marker=pattern_info[pat]["marker"], 
+                       label=pattern_info[pat]["label"])
+
+
+
+
+
+
+
         if pat=="pattern_0":
             # Display correlation coefficient and p-value on the plot
             ax.text(0.05, -0.4, f"trained\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
@@ -606,12 +618,13 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
         ax.set_xlabel("EPSP amplitude\npre (mV)")
         
         if lrn == "learners":
-            ax.set_ylabel("% LTP post-training")
+            ax.set_ylabel("chang in PSH\npost-training (mV)")
         else:
             ax.set_yticklabels([])
         
         # Legend customization
-        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.1), 
+        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.3),
+                  handletextpad=0.05,
                   frameon=True,ncol=1)
 
 
@@ -674,7 +687,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     #plot illustration of PSH
     axs_illu = fig.add_subplot(gs[0:2,1:3])
     plot_image(psh_illust,axs_illu,0,0,1.5)
-    move_axis([axs_illu],0.1,0.025,1)
+    move_axis([axs_illu],0.1,0.035,1)
     axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
                  fontsize=16, fontweight='bold', ha='center', va='center')
     
@@ -682,7 +695,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
     axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
     axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.05,1)
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.03,1)
 
     #plot distribution epsp for learners and non-leaners
     axs_ex_pat1 = fig.add_subplot(gs[2:7,0:3])
@@ -710,7 +723,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
 
     axs_bar = fig.add_subplot(gs[12:14,0:3])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
-    move_axis([axs_bar],0,-0.05,1)
+    move_axis([axs_bar],0,-0.03,1)
     axs_bar.text(0.05,1,'D',transform=axs_bar.transAxes,    
                  fontsize=16, fontweight='bold', ha='center',
                  va='center')

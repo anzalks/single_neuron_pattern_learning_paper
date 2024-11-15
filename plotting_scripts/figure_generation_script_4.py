@@ -1295,10 +1295,27 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
         corr_coeff, p_value = spearmanr(x, y)
         
         # Scatter plot
-        ax.scatter(x, y, color=color, alpha=0.9, 
-                   marker=pattern_info[pat]["marker"], 
-                   label=pattern_info[pat]["label"])
-        
+        if pat== "pattern_0":
+            ax.scatter(x, y, color=color, alpha=0.9, 
+                       marker=pattern_info[pat]["marker"],
+                       facecolors='none',
+                       label=pattern_info[pat]["label"])
+        else:
+            ax.scatter(x, y, color=color, alpha=0.9, 
+                       marker=pattern_info[pat]["marker"], 
+                       label=pattern_info[pat]["label"])      
+
+
+
+
+
+
+
+
+
+
+
+
         if pat=="pattern_0":
             # Display correlation coefficient and p-value on the plot
             ax.text(0.05, -0.4, f"trained\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
