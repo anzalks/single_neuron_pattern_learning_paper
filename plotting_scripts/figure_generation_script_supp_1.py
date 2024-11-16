@@ -355,8 +355,6 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df, val_to_plot, 
 
 
 
-
-
 def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles):
     """
     This function loops through all variables and creates subplots for each.
@@ -364,6 +362,7 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
     and each row has columns 0-2 for pattern_0, pattern_1, pattern_2.
     """
     num_patterns = 3  # Number of patterns (pattern_0, pattern_1, pattern_2)
+    all_axes = []  # List to collect all axes
 
     # Loop through the list of variables to plot for both pot_cells and dep_cells
     for idx, (val_to_plot, y_label, title) in enumerate(zip(list_of_variables, y_labels, subplot_titles)):
@@ -386,9 +385,16 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
             # Set title and label only once to avoid overlap
             if pattern_idx == 0:
                 axs_p.set_ylabel(y_label)
+            if pattern == "pattern_0":
+                pattern = "trained"
+            elif pattern == "pattern_1":
+                pattern = "overlapping"
+            else:
+                pattern = "non-overlapping"
+
             
             axs_p.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
-            label_axis([axs_p], f"{val_to_plot}_p_{pattern}", xpos=-0.1, ypos=1.1)
+            all_axes.append(axs_p)  # Collect axis
 
         # Plot for dep_cells
         for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
@@ -403,24 +409,110 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
             # Set title and label only once to avoid overlap
             if pattern_idx == 0:
                 axs_d.set_ylabel(y_label)
+            if pattern == "pattern_0":
+                pattern = "trained"
+            elif pattern == "pattern_1":
+                pattern = "overlapping"
+            else:
+                pattern = "non-overlapping"
             
             axs_d.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
-            label_axis([axs_d], f"{val_to_plot}_d_{pattern}", xpos=-0.1, ypos=1.1)
+            all_axes.append(axs_d)  # Collect axis
+
+    # Label all axes at once after they have been created
+    label_axis(all_axes, xpos=-0.05, ypos=1.2)
     
     # Adjust layout to prevent overlapping
     plt.tight_layout()
 
 
-def label_axis(axes_list, label, xpos=0, ypos=1):
+#def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles):
+#    """
+#    This function loops through all variables and creates subplots for each.
+#    Each variable gets its own set of rows (one for pot_cells, one for dep_cells),
+#    and each row has columns 0-2 for pattern_0, pattern_1, pattern_2.
+#    """
+#    num_patterns = 3  # Number of patterns (pattern_0, pattern_1, pattern_2)
+#
+#    # Loop through the list of variables to plot for both pot_cells and dep_cells
+#    for idx, (val_to_plot, y_label, title) in enumerate(zip(list_of_variables, y_labels, subplot_titles)):
+#        # Calculate row indices
+#        pot_start_row = idx * 4       # 4 rows per variable (2 for pot_cells, 2 for dep_cells)
+#        pot_end_row = pot_start_row + 2
+#        dep_start_row = pot_end_row
+#        dep_end_row = dep_start_row + 2
+#
+#        # Plot for pot_cells
+#        for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
+#            col_start = pattern_idx
+#            col_end = col_start + 1
+#
+#            # Create subplot for pot_cells
+#            axs_p = fig.add_subplot(gs[pot_start_row:pot_end_row, col_start:col_end])
+#            plot_cell_category_classified_EPSP_features(
+#                sc_data_dict["ap_cells"], val_to_plot, fig, axs_p, None, None, "pot_cells", pattern
+#            )
+#            # Set title and label only once to avoid overlap
+#            if pattern_idx == 0:
+#                axs_p.set_ylabel(y_label)
+#            
+#            axs_p.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
+#            #label_axis([axs_p], f"{val_to_plot}_p_{pattern}", xpos=-0.1, ypos=1.1)
+#            label_axis([axs_p], xpos=-0.1, ypos=1.1)
+#
+#        # Plot for dep_cells
+#        for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
+#            col_start = pattern_idx
+#            col_end = col_start + 1
+#
+#            # Create subplot for dep_cells
+#            axs_d = fig.add_subplot(gs[dep_start_row:dep_end_row, col_start:col_end])
+#            plot_cell_category_classified_EPSP_features(
+#                sc_data_dict["an_cells"], val_to_plot, fig, axs_d, None, None, "dep_cells", pattern
+#            )
+#            # Set title and label only once to avoid overlap
+#            if pattern_idx == 0:
+#                axs_d.set_ylabel(y_label)
+#            if pattern=="pattern_0":
+#                pattern="trained"
+#            elif pattern=="pattern_1":
+#                pattern="overlapping"
+#            else:
+#                pattern = "non-overlapping"
+#            
+#            axs_d.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
+#            #label_axis([axs_d], f"{val_to_plot}_d_{pattern}", xpos=-0.1, ypos=1.1)
+#            label_axis([axs_p], xpos=-0.05, ypos=1.1)
+#    
+#    # Adjust layout to prevent overlapping
+#    plt.tight_layout()
+
+
+
+def label_axis(axes, xpos=-0.05, ypos=1.1, fontsize=14):
     """
-    Adds a label to the given axes at the specified position.
-    Ensures that the label does not overlap with existing titles.
+    Adds labels to each subplot in the format 'Ai', 'Aii', etc.
     """
-    for ax in axes_list:
-        # Only add the label if there is no existing title
-        if ax.get_title() == "":
-            ax.text(xpos, ypos, label, transform=ax.transAxes, 
-                    fontsize=10, fontweight='normal', va='top')
+    row_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    col_labels = ['i', 'ii', 'iii']
+    
+    for idx, ax in enumerate(axes):
+        row = idx // len(col_labels)
+        col = idx % len(col_labels)
+        label = f"{row_labels[row]}{col_labels[col]}"
+        ax.text(xpos, ypos, label, transform=ax.transAxes,
+                fontsize=fontsize, fontweight='bold', va='top', ha='right', color='black')
+
+#def label_axis(axes_list, label, xpos=0, ypos=1):
+#    """
+#    Adds a label to the given axes at the specified position.
+#    Ensures that the label does not overlap with existing titles.
+#    """
+#    for ax in axes_list:
+#        # Only add the label if there is no existing title
+#        if ax.get_title() == "":
+#            ax.text(xpos, ypos, label, transform=ax.transAxes, 
+#                    fontsize=10, fontweight='normal', va='top')
 
 
 
