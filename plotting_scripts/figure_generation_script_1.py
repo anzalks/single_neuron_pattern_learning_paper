@@ -526,71 +526,73 @@ def inset_plot_traces(cell_data,field_to_plot,
 #    # Improve layout
 #    fig.tight_layout()
 
+# Updated function to include standard deviation display on the plot
+def plot_bar_distribution(ax, data, color, label, show_ylabel=True, remove_ytick_labels=False):
+    if len(data) > 1:
+        # Calculate the mean and standard deviation
+        mean_val = data.mean()
+        std_val = data.std()
+        
+        # Plot the histogram as a bar plot (without normalizing the counts)
+        n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
+        
+        # Overlay the mean line and shaded region for standard deviation
+        ax.axvline(mean_val, color='red', linestyle='--', linewidth=1.5)
+        ax.fill_betweenx(
+            y=[0, n.max()],
+            x1=mean_val - std_val,
+            x2=mean_val + std_val,
+            color='red',
+            alpha=0.3
+        )
+        
+        # Add text to show the standard deviation
+        ax.text(
+            mean_val + std_val, n.max() * 0.9, 
+            f"σ = {std_val:.2f}", 
+            color='red', 
+            fontsize=10,
+            va='center'
+        )
+        
+        ax.set_xlabel(f'Normalized\n{label}')
+        if show_ylabel:
+            ax.set_ylabel('Count')
+        if remove_ytick_labels:
+            ax.set_yticklabels([])
+        
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        return n.max(), bins
+    else:
+        ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+        return 0, None
 
-def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
-    #, axs_cell_t, axs_field_t):
-    """
-    Plot bar distributions of `max_trace`, `min_field`, `max_trace_t`, and `min_field_t`
-    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
-    
-    Parameters:
-    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
-    - fig (plt.Figure): Figure object.
-    - axs_cell (plt.Axes): Axis for `max_trace` plot.
-    - axs_field (plt.Axes): Axis for `min_field` plot.
-    - axs_cell_t (plt.Axes): Axis for `max_trace_t` plot.
-    - axs_field_t (plt.Axes): Axis for `min_field_t` plot.
-    """
-    
-    # Check if required columns exist in the DataFrame
+
+def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field): 
+                     #axs_cell_t, axs_field_t):
     required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
                      'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
     if not all(col in feature_extracted_df.columns for col in required_cols):
         raise ValueError("Input DataFrame is missing required columns.")
     
-    # Step 1: Filter data for 'pre' status
     filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
-    
-    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
     mean_combined_df = filtered_df[
         filtered_df['trial_no'].isin([0, 1, 2])
     ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field', 'max_trace_t', 'min_field_t']].mean().reset_index()
     
-    # Step 3: Merge the combined mean back to the original filtered data
     merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
-    
-    # Step 4: Normalize the columns using the combined mean
     merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
     merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
     merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
     merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
     
-    # Helper function to plot bar distributions without y-axis normalization
-    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
-        if len(data) > 1:
-            # Plot the histogram as a bar plot (without normalizing the counts)
-            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
-            ax.set_xlabel(f'Normalized\n{label}')
-            
-            if show_ylabel:
-                ax.set_ylabel('Count')
-            if remove_ytick_labels:
-                ax.set_yticklabels([])  # Remove only the y-axis tick labels
-            
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            return n.max(), bins  # Return the maximum count and bins for x-axis scaling
-        else:
-            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
-            return 0, None
-
-    # Step 5: Plot bar distributions for each feature on their respective axes
+    # Plot bar distributions using the updated bar distribution function
     max_count_cell, bins_cell = plot_bar_distribution(
         axs_cell, 
         merged_df['max_trace'], 
         color='black', 
         label='EPSP', 
-        title='EPSP', 
         show_ylabel=True
     )
     
@@ -599,7 +601,6 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
         merged_df['min_field'], 
         color='black', 
         label='LFP', 
-        title='LFP', 
         show_ylabel=False, 
         remove_ytick_labels=True
     )
@@ -609,7 +610,6 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
     #    merged_df['max_trace_t'], 
     #    color='black', 
     #    label='EPSP (t)', 
-    #    title='EPSP (t)', 
     #    show_ylabel=True
     #)
     #
@@ -618,30 +618,20 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
     #    merged_df['min_field_t'], 
     #    color='black', 
     #    label='LFP (t)', 
-    #    title='LFP (t)', 
     #    show_ylabel=False, 
     #    remove_ytick_labels=True
     #)
     
-    # Step 6: Set the same x-axis limits for `max_trace` and `min_field`
     if bins_cell is not None and bins_field is not None:
-        combined_xlim_cell = (
-            min(bins_cell.min(), bins_field.min()), 
-            max(bins_cell.max(), bins_field.max())
-        )
+        combined_xlim_cell = (min(bins_cell.min(), bins_field.min()), max(bins_cell.max(), bins_field.max()))
         axs_cell.set_xlim(combined_xlim_cell)
         axs_field.set_xlim(combined_xlim_cell)
     
-    ## Step 7: Set the same x-axis limits for `max_trace_t` and `min_field_t`
     #if bins_cell_t is not None and bins_field_t is not None:
-    #    combined_xlim_cell_t = (
-    #        min(bins_cell_t.min(), bins_field_t.min()), 
-    #        max(bins_cell_t.max(), bins_field_t.max())
-    #    )
+    #    combined_xlim_cell_t = (min(bins_cell_t.min(), bins_field_t.min()), max(bins_cell_t.max(), bins_field_t.max()))
     #    axs_cell_t.set_xlim(combined_xlim_cell_t)
     #    axs_field_t.set_xlim(combined_xlim_cell_t)
-    
-    # Step 8: Set the same y-axis limits for each pair of plots
+
     max_count_1 = max(max_count_cell, max_count_field)
     axs_cell.set_ylim(0, max_count_1 * 1.01)
     axs_field.set_ylim(0, max_count_1 * 1.01)
@@ -649,6 +639,130 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
     #max_count_2 = max(max_count_cell_t, max_count_field_t)
     #axs_cell_t.set_ylim(0, max_count_2 * 1.01)
     #axs_field_t.set_ylim(0, max_count_2 * 1.01)
+
+##everything works 
+#def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field,
+#                     axs_cell_t, axs_field_t):
+#    """
+#    Plot bar distributions of `max_trace`, `min_field`, `max_trace_t`, and `min_field_t`
+#    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
+#    
+#    Parameters:
+#    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+#    - fig (plt.Figure): Figure object.
+#    - axs_cell (plt.Axes): Axis for `max_trace` plot.
+#    - axs_field (plt.Axes): Axis for `min_field` plot.
+#    - axs_cell_t (plt.Axes): Axis for `max_trace_t` plot.
+#    - axs_field_t (plt.Axes): Axis for `min_field_t` plot.
+#    """
+#    
+#    # Check if required columns exist in the DataFrame
+#    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
+#                     'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
+#    if not all(col in feature_extracted_df.columns for col in required_cols):
+#        raise ValueError("Input DataFrame is missing required columns.")
+#    
+#    # Step 1: Filter data for 'pre' status
+#    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+#    
+#    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
+#    mean_combined_df = filtered_df[
+#        filtered_df['trial_no'].isin([0, 1, 2])
+#    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field', 'max_trace_t', 'min_field_t']].mean().reset_index()
+#    
+#    # Step 3: Merge the combined mean back to the original filtered data
+#    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
+#    
+#    # Step 4: Normalize the columns using the combined mean
+#    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
+#    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+#    merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
+#    merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
+#    
+#    # Helper function to plot bar distributions without y-axis normalization
+#    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
+#        if len(data) > 1:
+#            # Plot the histogram as a bar plot (without normalizing the counts)
+#            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
+#            ax.set_xlabel(f'Normalized\n{label}')
+#            
+#            if show_ylabel:
+#                ax.set_ylabel('Count')
+#            if remove_ytick_labels:
+#                ax.set_yticklabels([])  # Remove only the y-axis tick labels
+#            
+#            ax.spines['top'].set_visible(False)
+#            ax.spines['right'].set_visible(False)
+#            return n.max(), bins  # Return the maximum count and bins for x-axis scaling
+#        else:
+#            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+#            return 0, None
+#
+#    # Step 5: Plot bar distributions for each feature on their respective axes
+#    max_count_cell, bins_cell = plot_bar_distribution(
+#        axs_cell, 
+#        merged_df['max_trace'], 
+#        color='black', 
+#        label='EPSP', 
+#        title='EPSP', 
+#        show_ylabel=True
+#    )
+#    
+#    max_count_field, bins_field = plot_bar_distribution(
+#        axs_field, 
+#        merged_df['min_field'], 
+#        color='black', 
+#        label='LFP', 
+#        title='LFP', 
+#        show_ylabel=False, 
+#        remove_ytick_labels=True
+#    )
+#    
+#    max_count_cell_t, bins_cell_t = plot_bar_distribution(
+#        axs_cell_t, 
+#        merged_df['max_trace_t'], 
+#        color='black', 
+#        label='EPSP (t)', 
+#        title='EPSP (t)', 
+#        show_ylabel=True
+#    )
+#    
+#    max_count_field_t, bins_field_t = plot_bar_distribution(
+#        axs_field_t, 
+#        merged_df['min_field_t'], 
+#        color='black', 
+#        label='LFP (t)', 
+#        title='LFP (t)', 
+#        show_ylabel=False, 
+#        remove_ytick_labels=True
+#    )
+#    
+#    # Step 6: Set the same x-axis limits for `max_trace` and `min_field`
+#    if bins_cell is not None and bins_field is not None:
+#        combined_xlim_cell = (
+#            min(bins_cell.min(), bins_field.min()), 
+#            max(bins_cell.max(), bins_field.max())
+#        )
+#        axs_cell.set_xlim(combined_xlim_cell)
+#        axs_field.set_xlim(combined_xlim_cell)
+#    
+#    ## Step 7: Set the same x-axis limits for `max_trace_t` and `min_field_t`
+#    if bins_cell_t is not None and bins_field_t is not None:
+#        combined_xlim_cell_t = (
+#            min(bins_cell_t.min(), bins_field_t.min()), 
+#            max(bins_cell_t.max(), bins_field_t.max())
+#        )
+#        axs_cell_t.set_xlim(combined_xlim_cell_t)
+#        axs_field_t.set_xlim(combined_xlim_cell_t)
+#    
+#    # Step 8: Set the same y-axis limits for each pair of plots
+#    max_count_1 = max(max_count_cell, max_count_field)
+#    axs_cell.set_ylim(0, max_count_1 * 1.01)
+#    axs_field.set_ylim(0, max_count_1 * 1.01)
+#    
+#    max_count_2 = max(max_count_cell_t, max_count_field_t)
+#    axs_cell_t.set_ylim(0, max_count_2 * 1.01)
+#    axs_field_t.set_ylim(0, max_count_2 * 1.01)
 
 
 ##everything works but plots only EPSP and field amplitudes
@@ -960,14 +1074,23 @@ def plot_figure_1(pickle_file_path,
                loc='upper center',frameon=False)#,loc='lower center'    
     
     axs_cell = fig.add_subplot(gs[6:9,1:3])
-    #move_axis([axs_cell],xoffset=0.05,yoffset=0,pltscale=1)
+    move_axis([axs_cell],xoffset=-0.05,yoffset=0,pltscale=1)
     axs_field = fig.add_subplot(gs[6:9,3:5])
-    #move_axis([axs_field],xoffset=-0.025,yoffset=0,pltscale=1)
-    #axs_cell_t =fig.add_subplot(gs[6:9,4:6]) 
-    #axs_field_t=fig.add_subplot(gs[6:9,6:8]) 
+    move_axis([axs_field],xoffset=0.015,yoffset=0,pltscale=1)
 
 
-    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)#,axs_cell_t,axs_field_t)
+
+
+    #axs_cell = fig.add_subplot(gs[6:9,0:1])
+    #move_axis([axs_cell],xoffset=0,yoffset=0,pltscale=1)
+    #axs_field = fig.add_subplot(gs[6:9,1:2])
+    #move_axis([axs_field],xoffset=0,yoffset=0,pltscale=1)
+    #axs_cell_t =fig.add_subplot(gs[6:9,2:3]) 
+    #axs_field_t=fig.add_subplot(gs[6:9,3:4]) 
+
+
+    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)
+                     #axs_cell_t,axs_field_t)
     label_axis([axs_cell,axs_field,
                ],"E",xpos=-0.1, ypos=1)
     #label_axis([axs_cell_t,axs_field_t],"F",xpos=-0.1, ypos=1)
