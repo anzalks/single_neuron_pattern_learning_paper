@@ -570,14 +570,14 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     learners_pre_mean = learners_pre.mean()
     non_learners_pre_mean = non_learners_pre.mean()
     axs.plot([xloc_pre, xloc_pre], [learners_pre_mean, non_learners_pre_mean], color='black', linestyle='-')
-    axs.text(xloc_pre - 0.1, ((learners_pre_mean + non_learners_pre_mean) / 2),
+    axs.text(xloc_pre - 0.3, ((learners_pre_mean + non_learners_pre_mean) / 2),
              bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
 
     xloc_post_3 = 1.4
     learners_post_3_mean = learners_post_3.mean()
     non_learners_post_3_mean = non_learners_post_3.mean()
     axs.plot([xloc_post_3, xloc_post_3], [learners_post_3_mean, non_learners_post_3_mean], color='black', linestyle='-')
-    axs.text(xloc_post_3 + 0.1, ((learners_post_3_mean + non_learners_post_3_mean) / 2),
+    axs.text(xloc_post_3 + 0.3, ((learners_post_3_mean + non_learners_post_3_mean) / 2),
              bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
 
     # Set labels and adjust limits
@@ -1648,10 +1648,12 @@ def plot_cell_category_classified_EPSP_peaks(pot_cells_df,dep_cells_df,
 
 
 
-def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter):
+def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter, legend_added=False):
     sampling_rate = 20000  # for patterns
     sc_pat_grp = cell_df.groupby(by="frame_id")
-    legend_added = False  # Flag to add legend only once
+
+    # Determine the color for the "post" trace based on learner status
+    post_trace_color = bpf.CB_color_cycle[0] if learner_status == "learner" else bpf.CB_color_cycle[1]
 
     for pat, pat_data in sc_pat_grp:
         if "pattern" not in pat:
@@ -1674,27 +1676,27 @@ def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter):
             pre_trace = pre_trace[:int(sampling_rate * time_to_plot)]
             time = np.linspace(0, time_to_plot, len(post_trace)) * 1000
             
-            # Plot the pre and post training traces
-            axs.plot(time, pre_trace, color=bpf.pre_color, label="pre training trace")
-            axs.plot(time, post_trace, color=bpf.post_late, label="post training trace")
+            # Plot the pre and post training traces with solid lines
+            axs.plot(time, pre_trace, color=bpf.pre_color, label="pre training")
+            axs.plot(time, post_trace, color=post_trace_color, label="post training")
             
-            # Add legend only for learners when pat_num == 2
-            if learner_status == "learner" and pat_num == 2 and not legend_added:
-                # Create custom legend handles with thicker lines
+            # Add the legend only once for learners
+            if learner_status == "learner" and not legend_added:
                 custom_handles = [
-                    Line2D([0], [0], color=bpf.pre_color, linewidth=3,
-                           label="pre training\nEPSP trace"),
-                    Line2D([0], [0], color=bpf.post_late, linewidth=3,
-                           label="post 30 mins of\ntraining EPSP trace")
+                    Line2D([0], [0], color=bpf.pre_color, linewidth=3, label="pre training"),
+                    Line2D([0], [0], color=bpf.CB_color_cycle[0], linewidth=3,
+                           label="learner\n(post training)"),
+                    Line2D([0], [0], color=bpf.CB_color_cycle[1], linewidth=3,
+                           label="non-learner\n(post training)")
                 ]
                 axs.legend(handles=custom_handles, 
-                           #bbox_to_anchor=(0.95, -0.75),
-                           bbox_to_anchor=(-0.6, -0.3),
-                           loc='center', frameon=False,
-                           ncol=1)
+                           loc='center', 
+                           frameon=False, 
+                           bbox_to_anchor=(-0.1,-3.155),
+                           ncol=3)
                 legend_added = True  # Ensure legend is added only once
-
-            # Axis labels and titles
+            
+            # Set axis labels and titles
             if pat_num == 0:
                 axs.set_xlabel(None)
                 axs.set_ylabel(None)
@@ -1722,6 +1724,84 @@ def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter):
             
             axs.set_ylim(-5, 6)
             axs.spines[['right', 'top']].set_visible(False)
+    
+    return legend_added
+
+
+#def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter):
+#    sampling_rate = 20000  # for patterns
+#    sc_pat_grp = cell_df.groupby(by="frame_id")
+#    legend_added = False  # Flag to add legend only once
+#
+#    for pat, pat_data in sc_pat_grp:
+#        if "pattern" not in pat:
+#            continue
+#        else:
+#            pat_num = int(pat.split('_')[-1])
+#            pre_trace = pat_data[pat_data["pre_post_status"] == "pre"]["mean_trace"][0]
+#            post_trace = pat_data[pat_data["pre_post_status"] == "post_3"]["mean_trace"][0]
+#            
+#            # Determine the subplot location
+#            if learner_status == "learner":
+#                axs = fig.add_subplot(gs[pat_num, 4:6])
+#            else:
+#                axs = fig.add_subplot(gs[pat_num, 6:8])
+#            
+#            # Subtract baseline and truncate traces
+#            post_trace = bpf.substract_baseline(post_trace)
+#            post_trace = post_trace[:int(sampling_rate * time_to_plot)]
+#            pre_trace = bpf.substract_baseline(pre_trace)
+#            pre_trace = pre_trace[:int(sampling_rate * time_to_plot)]
+#            time = np.linspace(0, time_to_plot, len(post_trace)) * 1000
+#            
+#            # Plot the pre and post training traces
+#            axs.plot(time, pre_trace, color=bpf.pre_color, label="pre training trace")
+#            axs.plot(time, post_trace, color=bpf.post_late, label="post training trace")
+#            
+#            # Add legend only for learners when pat_num == 2
+#            if learner_status == "learner" and pat_num == 2 and not legend_added:
+#                # Create custom legend handles with thicker lines
+#                custom_handles = [
+#                    Line2D([0], [0], color=bpf.pre_color, linewidth=3,
+#                           label="pre training\nEPSP trace"),
+#                    Line2D([0], [0], color=bpf.post_late, linewidth=3,
+#                           label="post 30 mins of\ntraining EPSP trace")
+#                ]
+#                axs.legend(handles=custom_handles, 
+#                           #bbox_to_anchor=(0.95, -0.75),
+#                           bbox_to_anchor=(-0.6, -0.3),
+#                           loc='center', frameon=False,
+#                           ncol=1)
+#                legend_added = True  # Ensure legend is added only once
+#
+#            # Axis labels and titles
+#            if pat_num == 0:
+#                axs.set_xlabel(None)
+#                axs.set_ylabel(None)
+#                axs.set_xticklabels([])
+#            elif pat_num == 1:
+#                axs.set_xlabel(None)
+#                axs.set_xticklabels([])
+#                axs.set_ylabel("cell response (mV)")
+#            elif pat_num == 2:
+#                axs.set_xlabel("time (ms)")
+#                axs.set_ylabel(None)
+#            
+#            if learner_status != 'learner':
+#                if pat_num == 0:
+#                    axs.set_title("non-learners")
+#                else:
+#                    axs.set_title(None)
+#                axs.set_yticklabels([])
+#                axs.set_ylabel(None)
+#            else:
+#                if pat_num == 0:
+#                    axs.set_title("learners")
+#                else:
+#                    axs.set_title(None)
+#            
+#            axs.set_ylim(-5, 6)
+#            axs.spines[['right', 'top']].set_visible(False)
 
 #def plot_cell_category_trace(fig,learner_status,gs,cell_df, label_letter):
 #    sampling_rate = 20000 # for patterns
