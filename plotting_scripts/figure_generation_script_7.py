@@ -131,7 +131,7 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
 #    return expt-(((bet*expt)/(gam+expt))*expt)-alp
 
 
-
+#plot only gama 
 def gama_fit(expt, gam):
     """
     Gamma function fit model with fixed parameters:

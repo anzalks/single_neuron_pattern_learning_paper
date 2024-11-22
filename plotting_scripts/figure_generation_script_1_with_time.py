@@ -1069,9 +1069,9 @@ def plot_figure_1(pickle_file_path,
     handles, labels = axs_cl2.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     axs_cl2.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.8, 1),
+               bbox_to_anchor =(0.8, 0.65),
                ncol = 1,title="Voltage trace",
-               loc='upper center',frameon=False)#,loc='lower center'    
+               loc='center',frameon=False)#,loc='lower center'    
     
     #axs_cell = fig.add_subplot(gs[6:9,1:3])
     #move_axis([axs_cell],xoffset=-0.05,yoffset=0,pltscale=1)

@@ -277,7 +277,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
                 annotation_text = bpf.convert_pvalue_to_asterisks(pval)
                 axs.text(
                     (x1_pos + x2_pos) / 2, base_y + idx * step_y + 2, 
-                    annotation_text, ha='center', va='bottom', fontsize=8
+                    annotation_text, ha='center', va='bottom', fontsize=10
                 )
 
             # Draw a horizontal reference line at 100
@@ -1316,21 +1316,21 @@ def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
 
 
 
-        if pat=="pattern_0":
-            # Display correlation coefficient and p-value on the plot
-            ax.text(0.05, -0.4, f"trained\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
-                    transform=ax.transAxes, fontsize=10, 
-                    verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
-        if pat=="pattern_1":
-            # Display correlation coefficient and p-value on the plot                       
-            ax.text(0.05, -0.6, f"overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
-                    transform=ax.transAxes, fontsize=10, 
-                    verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
-        if pat=="pattern_2":
-            # Display correlation coefficient and p-value on the plot
-            ax.text(0.05, -0.8, f"non-overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
-                    transform=ax.transAxes, fontsize=10, 
-                    verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
+        #if pat=="pattern_0":
+        #    # Display correlation coefficient and p-value on the plot
+        #    ax.text(0.05, -0.4, f"trained\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
+        #            transform=ax.transAxes, fontsize=10, 
+        #            verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
+        #if pat=="pattern_1":
+        #    # Display correlation coefficient and p-value on the plot                       
+        #    ax.text(0.05, -0.6, f"overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
+        #            transform=ax.transAxes, fontsize=10, 
+        #            verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
+        #if pat=="pattern_2":
+        #    # Display correlation coefficient and p-value on the plot
+        #    ax.text(0.05, -0.8, f"non-overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
+        #            transform=ax.transAxes, fontsize=10, 
+        #            verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
 
 
         # Customize axes

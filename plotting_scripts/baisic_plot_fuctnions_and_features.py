@@ -29,14 +29,18 @@ def convert_pvalue_to_asterisks(pvalue):
         print(f"pvalue:{pvalue}")
         #return str(pvalue)
         pvalue=str(np.around(pvalue,5))
-        return f"**** \np= {pvalue}"
+        return f"****"
+        #return f"**** \np= {pvalue}"
     elif pvalue <= 0.001:
-        return f"*** \np= {np.around(pvalue,4)}"
+        return f"***"
+        #return f"*** \np= {np.around(pvalue,4)}"
     elif pvalue <= 0.01:
-        return f"** \np= {np.around(pvalue,3)}"
+        #return f"** \np= {np.around(pvalue,3)}"
+        return f"**"
     elif pvalue <= 0.05:
         #return str(pvalue)
-        return f"* p= {np.around(pvalue,3)}"
+        #return f"* p= {np.around(pvalue,3)}"
+        return f"*"
     else:
         return "ns"
 
