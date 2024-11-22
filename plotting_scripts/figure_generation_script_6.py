@@ -218,7 +218,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
-            g.set_ylim(50,250)
+            g.set_ylim(-50,250)
         else:
             pass
 
@@ -351,11 +351,11 @@ def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
             if "pattern" in pa:
                 pat_num = int(pa.split("_")[-1])
                 pps = pat["pre_post_status"].unique()
-                pre_minf_resp = float(pat[pat["pre_post_status"] == "pre"]["min_field"])
+                pre_minf_resp = np.abs(float(pat[pat["pre_post_status"] =="pre"]["min_field"]))
                 for p in pps:
-                    cell.loc[(cell["frame_id"] == f"{pa}") & (cell["pre_post_status"] == f"{p}"), "min_field"] = (
-                        np.abs(pat[pat["pre_post_status"] == f"{p}"]["min_field"]) / np.abs(pre_minf_resp) * 100
-                    )
+                    cell.loc[(cell["frame_id"] == f"{pa}") &
+                             (cell["pre_post_status"] == f"{p}"), 
+                             "min_f_norm"]=  np.abs(pat[pat["pre_post_status"] ==f"{p}"]["min_field"]) / pre_minf_resp* 100
             else:
                 continue
             cell = cell[cell["frame_status"] != "point"]
@@ -370,15 +370,22 @@ def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
     non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners)) & (all_cell_df["pre_post_status"] == "post_3")]
 
     # Plot learners and non-learners
-    sns.pointplot(data=learners_all_pat, x="frame_id", y="min_field",
-                  color=bpf.CB_color_cycle[0], ax=axs, errorbar='sd', capsize=0.15)
-    sns.pointplot(data=non_learners_all_pat, x="frame_id", y="min_field",
-                  color=bpf.CB_color_cycle[1], ax=axs, errorbar='sd', capsize=0.15)
-
+    sns.stripplot(data=learners_all_pat, x="frame_id", y="min_f_norm",
+                  color=bpf.CB_color_cycle[0], alpha=0.2, ax=axs,zorder=1)    
+    sns.stripplot(data=non_learners_all_pat, x="frame_id", y="min_f_norm",
+                  color=bpf.CB_color_cycle[1],alpha=0.2, ax=axs, zorder=1)
+    sns.pointplot(data=learners_all_pat, x="frame_id", y="min_f_norm",
+                  color=bpf.CB_color_cycle[0], ax=axs, errorbar='sd', 
+                  capsize=0.15, zorder=2)
+    sns.pointplot(data=non_learners_all_pat, x="frame_id", y="min_f_norm",
+                  color=bpf.CB_color_cycle[1], ax=axs, errorbar='sd', 
+                  capsize=0.15, zorder=2)
     # Set x and y labels and customize the plot
     axs.spines[['right', 'top']].set_visible(False)
     axs.set_xticklabels(["trained\npattern", "overlapping\npattern", "non-overlapping\npattern"], rotation=30)
     axs.set_ylabel("% change in field")
+    #axs.set_ylabel("LFP (mV)")
+    axs.axhline(100,linestyle=':',color='k',alpha=0.5)
     axs.set_xlabel("patterns")
 
     # Check the actual values in the "frame_id" column
@@ -402,62 +409,7 @@ def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
     # Set custom annotations using p-value converted to asterisks and annotate
     annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(p) for p in p_values])
     annotator.annotate()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    axs.set_ylim(10,250)
 
 
 
@@ -564,10 +516,11 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
     axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
     label_axis(axs_in_fl_list,"D")
-    axs_slope = fig.add_subplot(gs[9:11,0:2])
-    plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,axs_slope)
-    move_axis([axs_slope],0,-0.05,1)
-    axs_slope.text(0.05,1,'E',transform=axs_slope.transAxes,    
+    axs_all_field = fig.add_subplot(gs[9:11,0:2])
+    plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
+                             axs_all_field)
+    move_axis([axs_all_field],0,-0.05,1)
+    axs_all_field.text(0.05,1,'E',transform=axs_all_field.transAxes,    
                         fontsize=16, fontweight='bold',
                         ha='center',va='center')
 
