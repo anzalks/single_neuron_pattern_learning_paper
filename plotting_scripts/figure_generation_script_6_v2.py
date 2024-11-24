@@ -47,10 +47,10 @@ args_ = Args()
 
 def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     if title_row_num==1:
-        pattern_list = ["trained pattern","Overlapping pattern",
+        pattern_list = ["Trained pattern","Overlapping pattern",
                         "Non-overlapping pattern"]
     else:
-        pattern_list = ["trained\npattern","Overlapping\npattern",
+        pattern_list = ["Trained\npattern","Overlapping\npattern",
                         "Non-overlapping\npattern"]
 
     for pr_no, pattern in enumerate(pattern_list):
@@ -271,7 +271,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
                 g.set_xlabel(None)
                 g.set_xticklabels([])
                 if pat_num == "pattern_0":
-                    g.set_ylabel("field response\n%change")
+                    g.set_ylabel("LFP \n%change")
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
@@ -283,7 +283,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
                 else:
                     g.set_xlabel(None)
                 if pat_num == "pattern_0":
-                    g.set_ylabel("field response\n%change")
+                    g.set_ylabel("LFP \n%change")
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
@@ -763,8 +763,10 @@ def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig
 
     # Customize axis
     ax.set_xticks(range(len(patterns)))
-    ax.set_xticklabels(["Pattern 0", "Pattern 1", "Pattern 2"])
+    ax.set_xticklabels(["Trained", "Overlapping",
+                        "Non-overlapping"],rotation=15)
     ax.set_ylabel("% change\nin LFP")
+    ax.set_xlabel("patterns")
     ax.set_ylim(70, 220)
     ax.axhline(100, color="k", linestyle=":", alpha=0.5)
     sns.despine(fig=fig, ax=ax, top=True, right=True)
