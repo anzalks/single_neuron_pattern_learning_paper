@@ -28,7 +28,7 @@ def convert_pvalue_to_asterisks(pvalue):
     if pvalue <= 0.0001:
         print(f"pvalue:{pvalue}")
         #return str(pvalue)
-        pvalue=str(np.around(pvalue,5))
+        #pvalue=str(np.around(pvalue,5))
         return f"****"
         #return f"**** \np= {pvalue}"
     elif pvalue <= 0.001:
@@ -42,6 +42,7 @@ def convert_pvalue_to_asterisks(pvalue):
         #return f"* p= {np.around(pvalue,3)}"
         return f"*"
     else:
+        #return f"ns p= {np.around(pvalue,3)}"
         return "ns"
 
 def set_plot_properties():

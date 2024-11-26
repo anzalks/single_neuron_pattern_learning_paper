@@ -77,7 +77,7 @@ def int_to_roman(num):
         i += 1
     return roman_num
 
-def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweight='bold'):
+def label_axis(axis_list, letter_label, xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold'):
     for axs_no, axs in enumerate(axis_list):
         roman_no = int_to_roman(axs_no + 1)  # Convert number to Roman numeral
         axs.text(xpos, ypos, f'{letter_label}{roman_no}', 
@@ -635,6 +635,7 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     if axs.get_legend() is not None:
         axs.get_legend().remove()
 
+
     # Annotate comparison within learners (pre vs. post_3)
     stat_analysis = spst.mannwhitneyu(
         learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot],
@@ -654,18 +655,20 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot]
 
     # Draw vertical lines and p-value annotations
-    xloc_pre = -0.4
+    xloc_pre = -0.45
     stat_test_pre = spst.mannwhitneyu(learners_pre, non_learners_pre, alternative='two-sided')
     pval_pre = stat_test_pre.pvalue
     axs.plot([xloc_pre, xloc_pre], [learners_pre.mean(), non_learners_pre.mean()], color='black', linestyle='-')
-    axs.text(xloc_pre - 0.3, (learners_pre.mean() + non_learners_pre.mean()) / 2, 
+    axs.text(xloc_pre, (learners_pre.mean() + (non_learners_pre.mean()) /
+             2), 
              bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
 
-    xloc_post_3 = 1.4
+    xloc_post_3 = 1.45
     stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
     pval_post_3 = stat_test_post_3.pvalue
     axs.plot([xloc_post_3, xloc_post_3], [learners_post_3.mean(), non_learners_post_3.mean()], color='black', linestyle='-')
-    axs.text(xloc_post_3 + 0.3, (learners_post_3.mean() + non_learners_post_3.mean()) / 2, 
+    axs.text(xloc_post_3, ((learners_post_3.mean() +
+                            non_learners_post_3.mean()) / 2)+0.5, 
              bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
 
     # Set labels, limits, and remove legends
@@ -1115,60 +1118,60 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
 #    return None
 
 
+def inR_sag_plot(inR_all_Cells_df, fig, axs):
+    deselect_list = ['post_4', 'post_5']
+    inR_all_Cells_df = inR_all_Cells_df[~inR_all_Cells_df["pre_post_status"].isin(deselect_list)]
+    order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
 
+    # Plot input resistance and sag values using pointplot
+    g1 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="inR",
+                       capsize=0.2, ci='sd', order=order, color="k")
+    g2 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="sag",
+                       capsize=0.2, ci='sd', order=order, color=bpf.CB_color_cycle[4])
+    
+    # Plot individual points using stripplot
+    sns.stripplot(data=inR_all_Cells_df, color=bpf.CB_color_cycle[4],
+                  x="pre_post_status", y="sag",
+                  order=order, alpha=0.2)
 
+    # Perform Wilcoxon test between "pre" and "post_3"
+    pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"] == "pre"]["sag"]
+    post_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"] == "post_3"]["sag"]
+    pre = spst.wilcoxon(pre_trace, post_trace, zero_method="wilcox", correction=True)
+    pvalList = pre.pvalue
+    print(f"p-value: {pvalList}")
+    anotp_list = ("pre", "post_3")
+    annotator = Annotator(axs, [anotp_list], data=inR_all_Cells_df, x="pre_post_status", y="sag", order=order)
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
+    annotator.annotate()
 
+    # Manually create legend entries
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='k', label='input resistance', markersize=8, linestyle='None'),
+        Line2D([0], [0], marker='o', color=bpf.CB_color_cycle[4], label='sag value', markersize=8, linestyle='None')
+    ]
 
+    #legend_elements = [
+    #    Line2D([0], [0], color='k', label='input resistance', linewidth=2),
+    #    Line2D([0], [0], color=bpf.CB_color_cycle[4], label='sag value', linewidth=2)
+    #]
+    axs.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.05), loc='center', frameon=False)
 
+    # Set axis labels, ticks, and limits
+    axs.set_ylabel("MOhms")
+    axs.set_xlabel("time points (mins)")
 
+    # Set x-tick labels using the original time_points variable
+    time_points = ['pre', '0', '10', '20', '30']
+    axs.set_xticklabels(time_points)
 
+    axs.set_ylim(-10, 250)
+    sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Adjust the position of the axis
+    inr_pos = axs.get_position()
+    new_inr_pos = [inr_pos.x0, inr_pos.y0 - 0.04, inr_pos.width, inr_pos.height]
+    axs.set_position(new_inr_pos)
 
 
 
@@ -2234,6 +2237,8 @@ def compare_cell_properties(cell_stats, fig, axs_rmp, axs_inr,
 def plot_figure_3(extracted_feature_pickle_file_path,
                   all_trails_all_Cells_path,
                   cell_categorised_pickle_file,
+                  inR_all_Cells_df,
+                  inRillustration_path,
                   training_data_pickle_file,
                   firing_properties_path,
                   cell_stats_pickle_file,
@@ -2246,6 +2251,8 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
     training_data = pd.read_pickle(training_data_pickle_file)
     firing_properties= pd.read_pickle(firing_properties_path)
+    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df)
+    inRillustration = pillow.Image.open(inRillustration_path)
     print(f"cell stat df : {cell_stats_df}")
     single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
@@ -2299,7 +2306,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                                              sc_data_dict["an_cells"],
                                              "max_trace",fig,axs_dist1,
                                              )    
-    axs_dist1.text(0.05,1,'B',transform=axs_dist1.transAxes,    
+    axs_dist1.text(-0.1,1.05,'B',transform=axs_dist1.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_dist1],0,0.05,1)
     
@@ -2317,7 +2324,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot_fi_curve_with_ks(firing_properties,sc_data_dict,fig,axs_fi)
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
     move_axis([axs_fi],-0.05,0,1)
-    axs_fi.text(0.1,1,'E',transform=axs_fi.transAxes,    
+    axs_fi.text(-0.1,1.1,'E',transform=axs_fi.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot cell property comparison
@@ -2326,9 +2333,9 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,0,1)
-    axs_inr.text(0.1,1,'F',transform=axs_inr.transAxes,    
+    axs_inr.text(-0.1,1.1,'F',transform=axs_inr.transAxes,    
                 fontsize=16, fontweight='bold', ha='center', va='center')
-    axs_rmp.text(0.1,1,'G',transform=axs_rmp.transAxes,    
+    axs_rmp.text(-0.1,1.1,'G',transform=axs_rmp.transAxes,    
                 fontsize=16, fontweight='bold', ha='center', va='center')
     
     
@@ -2351,22 +2358,54 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_trn = fig.add_subplot(gs[7:8,5:7])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0.05,1)
-    axs_trn.text(0.1,1,'I',transform=axs_trn.transAxes,    
+    axs_trn.text(-0.1,1.1,'I',transform=axs_trn.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
-
-
-    #plot CDF for cells
-    axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
-    axs_cdf2 = fig.add_subplot(gs[9:10,3:6])
-    plot_cell_distribution_plasticity(sc_data_dict["ap_cells"],
-                                      fig,axs_cdf1,"learners")
-    plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
-                                      fig,axs_cdf2,"non-learners")
-    axs_cdf_list = [axs_cdf1,axs_cdf2]
     
+    #plot sag
+    axs_inr = fig.add_subplot(gs[8:9,3:6])
+    inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
+    move_axis([axs_inr],0.1,0,1)
+    axs_inr.text(-0.05,1,'K',transform=axs_inr.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')            
+
+    #plot the sag illustration
+    axs_inrill = fig.add_subplot(gs[8:9,0:3])
+    plot_image(inRillustration,axs_inrill,-0.1,-0.05,1)
+    axs_inrill.text(0.01,1.1,'J',transform=axs_inrill.transAxes,    
+                    fontsize=16, fontweight='bold', ha='center', va='center')            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ##plot CDF for cells
+    #axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
+    #axs_cdf2 = fig.add_subplot(gs[9:10,3:6])
+    #plot_cell_distribution_plasticity(sc_data_dict["ap_cells"],
+    #                                  fig,axs_cdf1,"learners")
+    #plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
+    #                                  fig,axs_cdf2,"non-learners")
+    #axs_cdf_list = [axs_cdf1,axs_cdf2]
+    #
+    ##label_axis(axs_cdf_list,"J")
+    #move_axis(axs_cdf_list,-0.05,0.075,1)
     #label_axis(axs_cdf_list,"J")
-    move_axis(axs_cdf_list,-0.05,0.075,1)
-    label_axis(axs_cdf_list,"J")
 
     ##GLM on firing properties
     #axs_glm = fig.add_subplot(gs[10:11,0:2])
@@ -2408,6 +2447,10 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
+    parser.add_argument('--inR-path', '-r'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with inR data'
+                       )
     parser.add_argument('--training-path', '-t'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
@@ -2431,7 +2474,10 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to the image file in png format'
                        )
-
+    parser.add_argument('--inRillustration-path', '-p'
+                        , required = False,default ='./', type=str         
+                        , help = 'path to the image file in png format'
+                       )
     parser.add_argument('--outdir-path','-o'
                         ,required = False, default ='./', type=str
                         ,help = 'where to save the generated figure image'
@@ -2442,14 +2488,19 @@ def main():
     alltrialspath=Path(args.alltrial_path)
     trainingpath = Path(args.training_path)
     scpath = Path(args.sortedcell_path)
+    inR_path = Path(args.inR_path)
     illustration_path = Path(args.illustration_path)
+    inRillustration_path = Path(args.inRillustration_path)
     cell_stat_path = Path(args.cellstat_path)
     firing_properties_path = Path(args.firingproperties_path)
     globoutdir = Path(args.outdir_path)
     globoutdir= globoutdir/'Figure_3'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_figure_3(pklpath,alltrialspath,scpath,trainingpath,firing_properties_path,cell_stat_path,illustration_path,globoutdir)
+    plot_figure_3(pklpath,alltrialspath,scpath,inR_path,
+                  inRillustration_path,
+                  trainingpath,firing_properties_path,
+                  cell_stat_path,illustration_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

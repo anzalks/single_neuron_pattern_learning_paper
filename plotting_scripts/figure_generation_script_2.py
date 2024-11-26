@@ -836,7 +836,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
 
 def main():
     # Argument parser.
-    description = '''Generates figure 1'''
+    description = '''Generates figure 2'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str

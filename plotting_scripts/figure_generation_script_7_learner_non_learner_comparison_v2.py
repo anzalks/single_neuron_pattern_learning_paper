@@ -123,54 +123,169 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
         # Shrink the plot
         axs.set_position(new_pos)
 
-def bootstrap_scram(list_of_x_y_responses_pre,
-                    list_of_x_y_responses_post,pat_num,cell_type,
-                   color):
-    #print(f"list_of_x_y_responses_pre:{list_of_x_y_responses_pre}..................")
-    list_of_x_y_responses_pre= np.array(list_of_x_y_responses_pre)
-    list_of_x_y_responses_post = np.array(list_of_x_y_responses_post)
-    pre_gama_dist=[]
-    post_gama_dist = []
-    for i in range(1000):
-        rng_pre = np.random.default_rng()
-        rng_post = np.random.default_rng()
-        pre_x_y = rng_pre.choice(list_of_x_y_responses_pre,
-                                 size=int(0.8*len(list_of_x_y_responses_pre)),
-                                 replace=False)
-        post_x_y_responses = rng_post.choice(list_of_x_y_responses_post,
-                                             size=int(0.8*len(list_of_x_y_responses_post)),
-                                             replace=False)
+def gamma_fit(expt, gamma):
+    """
+    Gamma function fit model with fixed parameters:
+    beta = 1, alpha = 0.
+    """
+    beta = 1  # Fixed value
+    alpha = 0  # Fixed value
+    return expt - (((beta * expt) / (gamma + expt)) * expt) - alpha
 
-        # Split the arrays into x (input) and y (response) parts
-        pre_arr1, pre_arr2 = np.split(pre_x_y, 2, axis=1)
-        arr1, arr2 = np.split(post_x_y_responses, 2, axis=1)
-        
-        # Flatten the arrays
-        pre_arr1 = np.ravel(pre_arr1)
-        pre_arr2 = np.ravel(pre_arr2)
-        arr1 = np.ravel(arr1)
-        arr2 = np.ravel(arr2)
-        
-        # Perform curve fitting only for the 'gam' parameter
-        param_pre, _ = scipy.optimize.curve_fit(gama_fit, pre_arr1, pre_arr2, bounds=(0, 60))
-        param_post, _ = scipy.optimize.curve_fit(gama_fit, arr1, arr2, bounds=(0, 60)
-                                                )
-        pre_gama_dist.append(param_pre[0])
-        post_gama_dist.append(param_post[0])
+def fitGamma( data ):
+    data = data.transpose()
+    [ret], cov = scipy.optimize.curve_fit(gamma_fit, 
+        data[0], data[1], p0 = [2.0], bounds=(0, 60))
+    return ret
 
-    _, pvalue = ttest_rel(pre_gama_dist,post_gama_dist)
-    #_, pvalue =mannwhitneyu(pre_gama_dist,post_gama_dist)
-    #pvalue = bpf.convert_pvalue_to_asterisks(pvalue)
-    fig1,axs = plt.subplots(1,1,figsize=(12,9))
-    axs.set_title(f"pattern_{pat_num}_{cell_type}")
-    axs.hist(pre_gama_dist,bins=int(np.sqrt(len(pre_gama_dist))),color='k')
-    axs.hist(post_gama_dist, bins=int(np.sqrt(len(pre_gama_dist))),color=color)
-    axs.set_xlabel("gama")
-    axs.set_ylabel("#")
-    fig1.savefig(f"/Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/plotting_scripts/Figure_7/plt_dist_{pat_num}_{cell_type}.png")
-    print(f"p val = {pvalue}****************************")
-    plt.close(fig1)
-    return pvalue
+
+
+def bootstrap_scram(A,B, nIter=10000):
+    #corrected chatGPT code from Upi v2
+    #convert list to array
+    A=np.array(A)
+    B=np.array(B)
+
+    # Combine datasets
+    combined = np.concatenate([A, B])
+
+    # Calculate observed test statistic (e.g., difference in means)
+    observed_stat = fitGamma(A) - fitGamma(B)
+
+    # Bootstrap resampling
+    bootstrap_stats = []
+    idx = np.arange(len(combined))
+    for _ in tqdm(range(nIter), desc="Bootstrapping"):
+    #for _ in range(nIter):
+        # Resample with replacement 
+        temp = np.random.choice(idx, size=len(A), replace=True)
+        A_boot = combined[temp]
+        temp = np.random.choice(idx, size=len(A), replace=True)
+        B_boot = combined[temp]
+        '''
+        A_boot = np.random.choice(combined, size=len(A), replace=True)
+        B_boot = np.random.choice(combined, size=len(B), replace=True)
+        '''
+
+        # Compute test statistic for resampled data
+        bootstrap_stats.append(fitGamma(A_boot) - fitGamma(B_boot))
+
+    # Convert to numpy array
+    #bootstrap_stats = np.array(bootstrap_stats)
+
+    # Calculate p-value (two-tailed)
+    p_value = np.mean(np.abs(bootstrap_stats) >= np.abs(observed_stat))
+
+    return p_value
+
+
+
+
+
+
+
+
+
+
+
+#def bootstrap_scram(A, B, nIter=10000):
+#    #chatgpt bootsratp from upi
+#    #chatBootstrap(A, B, nIter=1000):
+#    # Combine datasets
+#    A=np.array(A)
+#    B=np.array(B)
+#    combined = np.concatenate([A, B])
+#
+#    # Calculate observed test statistic (e.g., difference in means)
+#    observed_stat = fitGamma(A) - fitGamma(B)
+#
+#    # Bootstrap resampling
+#    bootstrap_stats = []
+#    idx = np.arange(len(A))
+#    for _ in range(nIter):
+#        # Resample with replacement 
+#        temp = np.random.choice(idx, size=len(A), replace=True)
+#        A_boot = combined[temp]
+#        temp = np.random.choice(idx, size=len(A), replace=True)
+#        B_boot = combined[temp]
+#        '''
+#        A_boot = np.random.choice(combined, size=len(A), replace=True)
+#        B_boot = np.random.choice(combined, size=len(B), replace=True)
+#        '''
+#
+#        # Compute test statistic for resampled data
+#        bootstrap_stats.append(fitGamma(A_boot) - fitGamma(B_boot))
+#
+#    # Convert to numpy array
+#    bootstrap_stats = np.array(bootstrap_stats)
+#
+#    # Calculate p-value (two-tailed)
+#    p_value = np.mean(np.abs(bootstrap_stats) >= np.abs(observed_stat))
+#
+#    return p_value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#def bootstrap_scram(list_of_x_y_responses_pre,
+#                    list_of_x_y_responses_post,pat_num,cell_type,
+#                   color):
+#    #print(f"list_of_x_y_responses_pre:{list_of_x_y_responses_pre}..................")
+#    list_of_x_y_responses_pre= np.array(list_of_x_y_responses_pre)
+#    list_of_x_y_responses_post = np.array(list_of_x_y_responses_post)
+#    pre_gama_dist=[]
+#    post_gama_dist = []
+#    for i in range(1000):
+#        rng_pre = np.random.default_rng()
+#        rng_post = np.random.default_rng()
+#        pre_x_y = rng_pre.choice(list_of_x_y_responses_pre,
+#                                 size=int(0.8*len(list_of_x_y_responses_pre)),
+#                                 replace=False)
+#        post_x_y_responses = rng_post.choice(list_of_x_y_responses_post,
+#                                             size=int(0.8*len(list_of_x_y_responses_post)),
+#                                             replace=False)
+#
+#        # Split the arrays into x (input) and y (response) parts
+#        pre_arr1, pre_arr2 = np.split(pre_x_y, 2, axis=1)
+#        arr1, arr2 = np.split(post_x_y_responses, 2, axis=1)
+#        
+#        # Flatten the arrays
+#        pre_arr1 = np.ravel(pre_arr1)
+#        pre_arr2 = np.ravel(pre_arr2)
+#        arr1 = np.ravel(arr1)
+#        arr2 = np.ravel(arr2)
+#        
+#        # Perform curve fitting only for the 'gam' parameter
+#        param_pre, _ = scipy.optimize.curve_fit(gama_fit, pre_arr1, pre_arr2, bounds=(0, 60))
+#        param_post, _ = scipy.optimize.curve_fit(gama_fit, arr1, arr2, bounds=(0, 60)
+#                                                )
+#        pre_gama_dist.append(param_pre[0])
+#        post_gama_dist.append(param_post[0])
+#
+#    _, pvalue = ttest_rel(pre_gama_dist,post_gama_dist)
+#    #_, pvalue =mannwhitneyu(pre_gama_dist,post_gama_dist)
+#    #pvalue = bpf.convert_pvalue_to_asterisks(pvalue)
+#    fig1,axs = plt.subplots(1,1,figsize=(12,9))
+#    axs.set_title(f"pattern_{pat_num}_{cell_type}")
+#    axs.hist(pre_gama_dist,bins=int(np.sqrt(len(pre_gama_dist))),color='k')
+#    axs.hist(post_gama_dist, bins=int(np.sqrt(len(pre_gama_dist))),color=color)
+#    axs.set_xlabel("gama")
+#    axs.set_ylabel("#")
+#    fig1.savefig(f"/Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/plotting_scripts/Figure_7/plt_dist_{pat_num}_{cell_type}.png")
+#    print(f"p val = {pvalue}****************************")
+#    plt.close(fig1)
+#    return pvalue
 
 
 
@@ -261,8 +376,9 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
     x = np.linspace(-0.5, 10, len(arr2))
 
     test_results = bootstrap_scram(list_of_x_y_responses_pre,
-                                   list_of_x_y_responses,pat_num, 
-                                   cell_type, color)
+                                   list_of_x_y_responses)
+                                   #,pat_num, 
+                                   #cell_type, color)
     test_results= bpf.convert_pvalue_to_asterisks(test_results)
     # Generate fitted y-values using the optimized 'gam' parameter
     pre_y = gama_fit(pre_x, param_pre[0])
@@ -284,10 +400,10 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
     # Display the fitted gamma values and test results on the plot
     axs.set_aspect(0.6)
     axs.text(0.5, 0.9, f'γ_post = {np.around(param_post[0], 2)}', transform=axs.transAxes, fontsize=12, ha='center')
-    axs.text(0.5, 0.8, f'γ_pre = {np.around(param_pre[0], 2)}', transform=axs.transAxes, fontsize=12, ha='center')
+    axs.text(0.5, 0.7, f'γ_pre = {np.around(param_pre[0], 2)}', transform=axs.transAxes, fontsize=12, ha='center')
     
     ## Display statistical test results with p-values
-    axs.text(0.5, 0.5, f'{test_results}', transform=axs.transAxes, fontsize=12, ha='center')
+    axs.text(0.12, 0.8, f'{test_results}', transform=axs.transAxes, fontsize=12, ha='center')
     #axs.text(0.5, 0.7, f'T-test p = {test_results["Paired T-test"]:.4f}', transform=axs.transAxes, fontsize=12, ha='center')
     #axs.text(0.5, 0.6, f'MWU p = {test_results["Mann-Whitney U test"]:.4f}', transform=axs.transAxes, fontsize=12, ha='center')
     #axs.text(0.5, 0.5, f'Wilcoxon p = {test_results["Wilcoxon test"]:.4f}', transform=axs.transAxes, fontsize=12, ha='center')
@@ -525,7 +641,12 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
                         continue
 
                     point_list = bpf.map_points_to_patterns(pat)
-                    pat_val = float(ppresp[ppresp["frame_id"] == pat]["max_trace"].values)
+                    matching_values = ppresp.loc[ppresp["frame_id"] == pat, "max_trace"]
+                    if len(matching_values) != 1:
+                        raise ValueError(f"Expected exactly one matching row for frame_id={pat}, but found {len(matching_values)}.")
+                    pat_val = float(matching_values.iloc[0])
+
+                    #pat_val = float(ppresp[ppresp["frame_id"] == pat]["max_trace"].values)
                     point_sum_val = np.sum(ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"])
 
                     # Append to the correct list based on 'pre' or 'post' status
@@ -1035,7 +1156,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     plt.tight_layout()
     outpath = f"{outdir}/figure_7_with_stats.png"
     #outpath = f"{outdir}/figure_7.svg"
-    #outpath = f"{outdir}/figure_7.pdf"
+    #outpath = f"{outdir}/figure_7_with_stats.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
