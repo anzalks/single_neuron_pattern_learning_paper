@@ -1306,6 +1306,10 @@ def plot_peak_perc_comp(
         else:
             ax.set_xlabel("")
 
+        # Show y-tick labels only for pattern_0
+        if pat != "pattern_0":
+            ax.set_yticklabels([])
+
         # Ensure tick labels are visible
         ax.tick_params(axis="both", which="both", labelsize=10)
 
@@ -1411,6 +1415,10 @@ def plot_peak_perc_comp(
         else:
             ax.set_xlabel("")
 
+        # Show y-tick labels only for pattern_0
+        if pat != "pattern_0":
+            ax.set_yticklabels([])
+
         # Ensure tick labels are visible
         ax.tick_params(axis="both", which="both", labelsize=10)
 
@@ -1448,8 +1456,8 @@ def plot_peak_perc_comp(
             ax.legend().set_visible(False)
 
 
-##everything is fixed including the regression fit, but the legends are yet to
-##be fixed
+
+#everything works except the tick labels 
 #def plot_peak_perc_comp(
 #    sc_data_dict,
 #    axs_learners_pat_trained,
@@ -1462,6 +1470,7 @@ def plot_peak_perc_comp(
 #    import matplotlib.pyplot as plt
 #    import numpy as np
 #    import scipy.stats as spst
+#    from matplotlib.lines import Line2D
 #
 #    order = ["pre", "post_3"]
 #    pattern_info = {
@@ -1556,9 +1565,31 @@ def plot_peak_perc_comp(
 #        # Ensure tick labels are visible
 #        ax.tick_params(axis="both", which="both", labelsize=10)
 #
-#        # Display legends with different markers
+#        # Set title based on pattern label
+#        ax.set_title(pattern_info[pat]['label'].capitalize())
+#
+#        # Display legends with markers from all patterns in pattern_2 plots
 #        if pat == "pattern_2":
+#            # Create legend elements for all patterns
+#            legend_elements = []
+#            for p in pattern_info.keys():
+#                m = pattern_info[p]['marker']
+#                l = pattern_info[p]['label']
+#                legend_elements.append(
+#                    Line2D(
+#                        [0],
+#                        [0],
+#                        marker=m,
+#                        color='w',
+#                        label=l,
+#                        markerfacecolor=color,
+#                        markersize=10,
+#                        markeredgecolor=color,
+#                    )
+#                )
+#            # Set legend
 #            ax.legend(
+#                handles=legend_elements,
 #                loc="center",
 #                bbox_to_anchor=(0.6, 1.2),
 #                frameon=True,
@@ -1639,9 +1670,31 @@ def plot_peak_perc_comp(
 #        # Ensure tick labels are visible
 #        ax.tick_params(axis="both", which="both", labelsize=10)
 #
-#        # Display legends with different markers
+#        # Set title based on pattern label
+#        ax.set_title(pattern_info[pat]['label'].capitalize())
+#
+#        # Display legends with markers from all patterns in pattern_2 plots
 #        if pat == "pattern_2":
+#            # Create legend elements for all patterns
+#            legend_elements = []
+#            for p in pattern_info.keys():
+#                m = pattern_info[p]['marker']
+#                l = pattern_info[p]['label']
+#                legend_elements.append(
+#                    Line2D(
+#                        [0],
+#                        [0],
+#                        marker=m,
+#                        color='w',
+#                        label=l,
+#                        markerfacecolor=color,
+#                        markersize=10,
+#                        markeredgecolor=color,
+#                    )
+#                )
+#            # Set legend
 #            ax.legend(
+#                handles=legend_elements,
 #                loc="center",
 #                bbox_to_anchor=(0.6, 1.2),
 #                frameon=True,
@@ -1651,266 +1704,6 @@ def plot_peak_perc_comp(
 #            ax.legend().set_visible(False)
 
 
-
-#def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
-#    order = ["pre", "post_3"]
-#    pattern_info = {
-#        "pattern_0": {"marker": "^", "label": "trained"},
-#        "pattern_1": {"marker": ".", "label": "overlapping"},
-#        "pattern_2": {"marker": "+", "label": "untrained"}
-#    }
-#    
-#    # Get data for learners and non-learners
-#    learners_df = sc_data_dict["ap_cells"]
-#    non_learners_df = sc_data_dict["an_cells"]
-#    
-#    learners_df = learners_df[learners_df["pre_post_status"].isin(order)]
-#    non_learners_df = non_learners_df[non_learners_df["pre_post_status"].isin(order)]
-#    
-#    pat_df_learners = learners_df[learners_df["frame_id"].isin(pattern_info.keys())].assign(group='learners')
-#    pat_df_non_learners = non_learners_df[non_learners_df["frame_id"].isin(pattern_info.keys())].assign(group='non_learners')
-#    
-#    # Combine and normalize data
-#    all_cell_df = pd.concat([pat_df_learners, pat_df_non_learners], ignore_index=True)
-#    norm_df = del_values(all_cell_df, "max_trace")
-#
-#    # Group data and plot
-#    for (lrn, pat), pat_data in all_cell_df.groupby(["group", "frame_id"]):
-#        color = bpf.CB_color_cycle[0] if lrn == "learners" else bpf.CB_color_cycle[1]
-#        ax = axs_learners if lrn == "learners" else axs_non_learners
-#        
-#        x = pat_data[pat_data["pre_post_status"] == "pre"]["max_trace"]
-#        y = norm_df[(norm_df["group"] == lrn) & 
-#                    (norm_df["frame_id"] == pat) & 
-#                    (norm_df["pre_post_status"] == "post_3")]["max_trace"]
-#        
-#        if x.empty or y.empty:
-#            print(f"No data for {lrn} - {pat}.")
-#            continue
-#        
-#        ax.scatter(x, y, color=color, alpha=0.9, 
-#                   marker=pattern_info[pat]["marker"], 
-#                   label=pattern_info[pat]["label"])
-#        
-#        ax.set_ylim(-3.5, 4)
-#        ax.set_xlim(0, 8)
-#        ax.spines[['right', 'top']].set_visible(False)
-#        ax.set_xlabel("EPSP amplitude\npre (mV)")
-#        
-#        if lrn == "learners":
-#            ax.set_ylabel("% LTP post-training")
-#        else:
-#            ax.set_yticklabels([])
-#        
-#        # Legend customization
-#        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.2), frameon=True,
-#                  ncol=1)
-
-
-
-#def plot_peak_perc_comp(
-#    sc_data_dict,
-#    axs_learners_pat_trained,
-#    axs_learners_pat_overlapping,
-#    axs_learners_pat_non_overlapping,
-#    axs_non_learners_pat_trained,
-#    axs_non_learners_pat_overlapping,
-#    axs_non_learners_pat_non_overlapping,
-#):
-#    import matplotlib.pyplot as plt
-#    import numpy as np
-#    import scipy.stats as spst
-#    from scipy.stats import spearmanr
-#
-#    order = ["pre", "post_3"]
-#    pattern_info = {
-#        "pattern_0": {"marker": "^", "label": "trained"},
-#        "pattern_1": {"marker": ".", "label": "overlapping"},
-#        "pattern_2": {"marker": "+", "label": "non-overlapping"},
-#    }
-#
-#    # Map patterns to specific axes for learners
-#    axis_map_learners = {
-#        "pattern_0": axs_learners_pat_trained,
-#        "pattern_1": axs_learners_pat_overlapping,
-#        "pattern_2": axs_learners_pat_non_overlapping,
-#    }
-#
-#    # Map patterns to specific axes for non-learners
-#    axis_map_non_learners = {
-#        "pattern_0": axs_non_learners_pat_trained,
-#        "pattern_1": axs_non_learners_pat_overlapping,
-#        "pattern_2": axs_non_learners_pat_non_overlapping,
-#    }
-#
-#    # Get data for learners
-#    learners_df = sc_data_dict["ap_cells"]
-#    learners_df = learners_df[learners_df["pre_post_status"].isin(order)]
-#    pat_df_learners = learners_df[
-#        learners_df["frame_id"].isin(pattern_info.keys())
-#    ].assign(group="learners")
-#
-#    # Normalize data for learners
-#    norm_df_learners = del_values(pat_df_learners, "max_trace")
-#
-#    # Define common x and y limits
-#    x_min = learners_df["max_trace"].min()
-#    x_max = learners_df["max_trace"].max()
-#    y_min = norm_df_learners["max_trace"].min()
-#    y_max = norm_df_learners["max_trace"].max()
-#
-#    # Plot for learners
-#    for pat in pattern_info.keys():
-#        pat_data = pat_df_learners[pat_df_learners["frame_id"] == pat]
-#        ax = axis_map_learners[pat]
-#
-#        # Extract x and y data
-#        x = pat_data[pat_data["pre_post_status"] == "pre"]["max_trace"]
-#        y = norm_df_learners[
-#            (norm_df_learners["frame_id"] == pat)
-#            & (norm_df_learners["pre_post_status"] == "post_3")
-#        ]["max_trace"]
-#
-#        if x.empty or y.empty:
-#            print(f"No data for learners - {pat}.")
-#            continue
-#
-#        # Perform Spearman correlation test
-#        corr_coeff, p_value = spearmanr(x, y)
-#
-#        # Scatter plot
-#        color = bpf.CB_color_cycle[0]  # Color for learners
-#        ax.scatter(
-#            x,
-#            y,
-#            color=color,
-#            alpha=0.9,
-#            marker=pattern_info[pat]["marker"],
-#            facecolors="none" if pat == "pattern_0" else color,
-#        )
-#
-#        # Add regression line
-#        if len(x) > 1:
-#            slope, intercept, _, _, _ = spst.linregress(x, y)
-#            x_line = np.linspace(x.min(), x.max(), 100)
-#            y_line = slope * x_line + intercept
-#            ax.plot(
-#                x_line,
-#                y_line,
-#                color=color,
-#                alpha=0.7,
-#                linestyle="--",
-#            )
-#
-#        # Set axis labels conditionally
-#        if pat == "pattern_0":
-#            ax.set_ylabel("Post_3 (normalized max_trace)")
-#        if pat == "pattern_1":
-#            ax.set_xlabel("Pre (max_trace)")
-#
-#        # Set common x and y limits
-#        ax.set_xlim(x_min, x_max)
-#        ax.set_ylim(y_min, y_max)
-#
-#        # Adjust spines to show only top and left
-#        ax.spines["top"].set_visible(True)
-#        ax.spines["right"].set_visible(False)
-#        ax.spines["bottom"].set_visible(False)
-#        ax.spines["left"].set_visible(True)
-#
-#        # Ensure tick labels are visible
-#        ax.tick_params(axis="both", which="both", labelsize=10)
-#
-#        # Remove legend except for pattern_2
-#        if pat == "pattern_2":
-#            ax.legend()
-#        else:
-#            ax.legend().set_visible(False)
-#
-#    # Get data for non-learners
-#    non_learners_df = sc_data_dict["an_cells"]
-#    non_learners_df = non_learners_df[non_learners_df["pre_post_status"].isin(order)]
-#    pat_df_non_learners = non_learners_df[
-#        non_learners_df["frame_id"].isin(pattern_info.keys())
-#    ].assign(group="non_learners")
-#
-#    # Normalize data for non-learners
-#    norm_df_non_learners = del_values(pat_df_non_learners, "max_trace")
-#
-#    # Update x and y limits if necessary
-#    x_min = min(x_min, non_learners_df["max_trace"].min())
-#    x_max = max(x_max, non_learners_df["max_trace"].max())
-#    y_min = min(y_min, norm_df_non_learners["max_trace"].min())
-#    y_max = max(y_max, norm_df_non_learners["max_trace"].max())
-#
-#    # Plot for non-learners
-#    for pat in pattern_info.keys():
-#        pat_data = pat_df_non_learners[pat_df_non_learners["frame_id"] == pat]
-#        ax = axis_map_non_learners[pat]
-#
-#        # Extract x and y data
-#        x = pat_data[pat_data["pre_post_status"] == "pre"]["max_trace"]
-#        y = norm_df_non_learners[
-#            (norm_df_non_learners["frame_id"] == pat)
-#            & (norm_df_non_learners["pre_post_status"] == "post_3")
-#        ]["max_trace"]
-#
-#        if x.empty or y.empty:
-#            print(f"No data for non-learners - {pat}.")
-#            continue
-#
-#        # Perform Spearman correlation test
-#        corr_coeff, p_value = spearmanr(x, y)
-#
-#        # Scatter plot
-#        color = bpf.CB_color_cycle[1]  # Color for non-learners
-#        ax.scatter(
-#            x,
-#            y,
-#            color=color,
-#            alpha=0.9,
-#            marker=pattern_info[pat]["marker"],
-#            facecolors="none" if pat == "pattern_0" else color,
-#        )
-#
-#        # Add regression line
-#        if len(x) > 1:
-#            slope, intercept, _, _, _ = spst.linregress(x, y)
-#            x_line = np.linspace(x.min(), x.max(), 100)
-#            y_line = slope * x_line + intercept
-#            ax.plot(
-#                x_line,
-#                y_line,
-#                color=color,
-#                alpha=0.7,
-#                linestyle="--",
-#            )
-#
-#        # Set axis labels conditionally
-#        if pat == "pattern_0":
-#            ax.set_ylabel("Post_3 (normalized max_trace)")
-#        if pat == "pattern_1":
-#            ax.set_xlabel("Pre (max_trace)")
-#
-#        # Set common x and y limits
-#        ax.set_xlim(x_min, x_max)
-#        ax.set_ylim(y_min, y_max)
-#
-#        # Adjust spines to show only top and left
-#        ax.spines["top"].set_visible(True)
-#        ax.spines["right"].set_visible(False)
-#        ax.spines["bottom"].set_visible(False)
-#        ax.spines["left"].set_visible(True)
-#
-#        # Ensure tick labels are visible
-#        ax.tick_params(axis="both", which="both", labelsize=10)
-#
-#        # Remove legend except for pattern_2
-#        if pat == "pattern_2":
-#            ax.legend()
-#        else:
-#            ax.legend().set_visible(False)
-#
 
 #def plot_peak_perc_comp(sc_data_dict, axs_learners_pat_trained,
 #                        axs_learners_pat_overlapping, 
