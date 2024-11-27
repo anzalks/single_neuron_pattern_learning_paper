@@ -520,7 +520,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
 
     # Create the figure and GridSpec
     fig = plt.figure(figsize=(12, 20))
-    gs = GridSpec(len(list_of_variables) * 4, 3, figure=fig)  # 4 rows per variable, 3 columns for patterns
+    gs = GridSpec(len(list_of_variables) * 6, 3, figure=fig)  # 4 rows per variable, 3 columns for patterns
 
     # Plot all features
     plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles)

@@ -420,7 +420,7 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
             all_axes.append(axs_d)  # Collect axis
 
     # Label all axes at once after they have been created
-    label_axis(all_axes, xpos=-0.05, ypos=1.2)
+    label_axis(all_axes, xpos=-0.01, ypos=1.1)
     
     # Adjust layout to prevent overlapping
     plt.tight_layout()
@@ -611,7 +611,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     subplot_titles = ['absolute area', 'positive area', 'negative area', 'onset time', 'slope']
 
     # Create the figure and GridSpec
-    fig = plt.figure(figsize=(12, 20))
+    fig = plt.figure(figsize=(12, 30))
     gs = GridSpec(len(list_of_variables) * 4, 3, figure=fig)  # 4 rows per variable, 3 columns for patterns
 
     # Plot all features
