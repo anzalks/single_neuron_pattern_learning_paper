@@ -29,6 +29,8 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 import baisic_plot_fuctnions_and_features as bpf
 from matplotlib.lines import Line2D
+from scipy.stats import gaussian_kde
+
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -54,6 +56,16 @@ args_ = Args()
 #    # Shrink the plot
 #    axs_img.set_position(new_pos)
 #    axs_img.axis('off')
+
+def move_axis(axs_list,xoffset,yoffset,pltscale):
+    for axs in axs_list:
+        pos = axs.get_position()  # Get the original position
+        new_pos = [pos.x0+xoffset, pos.y0+yoffset, pos.width*pltscale,
+                   pos.height*pltscale]
+        # Shrink the plot
+        axs.set_position(new_pos)
+
+
 
 def plot_image(image, axs_img, xoffset=0, yoffset=0, pltscale=1):
     """
@@ -404,6 +416,348 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
                 )
 
     return axs_slp
+
+
+#def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
+#                                time_point='post_3', colors=None):
+#    bins = 10 #np.linspace(-10, 10, num=10)
+#
+#    """
+#    Plots a frequency distribution (histogram) for the specified time point,
+#    comparing 'pattern_0', 'pattern_1', and 'pattern_2', and overlays a KDE.
+#
+#    Parameters:
+#    - cell_list: pandas DataFrame containing the data
+#    - val_to_plot: string, name of the column to plot
+#    - fig: matplotlib Figure object
+#    - ax: matplotlib Axes object
+#    - time_point: string, the time point to filter on (default is 'post_3')
+#    - bins: int or sequence, number of bins or bin edges for the histogram
+#    - colors: list of colors for each pattern (default is None)
+#
+#    Returns:
+#    - ax: matplotlib Axes object with the plot
+#    """
+#
+#    # Define the patterns within the function
+#    patterns = ['pattern_0', 'pattern_1', 'pattern_2']
+#
+#    # Run cell_list through norm_values before filtering the data
+#    cell_list = norm_values(cell_list, val_to_plot)
+#    norm_val_to_plot = f'{val_to_plot}'
+#
+#    # Check if colors are provided; if not, use default seaborn palette
+#    if colors is None:
+#        colors = sns.color_palette('Set1', n_colors=len(patterns))
+#
+#    # Loop over each pattern and plot the histogram with KDE
+#    for pattern, color in zip(patterns, colors):
+#        # Filter the data for the current pattern and time point
+#        data_filtered = cell_list[
+#            (cell_list['frame_id'] == pattern) &
+#            (cell_list['pre_post_status'] == time_point)
+#        ]
+#
+#        # Extract the normalized values to plot
+#        values = data_filtered[norm_val_to_plot]
+#
+#        # Plot the histogram with KDE
+#        sns.histplot(
+#            values,
+#            bins=bins,
+#            kde=True,  # Set to True to overlay the KDE
+#            label=pattern.replace('_', ' ').capitalize(),
+#            color=color,
+#            ax=ax,
+#            alpha=0.6,
+#            edgecolor='black'
+#        )
+#
+#    # Customize the plot
+#    ax.set_title(f'Frequency Distribution of {val_to_plot} at {time_point}')
+#    ax.set_xlabel(f'Normalized {val_to_plot} (% of Pre)')
+#    ax.set_ylabel('Frequency')
+#    ax.legend(title='Patterns')
+#    ax.set_xlim(-50,700)
+#    sns.despine(ax=ax, trim=True)
+#    #ax.set_xlim(bins[0], bins[-1])
+#
+#    return ax
+
+
+
+def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
+                                time_point='post_3', colors=None):
+    """
+    Plots a frequency distribution (histogram) for the specified time point,
+    comparing 'trained', 'overlapping', and 'non-overlapping', and overlays a scaled KDE.
+
+    Parameters:
+    - cell_list: pandas DataFrame containing the data
+    - val_to_plot: string, name of the column to plot
+    - fig: matplotlib Figure object
+    - ax: matplotlib Axes object
+    - time_point: string, the time point to filter on (default is 'post_3')
+    - colors: list of colors for each pattern (default is None)
+
+    Returns:
+    - ax: matplotlib Axes object with the plot
+    """
+
+    # Define the patterns within the function
+    patterns = ['pattern_0', 'pattern_1', 'pattern_2']
+
+    # Mapping from pattern names to desired labels
+    pattern_labels = {
+        'pattern_0': 'trained',
+        'pattern_1': 'overlapping',
+        'pattern_2': 'non-overlapping'
+    }
+
+    # Run cell_list through norm_values before filtering the data
+    cell_list = norm_values(cell_list, val_to_plot)
+    norm_val_to_plot = f'{val_to_plot}'
+
+    # Check if colors are provided; if not, use custom colors
+    if colors is None:
+        # Define custom colors that are not in the default plots
+        colors = ['teal', 'orange', 'purple']
+
+    # Determine the x-axis limits as desired
+    x_min, x_max = -50, 600  # Adjust these values as needed
+    ax.set_xlim(x_min, x_max)
+    data_list = cell_list[
+        cell_list['frame_id'].str.contains("pattern")&
+        (cell_list['pre_post_status'] == time_point)
+    ][norm_val_to_plot].to_numpy()
+    print(f"data_list:{data_list}")
+
+
+    # Define the bins
+    #bins = np.linspace(x_min, x_max, num=11)  # Adjust 'num' for number of bins
+    bins = int(np.sqrt(len(data_list)))
+    # Loop over each pattern and plot the histogram with KDE
+    for pattern, color in zip(patterns, colors):
+        # Filter the data for the current pattern and time point
+        data_filtered = cell_list[
+            (cell_list['frame_id'] == pattern) &
+            (cell_list['pre_post_status'] == time_point)
+        ]
+
+        # Extract the normalized values to plot
+        values = data_filtered[norm_val_to_plot]
+
+        # Remove NaN and infinite values
+        values = values.replace([np.inf, -np.inf], np.nan).dropna()
+
+        # Plot the histogram with counts
+        counts, bin_edges, patches = ax.hist(
+            values,
+            bins=bins,
+            label=pattern_labels[pattern],  # Use the mapped label
+            color=color,
+            alpha=0.6,
+            edgecolor='black',
+            linewidth=0.5
+        )
+
+        # Compute the KDE
+        if len(values) > 1:  # Need at least two data points for KDE
+            kde = gaussian_kde(values)
+            x_range = np.linspace(x_min, x_max, 1000)
+            kde_values = kde.evaluate(x_range)
+
+            # Scale the KDE to match counts
+            bin_width = len(data_list)
+            scaled_kde = kde_values * len(values) * bin_width
+
+            # Plot the scaled KDE
+            ax.plot(x_range, scaled_kde, color=color)
+        else:
+            print(f"Not enough data points for KDE for {pattern}.")
+
+    # Customize the plot
+    #ax.set_title(f'Frequency Distribution of {val_to_plot} at {time_point}')
+    ax.set_xlabel(f'% change in EPSP amplitude\npost 30 mins training')
+    ax.set_ylabel('Number of cells')  # Since we're plotting counts
+    ax.legend(title='Patterns')
+    ax.text(0.3,0.9,f"bin size: {bins}",transform=ax.transAxes,
+            fontsize=10, va='top', ha='left')
+
+    # Ensure x-axis limits are exactly as defined
+    ax.set_xlim(x_min, x_max)
+
+    # Remove top and right spines (similar to sns.despine)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # Ensure x and y ticks are shown by commenting out this line
+    # ax.tick_params(axis='both', which='both', length=0)
+
+
+    return ax
+
+
+
+#def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
+#                                time_point='post_3', colors=None):
+#    """
+#    Plots a frequency distribution (histogram) for the specified time point,
+#    comparing 'pattern_0', 'pattern_1', and 'pattern_2', and overlays a scaled KDE.
+#
+#    Parameters:
+#    - cell_list: pandas DataFrame containing the data
+#    - val_to_plot: string, name of the column to plot
+#    - fig: matplotlib Figure object
+#    - ax: matplotlib Axes object
+#    - time_point: string, the time point to filter on (default is 'post_3')
+#    - colors: list of colors for each pattern (default is None)
+#
+#    Returns:
+#    - ax: matplotlib Axes object with the plot
+#    """
+#
+#    # Define the patterns within the function
+#    patterns = ['pattern_0', 'pattern_1', 'pattern_2']
+#
+#    # Run cell_list through norm_values before filtering the data
+#    cell_list = norm_values(cell_list, val_to_plot)
+#    norm_val_to_plot = f'{val_to_plot}'
+#
+#    # Check if colors are provided; if not, use custom colors
+#    if colors is None:
+#        # Define custom colors that are not in the default plots
+#        colors = ['teal', 'orange', 'purple']
+#
+#    # Determine the x-axis limits as desired
+#    x_min, x_max = -50, 700  # Adjust these values as needed
+#    ax.set_xlim(x_min, x_max)
+#
+#    # Define the bins
+#    bins = np.linspace(x_min, x_max, num=11)  # Adjust 'num' for number of bins
+#
+#    # Loop over each pattern and plot the histogram with KDE
+#    for pattern, color in zip(patterns, colors):
+#        # Filter the data for the current pattern and time point
+#        data_filtered = cell_list[
+#            (cell_list['frame_id'] == pattern) &
+#            (cell_list['pre_post_status'] == time_point)
+#        ]
+#
+#        # Extract the normalized values to plot
+#        values = data_filtered[norm_val_to_plot]
+#
+#        # Remove NaN and infinite values
+#        values = values.replace([np.inf, -np.inf], np.nan).dropna()
+#
+#        # Plot the histogram with counts
+#        counts, bin_edges, patches = ax.hist(
+#            values,
+#            bins=bins,
+#            label=pattern.replace('_', ' ').capitalize(),
+#            color=color,
+#            alpha=0.6,
+#            edgecolor='black',
+#            linewidth=0.5
+#        )
+#
+#        # Compute the KDE
+#        if len(values) > 1:  # Need at least two data points for KDE
+#            kde = gaussian_kde(values)
+#            x_range = np.linspace(x_min, x_max, 1000)
+#            kde_values = kde.evaluate(x_range)
+#
+#            # Scale the KDE to match counts
+#            bin_width = np.diff(bins)[0]
+#            scaled_kde = kde_values * len(values) * bin_width
+#
+#            # Plot the scaled KDE
+#            ax.plot(x_range, scaled_kde, color=color)
+#        else:
+#            print(f"Not enough data points for KDE for {pattern}.")
+#
+#    # Customize the plot
+#    #ax.set_title(f'Frequency Distribution of {val_to_plot} at {time_point}')
+#    ax.set_xlabel(f'% change in EPSP amplitude\npost 30 mins of training')
+#    ax.set_ylabel('Number of cells')  # Since we're plotting counts
+#    ax.legend(title='Patterns')
+#
+#    # Ensure x-axis limits are exactly as defined
+#    ax.set_xlim(x_min, x_max)
+#
+#    # Remove top and right spines (similar to sns.despine)
+#    ax.spines['top'].set_visible(False)
+#    ax.spines['right'].set_visible(False)
+#
+#    # Optionally, adjust tick parameters to match Seaborn's style
+#    ax.tick_params(axis='both', which='both', length=0)
+#
+#    return ax
+
+
+
+#def plot_frequency_distribution(cell_list, val_to_plot, fig, ax, time_point='post_3', bins=10, colors=None):
+#    """
+#    Plots a frequency distribution (histogram) for the specified time point,
+#    comparing 'pattern_0', 'pattern_1', and 'pattern_2'.
+#
+#    Parameters:
+#    - cell_list: pandas DataFrame containing the data
+#    - val_to_plot: string, name of the column to plot
+#    - fig: matplotlib Figure object
+#    - ax: matplotlib Axes object
+#    - time_point: string, the time point to filter on (default is 'post_3')
+#    - bins: int or sequence, number of bins or bin edges for the histogram
+#    - colors: list of colors for each pattern (default is None)
+#
+#    Returns:
+#    - ax: matplotlib Axes object with the plot
+#    """
+#
+#    # Define the patterns within the function
+#    patterns = ['pattern_0', 'pattern_1', 'pattern_2']
+#
+#    # Run cell_list through norm_values before filtering the data
+#    cell_list = norm_values(cell_list, val_to_plot)
+#    norm_val_to_plot = f'{val_to_plot}'
+#
+#    # Check if colors are provided; if not, use default seaborn palette
+#    if colors is None:
+#        colors = sns.color_palette('Set1', n_colors=len(patterns))
+#
+#    # Loop over each pattern and plot the histogram
+#    for pattern, color in zip(patterns, colors):
+#        # Filter the data for the current pattern and time point
+#        data_filtered = cell_list[
+#            (cell_list['frame_id'] == pattern) &
+#            (cell_list['pre_post_status'] == time_point)
+#        ]
+#
+#        # Extract the normalized values to plot
+#        values = data_filtered[norm_val_to_plot]
+#
+#        # Plot the histogram
+#        sns.histplot(
+#            values,
+#            bins=bins,
+#            kde=False,
+#            label=pattern.replace('_', ' ').capitalize(),
+#            color=color,
+#            ax=ax,
+#            alpha=0.6,
+#            edgecolor='black'
+#        )
+#
+#    # Customize the plot
+#    ax.set_title(f'Frequency Distribution of {val_to_plot} at {time_point}')
+#    ax.set_xlabel(f'Normalized {val_to_plot} (% of Pre)')
+#    ax.set_ylabel('Frequency')
+#    ax.legend(title='Patterns')
+#    sns.despine(ax=ax, trim=True)
+#
+#    fig.tight_layout()
+#    return ax
+
 
 
 #def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot, plt_color):
@@ -802,17 +1156,24 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
     label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
 
+    axs_dist = fig.add_subplot(gs[9:10,0:4])
+    plot_frequency_distribution(sc_data_df, "max_trace", fig, 
+                                axs_dist, time_point='post_3', 
+                                colors=None)
+    axs_dist.text(-0.07,1,'E',transform=axs_dist.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_dist],xoffset=0,yoffset=-0.03,pltscale=1)
+    
+    #axs_inr = fig.add_subplot(gs[9:10,3:6])
+    #inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
+    #axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
+    #         fontsize=16, fontweight='bold', ha='center', va='center')            
 
-    axs_inr = fig.add_subplot(gs[9:10,3:6])
-    inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
-             fontsize=16, fontweight='bold', ha='center', va='center')            
 
-
-    axs_inrill = fig.add_subplot(gs[9:10,0:3])
-    plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
-    axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')            
+    #axs_inrill = fig.add_subplot(gs[9:10,0:3])
+    #plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
+    #axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     #handles, labels = plt.gca().get_legend_handles_labels()
