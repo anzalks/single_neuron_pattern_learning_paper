@@ -578,7 +578,7 @@ def plot_response_summary_bar(sc_data_dict, fig, axs):
         axs.errorbar(bar_x, row.mean, yerr=row.sem, fmt='none', c='black', capsize=5)
         
         if annotation:
-            bar_y = patch.get_height() + 0.25 * patch.get_height()
+            bar_y = patch.get_height() + 0.25 * patch.get_height()*0.9
             #bar_y = patch.get_height() + 10
             axs.text(bar_x, bar_y, annotation, ha='center', va='bottom', fontsize=10, color='black')
 

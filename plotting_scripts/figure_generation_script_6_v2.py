@@ -978,7 +978,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                     1, 1, 1
                    ]# Adjust these values as needed
 
-    fig = plt.figure(figsize=(12,9))
+    fig = plt.figure(figsize=(12,12))
     gs = GridSpec(12, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
