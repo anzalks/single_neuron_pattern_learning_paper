@@ -373,7 +373,8 @@ def cell_group_classifier(pd_all_cells_mean,outdir):
                     cell_replaced_min=cell[(cell["pre_post_status"]==f"{p}")&(cell["frame_id"]==f"{pa}")]["min_trace %"]
                     cell_replaced_minf=cell[(cell["pre_post_status"]==f"{p}")&(cell["frame_id"]==f"{pa}")]["min_field %"]
                     #print(f"pat: {pa}, pepo:{p}, cell_replaced:{cell_replaced}")
-            pre_cell = np.array(cell[(cell["pre_post_status"]=="pre")&(cell["frame_id"]=="pattern_0")]["min_trace %"])
+            pre_cell =np.array(cell[(cell["pre_post_status"]=="pre")&(cell["frame_id"]=="pattern_0")]["max_trace %"])
+            #pre_cell = np.array(cell[(cell["pre_post_status"]=="pre")&(cell["frame_id"]=="pattern_0")]["min_trace %"])
             #print(pre_cell)
             post_cell = np.array(cell[(cell["pre_post_status"]=="post_3")&(cell["frame_id"]=="pattern_0")]["max_trace %"])
             #cells with LTP and above 1mV

@@ -26,24 +26,24 @@ def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (atmix=0) 
 
 def convert_pvalue_to_asterisks(pvalue):
     if pvalue <= 0.0001:
-        print(f"pvalue:{pvalue}")
+        #print(f"pvalue:{pvalue}")
         #return str(pvalue)
         #pvalue=str(np.around(pvalue,5))
         return f"****"
         #return f"**** \np= {pvalue}"
     elif pvalue <= 0.001:
-        return str(pvalue)
-        #return f"***"
+        #return str(pvalue)
+        return f"***"
         #return str(pvalue)
         #return f"*** \np= {np.around(pvalue,4)}"
     elif pvalue <= 0.01:
-        return str(pvalue)
+        #return str(pvalue)
         #return f"** \np= {np.around(pvalue,3)}"
-        #return f"**"
+        return f"**"
     elif pvalue <= 0.05:
-        return str(pvalue)
+        #return str(pvalue)
         #return f"* p= {np.around(pvalue,3)}"
-        #return f"*"
+        return f"*"
     else:
         #return f"ns p= {np.around(pvalue,3)}"
         return "ns"

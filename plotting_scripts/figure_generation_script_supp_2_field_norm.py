@@ -255,7 +255,10 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
     pat_num = int(pattern_number.split("_")[-1])
     num_cells = len(catcell_dist["cell_ID"].unique())
     pfd = catcell_dist.groupby(by="frame_id")
-
+    if val_to_plot=="max_trace":
+        ylabel="field normalised\n% change in\nEPSP amplitude"
+    else:
+        ylabel="field normalised\n% change in\nPSH amplitude"
     # Set a fixed y-axis limit for consistency across all plots
     axs.set_ylim(y_lim)
 
@@ -320,7 +323,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
             # Adjust axis labels and ticks
             if pat_num == 0:
                 sns.despine(ax=axs, top=True, right=True)
-                axs.set_ylabel("field normalised\n% change in\nEPSP amplitude")
+                axs.set_ylabel(ylabel)
                 axs.set_xlabel(None)
             elif pat_num == 1:
                 sns.despine(ax=axs, top=True, right=True)
@@ -527,7 +530,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"B", xpos=0.1, ypos=0.9)
+    label_axis(axs_in_list,"B", xpos=0.075, ypos=0.95)
 
 
     #plot distribution epsp for learners and non-leaners
@@ -540,7 +543,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"C", xpos=-0.1, ypos=1.1)
+    label_axis(axs_ex_list,"C", xpos=-0.05, ypos=1.1)
                                                                              
                                                                              
     axs_in_pat1 = fig.add_subplot(gs[18:23,0:3])
@@ -552,7 +555,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"D", xpos=0.1, ypos=0.9)
+    label_axis(axs_in_list,"D", xpos=0.075, ypos=0.95)
 
 
 
