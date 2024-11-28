@@ -265,6 +265,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
                 x="pre_post_status", y=trace_property, order=order
             )
             annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+            annotator.annotate()
 
             # Customize labels for learners and non-learners
             if cell_type == "learners":
@@ -986,62 +987,118 @@ def plot_figure_6(extracted_feature_pickle_file_path,
 
 
 
-    #plot patterns
-    axs_pat_1 = fig.add_subplot(gs[0:1,0:1])
-    axs_pat_2 = fig.add_subplot(gs[0:1,1:2])
-    axs_pat_3 = fig.add_subplot(gs[0:1,2:3])
-    axs_pat_4 = fig.add_subplot(gs[0:1,4:5])
-    axs_pat_5 = fig.add_subplot(gs[0:1,5:6])
-    axs_pat_6 = fig.add_subplot(gs[0:1,6:7])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0,2)
-    plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,-0.05,0,2)
+    ##plot patterns
+    #axs_pat_1 = fig.add_subplot(gs[0:1,0:1])
+    #axs_pat_2 = fig.add_subplot(gs[0:1,1:2])
+    #axs_pat_3 = fig.add_subplot(gs[0:1,2:3])
+    #axs_pat_4 = fig.add_subplot(gs[0:1,4:5])
+    #axs_pat_5 = fig.add_subplot(gs[0:1,5:6])
+    #axs_pat_6 = fig.add_subplot(gs[0:1,6:7])
+    #plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,0,2)
+    #plot_patterns(axs_pat_4,axs_pat_5,axs_pat_6,-0.05,0,2)
 
 
-    #plot distribution epsp for learners and leaners
-    axs_ex_pat1 = fig.add_subplot(gs[1:3,0:1])
-    axs_ex_pat2 = fig.add_subplot(gs[1:3,1:2])
-    axs_ex_pat3 = fig.add_subplot(gs[1:3,2:3])
-    plot_field_response_pairs(sc_data_dict["ap_cells"],"min_field","post_3",
-                              "learners","no norm",
-                              fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
-    axs_ex_fl_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_fl_list,"A")
-    move_axis(axs_ex_fl_list,0,0,1)
+    ##plot distribution epsp for learners and leaners
+    #axs_ex_pat1 = fig.add_subplot(gs[1:3,0:1])
+    #axs_ex_pat2 = fig.add_subplot(gs[1:3,1:2])
+    #axs_ex_pat3 = fig.add_subplot(gs[1:3,2:3])
+    #plot_field_response_pairs(sc_data_dict["ap_cells"],"min_field","post_3",
+    #                          "learners","no norm",
+    #                          fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
+    #axs_ex_fl_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
+    #label_axis(axs_ex_fl_list,"A")
+    #move_axis(axs_ex_fl_list,0,0,1)
 
-    axs_in_pat1 = fig.add_subplot(gs[1:3,4:5])
-    axs_in_pat2 = fig.add_subplot(gs[1:3,5:6])
-    axs_in_pat3 = fig.add_subplot(gs[1:3,6:7])
-    plot_field_response_pairs(sc_data_dict["an_cells"],"min_field","post_3",
-                              "non-learners","no norm",
-                              fig,axs_in_pat1,axs_in_pat2,axs_in_pat3)
+    #axs_in_pat1 = fig.add_subplot(gs[1:3,4:5])
+    #axs_in_pat2 = fig.add_subplot(gs[1:3,5:6])
+    #axs_in_pat3 = fig.add_subplot(gs[1:3,6:7])
+    #plot_field_response_pairs(sc_data_dict["an_cells"],"min_field","post_3",
+    #                          "non-learners","no norm",
+    #                          fig,axs_in_pat1,axs_in_pat2,axs_in_pat3)
+    #
+    #axs_in_fl_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
+    #label_axis(axs_in_fl_list,"B")
+    #move_axis(axs_in_fl_list,-0.05,0,1)
     
-    axs_in_fl_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_fl_list,"B")
-    move_axis(axs_in_fl_list,-0.05,0,1)
-    
-    axs_pat_fl1 = fig.add_subplot(gs[4:5,0:1])
-    axs_pat_fl2 = fig.add_subplot(gs[4:5,2:3])
-    axs_pat_fl3 = fig.add_subplot(gs[4:5,4:5])
+    #axs_pat_fl1 = fig.add_subplot(gs[4:5,0:1])
+    #axs_pat_fl2 = fig.add_subplot(gs[4:5,2:3])
+    #axs_pat_fl3 = fig.add_subplot(gs[4:5,4:5])
+    #plot_patterns(axs_pat_fl1,axs_pat_fl2,axs_pat_fl3,0.07,0,1)
+    #axs_pat_list = [axs_pat_fl1,axs_pat_fl2,axs_pat_fl3]
+    #move_axis(axs_pat_list,-0.02,0,1)
+
+
+    #axs_ex_fl1 = fig.add_subplot(gs[5:7,0:2])
+    #axs_ex_fl2 = fig.add_subplot(gs[5:7,2:4])
+    #axs_ex_fl3 = fig.add_subplot(gs[5:7,4:6])
+    #plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
+    #                                  "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
+    #axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
+    #label_axis(axs_ex_fl_list,"C")    
+    #axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
+    #axs_in_fl2 = fig.add_subplot(gs[7:9,2:4])
+    #axs_in_fl3 = fig.add_subplot(gs[7:9,4:6])
+    #plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
+    #                                  "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
+    #axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
+    #label_axis(axs_in_fl_list,"D")
+    #axs_all_field = fig.add_subplot(gs[9:11,0:2])
+    ##plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
+    ##                         axs_all_field)
+    ##axs_all_field1= fig.add_subplot(gs[9:11,0:2])
+    ##axs_all_field2= fig.add_subplot(gs[9:11,2:4])
+    ##axs_all_field3= fig.add_subplot(gs[9:11,4:6])
+    ##plot_minf_compare_all_pat(data_learners=sc_data_dict["ap_cells"], 
+    ##                          data_non_learners=sc_data_dict["an_cells"], 
+    ##                          trace_property="min_field",
+    ##                          fig=fig, 
+    ##                          axs1=axs_all_field1, 
+    ##                          axs2=axs_all_field2, 
+    ##                          axs3=axs_all_field3)
+    #plot_last_point_post_3(data_learners=sc_data_dict["ap_cells"], 
+    #                          data_non_learners=sc_data_dict["an_cells"], 
+    #                          trace_property="min_field",
+    #                          fig=fig, 
+    #                          ax=axs_all_field) 
+
+
+    #move_axis([axs_all_field],0,-0.05,1)
+    #axs_all_field.text(0.05,1,'E',transform=axs_all_field.transAxes,    
+    #                    fontsize=16, fontweight='bold',
+    #                    ha='center',va='center')
+
+    #handles, labels = plt.gca().get_legend_handles_labels()
+    #by_label = dict(zip(labels, handles))
+    #fig.legend(by_label.values(), by_label.keys(), 
+    #           bbox_to_anchor =(0.5, 0.175),
+    #           ncol = 6,title="Legend",
+    #           loc='upper center')#,frameon=False)#,loc='lower center'    
+    #
+
+
+    axs_pat_fl1 = fig.add_subplot(gs[0:1,0:1])
+    axs_pat_fl2 = fig.add_subplot(gs[0:1,2:3])
+    axs_pat_fl3 = fig.add_subplot(gs[0:1,4:5])
     plot_patterns(axs_pat_fl1,axs_pat_fl2,axs_pat_fl3,0.07,0,1)
     axs_pat_list = [axs_pat_fl1,axs_pat_fl2,axs_pat_fl3]
     move_axis(axs_pat_list,-0.02,0,1)
-
-
-    axs_ex_fl1 = fig.add_subplot(gs[5:7,0:2])
-    axs_ex_fl2 = fig.add_subplot(gs[5:7,2:4])
-    axs_ex_fl3 = fig.add_subplot(gs[5:7,4:6])
+                                                                                       
+                                                                                       
+    axs_ex_fl1 = fig.add_subplot(gs[1:3,0:2])
+    axs_ex_fl2 = fig.add_subplot(gs[1:3,2:4])
+    axs_ex_fl3 = fig.add_subplot(gs[1:3,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
                                       "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
     axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
-    label_axis(axs_ex_fl_list,"C")    
-    axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
-    axs_in_fl2 = fig.add_subplot(gs[7:9,2:4])
-    axs_in_fl3 = fig.add_subplot(gs[7:9,4:6])
+    label_axis(axs_ex_fl_list,"A")    
+    axs_in_fl1 = fig.add_subplot(gs[3:5,0:2])
+    axs_in_fl2 = fig.add_subplot(gs[3:5,2:4])
+    axs_in_fl3 = fig.add_subplot(gs[3:5,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
     axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
-    label_axis(axs_in_fl_list,"D")
-    axs_all_field = fig.add_subplot(gs[9:11,0:2])
+    label_axis(axs_in_fl_list,"B")
+    axs_all_field = fig.add_subplot(gs[5:7,0:2])
     #plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     #                         axs_all_field)
     #axs_all_field1= fig.add_subplot(gs[9:11,0:2])
@@ -1059,20 +1116,42 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                               trace_property="min_field",
                               fig=fig, 
                               ax=axs_all_field) 
-
-
-    move_axis([axs_all_field],0,-0.05,1)
-    axs_all_field.text(0.05,1,'E',transform=axs_all_field.transAxes,    
+                                                                                       
+                                                                                       
+    move_axis([axs_all_field],0,-0.02,1)
+    axs_all_field.text(0.05,1,'C',transform=axs_all_field.transAxes,    
                         fontsize=16, fontweight='bold',
                         ha='center',va='center')
 
-    #handles, labels = plt.gca().get_legend_handles_labels()
-    #by_label = dict(zip(labels, handles))
-    #fig.legend(by_label.values(), by_label.keys(), 
-    #           bbox_to_anchor =(0.5, 0.175),
-    #           ncol = 6,title="Legend",
-    #           loc='upper center')#,frameon=False)#,loc='lower center'    
-    #
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_6.png"
