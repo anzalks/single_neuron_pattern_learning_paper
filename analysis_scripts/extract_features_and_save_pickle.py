@@ -14,7 +14,8 @@ import argparse
 from  matplotlib import pyplot as plt
 from scipy.signal import butter, filtfilt
 import scipy
-
+import multiprocessing as mp
+from scipy.signal import butter, filtfilt
 
 class Args: pass
 args_ = Args()
@@ -38,14 +39,34 @@ def substract_baseline(trace,sampling_rate, bl_period_in_ms):
     bl_trace = trace-bl
     return bl_trace
 
-def baseline_data_extractor(cells_df,outdir):
-    pre_only_df = cells_df[(cells_df["pre_post_status"]=="pre")&(cells_df["frame_status"]=="pattern")]
+#def baseline_data_extractor(cells_df,outdir):
+#    pre_only_df = cells_df[(cells_df["pre_post_status"]=="pre")&(cells_df["frame_status"]=="pattern")]
+#    outpath = f"{outdir}/baseline_traces_all_cells"
+#    write_pkl(pre_only_df,outpath)
+#    print(f"all traces 'pre' written to pickle file: {outpath}")
+#    return pre_only_df
+
+
+
+def baseline_data_extractor(cells_df, outdir):
+    # Extract columns as NumPy arrays
+    pre_post_status_array = cells_df["pre_post_status"].to_numpy()
+    frame_status_array = cells_df["frame_status"].to_numpy()
+    
+    # Create boolean mask
+    mask = (pre_post_status_array == "pre") & (frame_status_array == "pattern")
+    
+    # Apply the mask to the DataFrame
+    pre_only_df = cells_df.loc[mask].copy()
+    
     outpath = f"{outdir}/baseline_traces_all_cells"
-    write_pkl(pre_only_df,outpath)
-    print(f"all traces 'pre' written to pickle file: {outpath}")
+    write_pkl(pre_only_df, outpath)
+    print(f"All 'pre' traces written to pickle file: {outpath}")
     return pre_only_df
 
-from scipy.signal import butter, filtfilt
+
+
+
 
 def butter_bandpass(lowcut, highcut, fs, order=4):
     nyquist = 0.5 * fs
@@ -77,90 +98,222 @@ def mini_features(trace, sampling_rate=20000,threshold=0.3, min_distance=0.05, m
     return mepsp_amp, mepsp_time, num_mepsp, freq_mepsp
     
 
+def process_cell(args):
+    c, cell = args
+    cell_rmp = np.mean(cell["cell_trace(mV)"])
+    cell_list = []
+    frame_status_grp = cell.groupby(by="frame_status")
+    for fs, f_status in frame_status_grp:
+        sampling_rate = int(f_status["sampling_rate(Hz)"].iloc[0])
+        fit_i = int(0.003*sampling_rate)  # default timepoint to start measuring slope=3ms
+        fit_f = int(0.01*sampling_rate)   # default timepoint to end measuring slope=10ms
+        x_fit_f = int(0.01*sampling_rate) # dynamic timepoint to end measuring slope in case of rise time is too high =10ms
+        total_tp = len(f_status["pre_post_status"].unique())
+        pp_status_grp = f_status.groupby(by="pre_post_status")
+        for pps, pp_status in pp_status_grp:
+            if "pre" in pps:
+                time_point = -1
+            elif "post" in pps:
+                time_point = int(pps.split("_")[-1])+1
+            else:
+                continue
+            pat_grp = pp_status.groupby(by='frame_id')
+            for pat, patg in pat_grp:
+                if ("no_frame" in pat) or ("inR" in pat):
+                    continue
+                else:
+                    trial_grp = patg.groupby(by='trial_no')
+                    for tr, trial in trial_grp:
+                        pat_trace = np.array(trial['cell_trace(mV)'])
+                        field_trace = np.array(trial['field_trace(mV)'])
+                        ttl_trace = np.array(trial["ttl_trace(V)"])
+                        pat_trace = substract_baseline(pat_trace, sampling_rate, 5)  # 5ms baseline
+                        no_stim_trace = pat_trace[int(sampling_rate*1):]
+                        mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(
+                            no_stim_trace, sampling_rate=sampling_rate)
+                        pat_trace = pat_trace[:int(sampling_rate*0.5)]  # 500ms time window
+                        field_trace = substract_baseline(field_trace, sampling_rate, 1)  # 1ms baseline
+                        field_trace = field_trace[:int(sampling_rate*0.5)]  # 500ms time window
+                        ttl_trace = ttl_trace[:int(sampling_rate*0.5)]  # 500ms time window
+                        onset_time_idx = np.argmax(pat_trace[0:int(sampling_rate*0.05)] > 0.2)
+                        abs_trace = np.abs(pat_trace)
+                        pos_trace = pat_trace.clip(min=0)
+                        neg_trace = np.abs(pat_trace.clip(max=0))
+                        abs_area = np.trapz(abs_trace, dx=sampling_rate)
+                        pos_area = np.trapz(pos_trace, dx=sampling_rate)
+                        neg_area = np.trapz(neg_trace, dx=sampling_rate)
+                        max_trace = float(pat_trace[np.argmax(pat_trace[:int(sampling_rate*0.05)])])
+                        min_trace = float(pat_trace[np.argmax(
+                            pat_trace == np.min(pat_trace[:int(sampling_rate*0.2)]))])  # Epk is within 50ms, Ipk within 200ms
+                        max_field = float(field_trace[np.argmax(field_trace)])
+                        min_field = float(field_trace[np.argmin(field_trace[:int(sampling_rate*0.02)])])
+                        time_x = np.linspace(0, len(pat_trace), int(sampling_rate*0.5)) / sampling_rate
+                        onset_time = float(time_x[onset_time_idx])
+                        max_trace_t = float(time_x[np.where(pat_trace == max_trace)[0][0]])
+                        min_trace_t = float(time_x[np.where(pat_trace == min_trace)[0][0]])
+                        max_field_t = float(time_x[np.where(field_trace == max_field)[0][0]])
+                        min_field_t = float(time_x[np.where(field_trace == min_field)[0][0]])
+
+                        try:
+                            fit_i = np.where(pat_trace > 0.2)[0][0]
+                            fit_f = np.where(pat_trace[:x_fit_f] <= 0.66 * (np.max(pat_trace)))[0][-1]
+                            if fit_f <= fit_i:
+                                fit_i = int(0.005 * sampling_rate)
+                                fit_f = int(0.01 * sampling_rate)
+                        except:
+                            fit_i = int(0.005 * sampling_rate)
+                            fit_f = int(0.01 * sampling_rate)
+                        slope, intercept = np.polyfit(
+                            time_x[fit_i:fit_f], pat_trace[fit_i:fit_f], 1)
+                        cell_list.append([c, fs, pps, pat, tr, min_trace,
+                                          max_trace, abs_area, pos_area,
+                                          neg_area, onset_time, max_field,
+                                          min_field, slope, intercept,
+                                          min_trace_t, max_trace_t,
+                                          max_field_t, min_field_t,
+                                          pat_trace, field_trace,
+                                          ttl_trace, cell_rmp, mepsp_amp, mepsp_time, num_mepsp, freq_mepsp])
+    return cell_list
+
 def extract_cell_features_all_trials(cells_df, outdir):
     cell_grp = cells_df.groupby(by="cell_ID")
     cell_list = []
-    for c, cell in tqdm(cell_grp):
-        cell_rmp = np.mean(cell["cell_trace(mV)"])
-        frame_status_grp = cell.groupby(by="frame_status")
-        for fs, f_status in frame_status_grp:
-            sampling_rate = int(f_status["sampling_rate(Hz)"].iloc[0])
-            fit_i = int(0.003*sampling_rate) #default timepoint to start measuring slope=3ms
-            fit_f = int(0.01*sampling_rate) #default timepoint to end measuring slope =10ms
-            x_fit_f = int(0.01*sampling_rate) #dynamic timepoint to end measuring slope incase of rise time is too high =10ms
-            total_tp = len(f_status["pre_post_status"].unique())
-            pp_status_grp = f_status.groupby(by="pre_post_status")
-            for pps, pp_status in pp_status_grp:
-                if "pre" in pps:
-                    time_point = -1
-                elif "post" in pps:
-                    time_point = int(pps.split("_")[-1])+1
-                else:
-                    continue
-                pat_grp = pp_status.groupby(by='frame_id')
-                for pat, patg in pat_grp:
-                    if ("no_frame" in pat)or("inR" in pat):
-                        continue
-                    else:
-                        trial_grp = patg.groupby(by='trial_no')
-                        for tr, trial in trial_grp:
-                            pat_trace = np.array(trial['cell_trace(mV)'])
-                            field_trace = np.array(trial['field_trace(mV)'])
-                            ttl_trace = np.array(trial["ttl_trace(V)"])
-                            pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
-                            no_stim_trace = pat_trace[int(sampling_rate*1):]
-                            mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(no_stim_trace,
-                                                                                         sampling_rate=sampling_rate)
-                            pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
-                            field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
-                            field_trace = field_trace[:int(sampling_rate*0.5)] #500ms time window
-                            ttl_trace = ttl_trace[:int(sampling_rate*0.5)] #500ms time window
-                            onset_time_idx = np.argmax(pat_trace>0.2)
-                            abs_trace = np.abs(pat_trace)
-                            pos_trace = pat_trace.clip(min=0)
-                            neg_trace = np.abs(pat_trace.clip(max=0))
-                            abs_area= np.trapz(abs_trace, dx=sampling_rate)
-                            pos_area = np.trapz(pos_trace, dx=sampling_rate)
-                            neg_area = np.trapz(neg_trace, dx=sampling_rate)
-                            max_trace = float(pat_trace[np.argmax(pat_trace)])
-                            min_trace = float(pat_trace[np.argmax(pat_trace==np.min(pat_trace[0:int(sampling_rate*0.2)]))]) # Epk is within 50ms, Ipk within 200ms
-                            max_field = float(field_trace[np.argmax(field_trace)])
-                            min_field = (field_trace[np.argmin(field_trace)])
-                            time_x = np.linspace(0,len(pat_trace), int(sampling_rate*0.5))/sampling_rate
-                            onset_time = float(time_x[onset_time_idx])
-                            max_trace_t = float(time_x[np.where(pat_trace ==max_trace)[0][0]])
-                            min_trace_t = float(time_x[np.where(pat_trace ==min_trace)[0][0]])
-                            max_field_t = float(time_x[np.where(field_trace ==max_field)[0][0]])
-                            min_field_t = float(time_x[np.where(field_trace ==min_field)[0][0]])
-                            try:
-                                fit_i = np.where(pat_trace>0.2)[0][0]
-                                fit_f=np.where(pat_trace[:x_fit_f]<=0.66*(np.max(pat_trace)))[0][-1]
-                                if fit_f<=fit_i:
-                                    fit_i = int(0.005*sampling_rate)
-                                    fit_f =int(0.01*sampling_rate)
-                            except:
-                                fit_i = int(0.005*sampling_rate)
-                                fit_f =int(0.01*sampling_rate)
-                            slope,intercept = np.polyfit(time_x[fit_i:fit_f],pat_trace[fit_i:fit_f],1)
-                            cell_list.append([c,fs,pps,pat,tr,min_trace,
-                                              max_trace,abs_area,pos_area,
-                                              neg_area,onset_time,max_field,
-                                              min_field,slope,intercept,
-                                              min_trace_t,max_trace_t,
-                                              max_field_t, min_field_t,
-                                              pat_trace,field_trace,
-                                              ttl_trace, cell_rmp, mepsp_amp, mepsp_time, num_mepsp, freq_mepsp])
-    clist_header=["cell_ID","frame_status","pre_post_status","frame_id",
-                  "trial_no","min_trace","max_trace","abs_area","pos_area",
-                  "neg_area","onset_time","max_field","min_field","slope",
-                  "intercept","min_trace_t","max_trace_t","max_field_t",
-                  "min_field_t","trace","field","ttl","mean_rmp","mepsp_amp", "mepsp_time", "num_mepsp", "freq_mepsp"]
-    pd_cell_list =pd.concat(pd.DataFrame([i],columns=clist_header) for i in tqdm(cell_list))
-    pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"]!="post_5"]
+
+    # Convert the groupby object to a list for multiprocessing
+    cell_grp_list = list(cell_grp)
+
+    # Prepare arguments for the worker function
+    args_list = [(c, cell) for c, cell in cell_grp_list]
+
+    # Create a multiprocessing Pool
+    pool = mp.Pool(processes=6)
+
+    # Use tqdm to display progress
+    for result in tqdm(pool.imap_unordered(process_cell, args_list), total=len(args_list)):
+        cell_list.extend(result)
+
+    # Close the pool and wait for all processes to finish
+    pool.close()
+    pool.join()
+
+    clist_header = ["cell_ID", "frame_status", "pre_post_status", "frame_id",
+                    "trial_no", "min_trace", "max_trace", "abs_area", "pos_area",
+                    "neg_area", "onset_time", "max_field", "min_field", "slope",
+                    "intercept", "min_trace_t", "max_trace_t", "max_field_t",
+                    "min_field_t", "trace", "field", "ttl", "mean_rmp", "mepsp_amp", "mepsp_time", "num_mepsp", "freq_mepsp"]
+
+    pd_cell_list = pd.concat(pd.DataFrame([i], columns=clist_header) for i in tqdm(cell_list))
+    pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"] != "post_5"]
     outpath = f"{outdir}/pd_all_cells_all_trials"
-    write_pkl(pd_cell_list,outpath)
-    print(f"all cells all trails features extracted, file: {outpath}")
+    write_pkl(pd_cell_list, outpath)
+    print(f"All cells all trials features extracted, file: {outpath}")
     return pd_cell_list
+
+
+
+#def extract_cell_features_all_trials(cells_df, outdir):
+#    cell_grp = cells_df.groupby(by="cell_ID")
+#    cell_list = []
+#    for c, cell in tqdm(cell_grp):
+#        cell_rmp = np.mean(cell["cell_trace(mV)"])
+#        frame_status_grp = cell.groupby(by="frame_status")
+#        for fs, f_status in frame_status_grp:
+#            sampling_rate = int(f_status["sampling_rate(Hz)"].iloc[0])
+#            fit_i = int(0.003*sampling_rate) #default timepoint to start measuring slope=3ms
+#            fit_f = int(0.01*sampling_rate) #default timepoint to end measuring slope =10ms
+#            x_fit_f = int(0.01*sampling_rate) #dynamic timepoint to end measuring slope incase of rise time is too high =10ms
+#            total_tp = len(f_status["pre_post_status"].unique())
+#            pp_status_grp = f_status.groupby(by="pre_post_status")
+#            for pps, pp_status in pp_status_grp:
+#                if "pre" in pps:
+#                    time_point = -1
+#                elif "post" in pps:
+#                    time_point = int(pps.split("_")[-1])+1
+#                else:
+#                    continue
+#                pat_grp = pp_status.groupby(by='frame_id')
+#                for pat, patg in pat_grp:
+#                    if ("no_frame" in pat)or("inR" in pat):
+#                        continue
+#                    else:
+#                        trial_grp = patg.groupby(by='trial_no')
+#                        for tr, trial in trial_grp:
+#                            pat_trace = np.array(trial['cell_trace(mV)'])
+#                            field_trace = np.array(trial['field_trace(mV)'])
+#                            ttl_trace = np.array(trial["ttl_trace(V)"])
+#                            pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
+#                            no_stim_trace = pat_trace[int(sampling_rate*1):]
+#                            mepsp_amp, mepsp_time, num_mepsp, freq_mepsp = mini_features(no_stim_trace,
+#                                                                                         sampling_rate=sampling_rate)
+#                            pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
+#                            field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
+#                            field_trace = field_trace[:int(sampling_rate*0.5)] #500ms time window
+#                            ttl_trace = ttl_trace[:int(sampling_rate*0.5)] #500ms time window
+#                            onset_time_idx = np.argmax(pat_trace[0:int(sampling_rate*0.05)] >0.2)
+#                            abs_trace = np.abs(pat_trace)
+#                            pos_trace = pat_trace.clip(min=0)
+#                            neg_trace = np.abs(pat_trace.clip(max=0))
+#                            abs_area= np.trapz(abs_trace, dx=sampling_rate)
+#                            pos_area = np.trapz(pos_trace, dx=sampling_rate)
+#                            neg_area = np.trapz(neg_trace, dx=sampling_rate)
+#                            max_trace = float(pat_trace[np.argmax(pat_trace[:int(sampling_rate*0.1)])])
+#                            #max_trace = float(pat_trace[np.argmax(pat_trace)])
+#                            min_trace = float(pat_trace[np.argmax(pat_trace==np.min(pat_trace[:int(sampling_rate*0.2)]))]) # Epk is within 50ms, Ipk within 200ms
+#                            max_field = float(field_trace[np.argmax(field_trace)])
+#                            min_field = float(field_trace[np.argmin(field_trace[:int(sampling_rate*0.02)])])
+#                            #min_field = (field_trace[np.argmin(field_trace)])
+#                            time_x = np.linspace(0,len(pat_trace), int(sampling_rate*0.5))/sampling_rate
+#                            onset_time = float(time_x[onset_time_idx])
+#                            max_trace_t = float(time_x[np.where(pat_trace ==max_trace)[0][0]])
+#                            min_trace_t = float(time_x[np.where(pat_trace ==min_trace)[0][0]])
+#                            max_field_t = float(time_x[np.where(field_trace ==max_field)[0][0]])
+#                            min_field_t = float(time_x[np.where(field_trace ==min_field)[0][0]])
+#
+#
+#
+#
+#                            #max_trace = float(pat_trace[np.argmax(pat_trace[0:int(sampling_rate*0.07)])])
+#                            #min_trace = float(pat_trace[np.argmax(pat_trace==np.min(pat_trace[0:int(sampling_rate*0.2)]))]) # Epk is within 50ms, Ipk within 200ms
+#                            #max_field = float(field_trace[np.argmax(field_trace[:int(sampling_rate*0.02)])])
+#                            #min_field = float(field_trace[np.argmin(field_trace[:int(sampling_rate*0.02)])])
+#                            #time_x = np.linspace(0,len(pat_trace), int(sampling_rate*0.5))/sampling_rate
+#                            ##time_x_f = np.linspace(0,len(pat_trace),int(sampling_rate*0.01))/sampling_rate
+#                            #onset_time = float(time_x[onset_time_idx])
+#                            #max_trace_t = float(time_x[np.where(pat_trace==max_trace)[0][0]])
+#                            #min_trace_t = float(time_x[np.where(pat_trace==min_trace)[0][0]])
+#                            #max_field_t = float(time_x[np.where(field_trace==max_field)[0][0]])
+#                            #min_field_t = float(time_x[np.where(field_trace==min_field)[0][0]])
+#                            ##max_field_t = float(time_x_f[np.where(field_trace==max_field)[0][0]])
+#                            ##min_field_t = float(time_x_f[np.where(field_trace==min_field)[0][0]])
+#                            try:
+#                                fit_i = np.where(pat_trace>0.2)[0][0]
+#                                fit_f=np.where(pat_trace[:x_fit_f]<=0.66*(np.max(pat_trace)))[0][-1]
+#                                if fit_f<=fit_i:
+#                                    fit_i = int(0.005*sampling_rate)
+#                                    fit_f =int(0.01*sampling_rate)
+#                            except:
+#                                fit_i = int(0.005*sampling_rate)
+#                                fit_f =int(0.01*sampling_rate)
+#                            slope,intercept = np.polyfit(time_x[fit_i:fit_f],pat_trace[fit_i:fit_f],1)
+#                            cell_list.append([c,fs,pps,pat,tr,min_trace,
+#                                              max_trace,abs_area,pos_area,
+#                                              neg_area,onset_time,max_field,
+#                                              min_field,slope,intercept,
+#                                              min_trace_t,max_trace_t,
+#                                              max_field_t, min_field_t,
+#                                              pat_trace,field_trace,
+#                                              ttl_trace, cell_rmp, mepsp_amp, mepsp_time, num_mepsp, freq_mepsp])
+#    clist_header=["cell_ID","frame_status","pre_post_status","frame_id",
+#                  "trial_no","min_trace","max_trace","abs_area","pos_area",
+#                  "neg_area","onset_time","max_field","min_field","slope",
+#                  "intercept","min_trace_t","max_trace_t","max_field_t",
+#                  "min_field_t","trace","field","ttl","mean_rmp","mepsp_amp", "mepsp_time", "num_mepsp", "freq_mepsp"]
+#    pd_cell_list =pd.concat(pd.DataFrame([i],columns=clist_header) for i in tqdm(cell_list))
+#    pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"]!="post_5"]
+#    outpath = f"{outdir}/pd_all_cells_all_trials"
+#    write_pkl(pd_cell_list,outpath)
+#    print(f"all cells all trails features extracted, file: {outpath}")
+#    return pd_cell_list
 
 def extract_training_data(cell_data,outdir):
     cell_data = cell_data[cell_data["frame_id"].str.contains("training", case=False, na=False)]
@@ -186,109 +339,232 @@ def extract_training_data(cell_data,outdir):
     write_pkl(pd_cell_list,outpath)    
     return None
 
-def extract_cell_features_mean(all_data_with_training_df, outdir):
-    cell_grp = all_data_with_training_df.groupby(by="cell_ID")
+
+# Define a worker function to process a single cell group
+def process_cell_group(args):
+    c, cell = args
+    cell_rmp = np.mean(cell["cell_trace(mV)"])
     cell_type_list = []
-    for c, cell in tqdm(cell_grp):
-        #print(f" colums: {cell.columns}")
-        cell_rmp = np.mean(cell["cell_trace(mV)"])
-        frame_status_grp = cell.groupby(by="frame_status")
-        for fs, f_status in frame_status_grp:
-            sampling_rate = int(f_status["sampling_rate(Hz)"].iloc[0])
-            fit_i = int(0.003*sampling_rate) #default timepoint to start measuring slope=3ms
-            fit_f = int(0.01*sampling_rate) #default timepoint to end measuring slope =10ms
-            x_fit_f = int(0.01*sampling_rate) #dynamic timepoint to end measuring slope incase of rise time is too high =10ms
-            #print(f" frame type: {fs } ::: sampling_rate = {sampling_rate}")
-            total_tp = len(f_status["pre_post_status"].unique())
-            pp_status_grp = f_status.groupby(by="pre_post_status")
-            for pps, pp_status in pp_status_grp:
-                if "training" in pps:
+
+    frame_status_grp = cell.groupby(by="frame_status")
+    for fs, f_status in frame_status_grp:
+        sampling_rate = int(f_status["sampling_rate(Hz)"].iloc[0])
+        fit_i = int(0.003 * sampling_rate)  # default timepoint to start measuring slope = 3ms
+        fit_f = int(0.01 * sampling_rate)  # default timepoint to end measuring slope = 10ms
+        x_fit_f = int(0.01 * sampling_rate)  # dynamic timepoint to end measuring slope = 10ms
+
+        pp_status_grp = f_status.groupby(by="pre_post_status")
+        for pps, pp_status in pp_status_grp:
+            if "training" in pps:
+                continue
+            elif "pre" in pps:
+                time_point = -1
+            else:
+                time_point = int(pps.split("_")[-1]) + 1
+
+            pat_grp = pp_status.groupby(by='frame_id')
+            for pat, patg in pat_grp:
+                if ("no_frame" in pat) or ("inR" in pat):
                     continue
-                elif "pre" in pps:
-                    time_point = -1
                 else:
-                    time_point = int(pps.split("_")[-1])+1
-                pat_grp = pp_status.groupby(by='frame_id')
-                for pat, patg in pat_grp:
-                    if ("no_frame" in pat)or("inR" in pat):
-                        continue
-                    else:
-                        pat_no = int(pat.split("_")[-1])
-                        trial_grp = patg.groupby(by='trial_no')
-                        mean_trace = []
-                        mean_field = []
-                        mean_ttl = []
-                        for tr, trial in trial_grp:
-                            pat_trace = np.array(trial['cell_trace(mV)'])
-                            field_trace = np.array(trial['field_trace(mV)'])
-                            ttl_trace = np.array(trial["ttl_trace(V)"])
-                            #print(f"{sampling_rate}: {sampling_rate}")
-                            pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
-                            pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
-                            field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
-                            field_trace = field_trace[:int(sampling_rate*0.5)] #500ms time window
-                            ttl_trace = ttl_trace[:int(sampling_rate*0.5)] #500ms time window
-                            mean_trace.append(pat_trace)
-                            mean_field.append(field_trace)
-                            mean_ttl.append(ttl_trace)
-                        mean_trace = np.mean(np.array(mean_trace),axis=0)
-                        mean_field = np.mean(np.array(mean_field),axis=0)
-                        mean_ttl = np.mean(np.array(mean_ttl),axis=0)
-                        
-                        onset_time_idx = np.argmax(mean_trace>0.2)
-                        abs_trace = np.abs(mean_trace)
-                        pos_trace = mean_trace.clip(min=0)
-                        neg_trace = np.abs(mean_trace.clip(max=0))
-                        abs_area= np.trapz(abs_trace, dx=sampling_rate)
-                        pos_area = np.trapz(pos_trace, dx=sampling_rate)
-                        neg_area = np.trapz(neg_trace, dx=sampling_rate)
-                        #print(f"total area = {abs_area}, pos_area={pos_area}, neg_area ={neg_area}")
-                        
-                        max_trace = float(mean_trace[np.argmax(mean_trace[0:int(sampling_rate*0.05)])])
-                        #min_trace = mean_trace[np.where(mean_trace==np.min(mean_trace[int(sampling_rate*0.02):int(sampling_rate*0.2)]))[0][0]] # Epk is within 50ms, Ipk within 200ms
-                        min_trace = float(mean_trace[np.argmax(mean_trace==np.min(mean_trace[0:int(sampling_rate*0.2)]))]) # Epk is within 50ms, Ipk within 200ms
-                        
-                        max_field = float(mean_field[np.argmax(mean_field)])
-                        min_field = (mean_field[np.argmin(mean_field)])
-                        
-                        time_x = np.linspace(0,len(mean_trace), int(sampling_rate*0.5))/sampling_rate
-                        onset_time = float(time_x[onset_time_idx])
-                        
-                        max_trace_t = float(time_x[np.where(mean_trace ==max_trace)[0][0]])
-                        min_trace_t = float(time_x[np.where(mean_trace ==min_trace)[0][0]])
-                        max_field_t = float(time_x[np.where(mean_field ==max_field)[0][0]])
-                        min_field_t = float(time_x[np.where(mean_field ==min_field)[0][0]])
-                        
-                        try:
-                            fit_i = np.where(mean_trace>0.2)[0][0]
-                            fit_f=np.where(mean_trace[:x_fit_f]<=0.66*(np.max(mean_trace)))[0][-1]
-                            #fit_f = np.where(trace <=0.66*(np.max(trace)))[0][-1]
-                            if fit_f<=fit_i:
-                                fit_i = int(0.005*sampling_rate)
-                                fit_f =int(0.01*sampling_rate)
-                        except:
-                            fit_i = int(0.005*sampling_rate)
-                            fit_f =int(0.01*sampling_rate)
-                        slope,intercept = np.polyfit(time_x[fit_i:fit_f],mean_trace[fit_i:fit_f],1)
-                        cell_type_list.append([c,fs,pps,pat,min_trace,
-                                               max_trace,abs_area,pos_area,
-                                               neg_area,onset_time,
-                                               max_field, min_field,slope,
-                                               intercept,min_trace_t,
-                                               max_trace_t,max_field_t, 
-                                               min_field_t,mean_trace,
-                                               mean_field,mean_ttl, 
-                                               cell_rmp])
-    ctype_header=["cell_ID","frame_status","pre_post_status","frame_id",
-                  "min_trace","max_trace","abs_area","pos_area","neg_area",
-                  "onset_time","max_field","min_field","slope","intercept",
-                  "min_trace_t","max_trace_t","max_field_t","min_field_t",
-                  "mean_trace","mean_field","mean_ttl","mean_rmp"]
-    pd_all_cells_mean =pd.concat(pd.DataFrame([i],columns=ctype_header) for i in tqdm(cell_type_list))
+                    pat_no = int(pat.split("_")[-1])
+                    trial_grp = patg.groupby(by='trial_no')
+                    mean_trace = []
+                    mean_field = []
+                    mean_ttl = []
+                    for tr, trial in trial_grp:
+                        pat_trace = np.array(trial['cell_trace(mV)'])
+                        field_trace = np.array(trial['field_trace(mV)'])
+                        ttl_trace = np.array(trial["ttl_trace(V)"])
+                        pat_trace = substract_baseline(pat_trace, sampling_rate, 5)  # 5ms baseline
+                        pat_trace = pat_trace[:int(sampling_rate * 0.5)]  # 500ms time window
+                        field_trace = substract_baseline(field_trace, sampling_rate, 1)  # 1ms baseline
+                        field_trace = field_trace[:int(sampling_rate * 0.5)]  # 500ms time window
+                        ttl_trace = ttl_trace[:int(sampling_rate * 0.5)]  # 500ms time window
+                        mean_trace.append(pat_trace)
+                        mean_field.append(field_trace)
+                        mean_ttl.append(ttl_trace)
+
+                    mean_trace = np.mean(np.array(mean_trace), axis=0)
+                    mean_field = np.mean(np.array(mean_field), axis=0)
+                    mean_ttl = np.mean(np.array(mean_ttl), axis=0)
+
+                    onset_time_idx = np.argmax(mean_trace > 0.2)
+                    abs_trace = np.abs(mean_trace)
+                    pos_trace = mean_trace.clip(min=0)
+                    neg_trace = np.abs(mean_trace.clip(max=0))
+                    abs_area = np.trapz(abs_trace, dx=sampling_rate)
+                    pos_area = np.trapz(pos_trace, dx=sampling_rate)
+                    neg_area = np.trapz(neg_trace, dx=sampling_rate)
+
+                    max_trace = float(mean_trace[np.argmax(mean_trace[0:int(sampling_rate * 0.07)])])
+                    min_trace = float(mean_trace[np.argmax(mean_trace == np.min(mean_trace[0:int(sampling_rate * 0.2)]))])
+
+                    max_field = float(mean_field[np.argmax(mean_field[0:int(sampling_rate * 0.02)])])
+                    min_field = float(mean_field[np.argmin(mean_field[0:int(sampling_rate * 0.02)])])
+
+                    time_x = np.linspace(0, len(mean_trace), int(sampling_rate * 0.5)) / sampling_rate
+                    onset_time = float(time_x[onset_time_idx])
+
+                    max_trace_t = float(time_x[np.where(mean_trace == max_trace)[0][0]])
+                    min_trace_t = float(time_x[np.where(mean_trace == min_trace)[0][0]])
+                    max_field_t = float(time_x[np.where(mean_field == max_field)[0][0]])
+                    min_field_t = float(time_x[np.where(mean_field == min_field)[0][0]])
+
+                    try:
+                        fit_i = np.where(mean_trace > 0.2)[0][0]
+                        fit_f = np.where(mean_trace[:x_fit_f] <= 0.66 * (np.max(mean_trace)))[0][-1]
+                        if fit_f <= fit_i:
+                            fit_i = int(0.005 * sampling_rate)
+                            fit_f = int(0.01 * sampling_rate)
+                    except:
+                        fit_i = int(0.005 * sampling_rate)
+                        fit_f = int(0.01 * sampling_rate)
+
+                    slope, intercept = np.polyfit(time_x[fit_i:fit_f], mean_trace[fit_i:fit_f], 1)
+                    cell_type_list.append([c, fs, pps, pat, min_trace, max_trace, abs_area, pos_area,
+                                           neg_area, onset_time, max_field, min_field, slope, intercept,
+                                           min_trace_t, max_trace_t, max_field_t, min_field_t, mean_trace,
+                                           mean_field, mean_ttl, cell_rmp])
+    return cell_type_list
+
+# Main function with parallelization
+def extract_cell_features_mean(all_data_with_training_df, outdir):
+    cell_grp = list(all_data_with_training_df.groupby(by="cell_ID"))  # Convert to list for parallel processing
+
+    # Use multiprocessing to parallelize the processing
+    num_processes = 6#mp.cpu_count()
+    with mp.Pool(processes=num_processes) as pool:
+        results = list(tqdm(pool.imap(process_cell_group, cell_grp), total=len(cell_grp), desc="Processing Cells"))
+
+    # Flatten the results
+    cell_type_list = [item for sublist in results for item in sublist]
+
+    # Create the final DataFrame
+    ctype_header = ["cell_ID", "frame_status", "pre_post_status", "frame_id",
+                    "min_trace", "max_trace", "abs_area", "pos_area", "neg_area",
+                    "onset_time", "max_field", "min_field", "slope", "intercept",
+                    "min_trace_t", "max_trace_t", "max_field_t", "min_field_t",
+                    "mean_trace", "mean_field", "mean_ttl", "mean_rmp"]
+
+    pd_all_cells_mean = pd.concat(pd.DataFrame([i], columns=ctype_header) for i in tqdm(cell_type_list))
     outpath = f"{outdir}/pd_all_cells_mean"
-    write_pkl(pd_all_cells_mean,"pd_all_cells_mean")
-    print(f"all cells mean of features saved file {outpath}")
+    write_pkl(pd_all_cells_mean, "pd_all_cells_mean")
+    print(f"All cells mean of features saved to file {outpath}")
     return pd_all_cells_mean
+
+
+
+#def extract_cell_features_mean(all_data_with_training_df, outdir):
+#    cell_grp = all_data_with_training_df.groupby(by="cell_ID")
+#    cell_type_list = []
+#    for c, cell in tqdm(cell_grp):
+#        #print(f" colums: {cell.columns}")
+#        cell_rmp = np.mean(cell["cell_trace(mV)"])
+#        frame_status_grp = cell.groupby(by="frame_status")
+#        for fs, f_status in frame_status_grp:
+#            sampling_rate = int(f_status["sampling_rate(Hz)"].iloc[0])
+#            fit_i = int(0.003*sampling_rate) #default timepoint to start measuring slope=3ms
+#            fit_f = int(0.01*sampling_rate) #default timepoint to end measuring slope =10ms
+#            x_fit_f = int(0.01*sampling_rate) #dynamic timepoint to end measuring slope incase of rise time is too high =10ms
+#            #print(f" frame type: {fs } ::: sampling_rate = {sampling_rate}")
+#            total_tp = len(f_status["pre_post_status"].unique())
+#            pp_status_grp = f_status.groupby(by="pre_post_status")
+#            for pps, pp_status in pp_status_grp:
+#                if "training" in pps:
+#                    continue
+#                elif "pre" in pps:
+#                    time_point = -1
+#                else:
+#                    time_point = int(pps.split("_")[-1])+1
+#                pat_grp = pp_status.groupby(by='frame_id')
+#                for pat, patg in pat_grp:
+#                    if ("no_frame" in pat)or("inR" in pat):
+#                        continue
+#                    else:
+#                        pat_no = int(pat.split("_")[-1])
+#                        trial_grp = patg.groupby(by='trial_no')
+#                        mean_trace = []
+#                        mean_field = []
+#                        mean_ttl = []
+#                        for tr, trial in trial_grp:
+#                            pat_trace = np.array(trial['cell_trace(mV)'])
+#                            field_trace = np.array(trial['field_trace(mV)'])
+#                            ttl_trace = np.array(trial["ttl_trace(V)"])
+#                            #print(f"{sampling_rate}: {sampling_rate}")
+#                            pat_trace = substract_baseline(pat_trace,sampling_rate,5) #5ms baseline
+#                            pat_trace = pat_trace[:int(sampling_rate*0.5)] #500ms time window
+#                            field_trace = substract_baseline(field_trace,sampling_rate,1) #1ms baseline
+#                            field_trace = field_trace[:int(sampling_rate*0.5)] #500ms time window
+#                            ttl_trace = ttl_trace[:int(sampling_rate*0.5)] #500ms time window
+#                            mean_trace.append(pat_trace)
+#                            mean_field.append(field_trace)
+#                            mean_ttl.append(ttl_trace)
+#                        mean_trace = np.mean(np.array(mean_trace),axis=0)
+#                        mean_field = np.mean(np.array(mean_field),axis=0)
+#                        mean_ttl = np.mean(np.array(mean_ttl),axis=0)
+#                        
+#                        onset_time_idx = np.argmax(mean_trace>0.2)
+#                        abs_trace = np.abs(mean_trace)
+#                        pos_trace = mean_trace.clip(min=0)
+#                        neg_trace = np.abs(mean_trace.clip(max=0))
+#                        abs_area= np.trapz(abs_trace, dx=sampling_rate)
+#                        pos_area = np.trapz(pos_trace, dx=sampling_rate)
+#                        neg_area = np.trapz(neg_trace, dx=sampling_rate)
+#                        #print(f"total area = {abs_area}, pos_area={pos_area}, neg_area ={neg_area}")
+#                        
+#                        max_trace = float(mean_trace[np.argmax(mean_trace[0:int(sampling_rate*0.07)])])
+#                        #min_trace = mean_trace[np.where(mean_trace==np.min(mean_trace[int(sampling_rate*0.02):int(sampling_rate*0.2)]))[0][0]] # Epk is within 50ms, Ipk within 200ms
+#                        min_trace = float(mean_trace[np.argmax(mean_trace==np.min(mean_trace[0:int(sampling_rate*0.2)]))]) # Epk is within 50ms, Ipk within 200ms
+#                        
+#                        max_field = float(mean_field[np.argmax(mean_field[0:int(sampling_rate*0.02)])])
+#                        min_field = float(mean_field[np.argmin(mean_field[0:int(sampling_rate*0.02)])])
+#                        
+#                        time_x = np.linspace(0,len(mean_trace), int(sampling_rate*0.5))/sampling_rate
+#                        onset_time = float(time_x[onset_time_idx])
+#                        #time_x_c = np.linspace(0,len(mean_trace),int(sampling_rate*0.05))/sampling_rate
+#                        #time_x_c_m = np.linspace(0,len(mean_trace),int(sampling_rate*0.2))/sampling_rate
+#                        #time_x_f = np.linspace(0,len(mean_trace),int(sampling_rate*0.01))/sampling_rate 
+#                        
+#                        max_trace_t = float(time_x[np.where(mean_trace==max_trace)[0][0]])
+#                        min_trace_t = float(time_x[np.where(mean_trace ==min_trace)[0][0]])
+#                        max_field_t = float(time_x[np.where(mean_field==max_field)[0][0]])
+#                        min_field_t = float(time_x[np.where(mean_field==min_field)[0][0]])
+#                        #max_trace_t = float(time_x_c[np.where(mean_trace==max_trace)[0][0]])
+#                        #min_trace_t = float(time_x_c_m[np.where(mean_trace ==min_trace)[0][0]])
+#                        #max_field_t = float(time_x_f[np.where(mean_field==max_field)[0][0]])
+#                        #min_field_t = float(time_x_f[np.where(mean_field==min_field)[0][0]])
+#                        
+#                        try:
+#                            fit_i = np.where(mean_trace>0.2)[0][0]
+#                            fit_f=np.where(mean_trace[:x_fit_f]<=0.66*(np.max(mean_trace)))[0][-1]
+#                            #fit_f = np.where(trace <=0.66*(np.max(trace)))[0][-1]
+#                            if fit_f<=fit_i:
+#                                fit_i = int(0.005*sampling_rate)
+#                                fit_f =int(0.01*sampling_rate)
+#                        except:
+#                            fit_i = int(0.005*sampling_rate)
+#                            fit_f =int(0.01*sampling_rate)
+#                        slope,intercept = np.polyfit(time_x[fit_i:fit_f],mean_trace[fit_i:fit_f],1)
+#                        cell_type_list.append([c,fs,pps,pat,min_trace,
+#                                               max_trace,abs_area,pos_area,
+#                                               neg_area,onset_time,
+#                                               max_field, min_field,slope,
+#                                               intercept,min_trace_t,
+#                                               max_trace_t,max_field_t, 
+#                                               min_field_t,mean_trace,
+#                                               mean_field,mean_ttl, 
+#                                               cell_rmp])
+#    ctype_header=["cell_ID","frame_status","pre_post_status","frame_id",
+#                  "min_trace","max_trace","abs_area","pos_area","neg_area",
+#                  "onset_time","max_field","min_field","slope","intercept",
+#                  "min_trace_t","max_trace_t","max_field_t","min_field_t",
+#                  "mean_trace","mean_field","mean_ttl","mean_rmp"]
+#    pd_all_cells_mean =pd.concat(pd.DataFrame([i],columns=ctype_header) for i in tqdm(cell_type_list))
+#    outpath = f"{outdir}/pd_all_cells_mean"
+#    write_pkl(pd_all_cells_mean,"pd_all_cells_mean")
+#    print(f"all cells mean of features saved file {outpath}")
+#    return pd_all_cells_mean
 
 #all_cell_trace_alone = all_cell_trace_alone[all_cell_trace_alone["cell_ID"]!="2022_12_12_cell_5"]
 def sag_n_inR(trial_df_slice,sampling_rate):
@@ -514,10 +790,10 @@ def main():
     baseline_data_extractor(all_data_with_training_df,globoutdir)
     extract_cell_inR_features(all_data_with_training_df,globoutdir)
     extract_cell_features_all_trials(all_data_with_training_df,globoutdir)
-    pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df,globoutdir)
-    extract_training_data(all_data_with_training_df,globoutdir)
-    cell_group_classifier(pd_all_cells_mean,globoutdir)
-    cell_classifier_with_fnorm(pd_all_cells_mean,globoutdir)
+    #pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df,globoutdir)
+    #extract_training_data(all_data_with_training_df,globoutdir)
+    #cell_group_classifier(pd_all_cells_mean,globoutdir)
+    #cell_classifier_with_fnorm(pd_all_cells_mean,globoutdir)
     
 
 if __name__  == '__main__':

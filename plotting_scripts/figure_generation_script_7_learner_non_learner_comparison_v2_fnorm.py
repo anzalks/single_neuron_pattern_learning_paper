@@ -141,7 +141,6 @@ def fitGamma( data ):
     return ret
 
 
-
 # Define the worker function at the top level
 def bootstrap_worker(args):
     combined, len_A = args
@@ -184,7 +183,6 @@ def bootstrap_scram(A, B, nIter=10000):
     p_value = np.mean(np.abs(bootstrap_stats) >= np.abs(observed_stat))
 
     return p_value
-
 
 
 #def bootstrap_scram(A,B, nIter=10000):
@@ -1108,7 +1106,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     deselect_list = ["no_frame","inR","point"]
     feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
-    print(f"cell stat df : {cell_stats_df}")
+    #print(f"cell stat df : {cell_stats_df}")
     alltrial_Df=pd.read_pickle(all_trials_path)
     single_cell_df = feature_extracted_data.copy()
     learner_cell_df = single_cell_df.copy()
@@ -1118,7 +1116,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     sc_data_dict = pd.read_pickle(cell_categorised_pickle_file)
     sc_data_df = pd.concat([sc_data_dict["ap_cells"],
                             sc_data_dict["an_cells"]]).reset_index(drop=True)
-    print(f"sc data : {sc_data_df['cell_ID'].unique()}")
+    #print(f"sc data : {sc_data_df['cell_ID'].unique()}")
 
     sum_illust= pillow.Image.open(sum_illustration_path)
     # Check if the image has an alpha channel (transparency)
@@ -1201,7 +1199,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_7_with_stats.png"
+    outpath = f"{outdir}/figure_7_with_stats_fnorm.png"
     #outpath = f"{outdir}/figure_7.svg"
     #outpath = f"{outdir}/figure_7_with_stats.pdf"
     plt.savefig(outpath,bbox_inches='tight')

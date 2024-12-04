@@ -555,7 +555,7 @@ def plot_bar_distribution(ax, data, color, label, show_ylabel=True, remove_ytick
             va='center'
         )
         
-        ax.set_xlabel(f'Normalized\n{label}')
+        ax.set_xlabel(f'{label}')
         if show_ylabel:
             ax.set_ylabel('Count')
         if remove_ytick_labels:
@@ -565,12 +565,15 @@ def plot_bar_distribution(ax, data, color, label, show_ylabel=True, remove_ytick
         ax.spines['right'].set_visible(False)
         return n.max(), bins
     else:
-        ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+        ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10) 
         return 0, None
 
 
-def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field, 
+
+def plot_trace_stats(feature_extracted_df, fig,
                      axs_cell_t, axs_field_t):
+    print(feature_extracted_df.head())
+    feature_extracted_df = feature_extracted_df[feature_extracted_df["pre_post_status"]=="pre"]
     required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
                      'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
     if not all(col in feature_extracted_df.columns for col in required_cols):
@@ -582,34 +585,25 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field,
     ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field', 'max_trace_t', 'min_field_t']].mean().reset_index()
     
     merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
-    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
-    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
-    merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
-    merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
+    stat, p_value = levene(merged_df['max_trace'].dropna(),
+                           merged_df['min_field'].dropna())
+    pval_list = [p_value]  # Create a list for annotation
+    print(f"levne's p value for max_t v/s field_t {p_value} ..............")
+    # Convert p-value to asterisks using your custom function
+    #annotations = [bpf.convert_pvalue_to_asterisks(p) for p in pval_list]
+
+
+    merged_df['max_trace_t'] = merged_df['max_trace_t']*1000
+    merged_df['min_field_t'] = merged_df['min_field_t']*1000
+    #merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
+    #merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
     
     # Plot bar distributions using the updated bar distribution function
-    max_count_cell, bins_cell = plot_bar_distribution(
-        axs_cell, 
-        merged_df['max_trace'], 
-        color='black', 
-        label='EPSP', 
-        show_ylabel=True
-    )
-    
-    max_count_field, bins_field = plot_bar_distribution(
-        axs_field, 
-        merged_df['min_field'], 
-        color='black', 
-        label='LFP', 
-        show_ylabel=False, 
-        remove_ytick_labels=True
-    )
-    
     max_count_cell_t, bins_cell_t = plot_bar_distribution(
         axs_cell_t, 
         merged_df['max_trace_t'], 
         color='black', 
-        label='time (EPSP)', 
+        label='time (ms)\n(EPSP)', 
         show_ylabel=True
     )
     
@@ -617,28 +611,95 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field,
         axs_field_t, 
         merged_df['min_field_t'], 
         color='black', 
-        label='time (LFP)', 
+        label='time (ms)\n(LFP)', 
         show_ylabel=False, 
         remove_ytick_labels=True
     )
-    
-    if bins_cell is not None and bins_field is not None:
-        combined_xlim_cell = (min(bins_cell.min(), bins_field.min()), max(bins_cell.max(), bins_field.max()))
-        axs_cell.set_xlim(combined_xlim_cell)
-        axs_field.set_xlim(combined_xlim_cell)
     
     if bins_cell_t is not None and bins_field_t is not None:
         combined_xlim_cell_t = (min(bins_cell_t.min(), bins_field_t.min()), max(bins_cell_t.max(), bins_field_t.max()))
         axs_cell_t.set_xlim(combined_xlim_cell_t)
         axs_field_t.set_xlim(combined_xlim_cell_t)
 
-    max_count_1 = max(max_count_cell, max_count_field)
-    axs_cell.set_ylim(0, max_count_1 * 1.01)
-    axs_field.set_ylim(0, max_count_1 * 1.01)
     
     max_count_2 = max(max_count_cell_t, max_count_field_t)
     axs_cell_t.set_ylim(0, max_count_2 * 1.01)
-    axs_field_t.set_ylim(0, max_count_2 * 1.01)
+    axs_field_t.set_ylim(0, max_count_2 * 1.01)                                                                        
+##plot both fielt amplitude and time
+#def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field, 
+#                     axs_cell_t, axs_field_t):
+#    print(feature_extracted_df.head())
+#    feature_extracted_df = feature_extracted_df[feature_extracted_df["pre_post_status"]=="pre"]
+#    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
+#                     'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
+#    if not all(col in feature_extracted_df.columns for col in required_cols):
+#        raise ValueError("Input DataFrame is missing required columns.")
+#    
+#    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
+#    mean_combined_df = filtered_df[
+#        filtered_df['trial_no'].isin([0, 1, 2])
+#    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field', 'max_trace_t', 'min_field_t']].mean().reset_index()
+#    
+#    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
+#    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
+#    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+#    merged_df['max_trace_t'] = merged_df['max_trace_t']*1000
+#    merged_df['min_field_t'] = merged_df['min_field_t']*1000
+#    #merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
+#    #merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
+#    
+#    # Plot bar distributions using the updated bar distribution function
+#    max_count_cell, bins_cell = plot_bar_distribution(
+#        axs_cell, 
+#        merged_df['max_trace'], 
+#        color='black', 
+#        label='Normalised\nEPSP', 
+#        show_ylabel=True
+#    )
+#    
+#    max_count_field, bins_field = plot_bar_distribution(
+#        axs_field, 
+#        merged_df['min_field'], 
+#        color='black', 
+#        label='Normalised\nLFP', 
+#        show_ylabel=False, 
+#        remove_ytick_labels=True
+#    )
+#    
+#    max_count_cell_t, bins_cell_t = plot_bar_distribution(
+#        axs_cell_t, 
+#        merged_df['max_trace_t'], 
+#        color='black', 
+#        label='time (ms)\n(EPSP)', 
+#        show_ylabel=True
+#    )
+#    
+#    max_count_field_t, bins_field_t = plot_bar_distribution(
+#        axs_field_t, 
+#        merged_df['min_field_t'], 
+#        color='black', 
+#        label='time (ms)\n(LFP)', 
+#        show_ylabel=False, 
+#        remove_ytick_labels=True
+#    )
+#    
+#    if bins_cell is not None and bins_field is not None:
+#        combined_xlim_cell = (min(bins_cell.min(), bins_field.min()), max(bins_cell.max(), bins_field.max()))
+#        axs_cell.set_xlim(combined_xlim_cell)
+#        axs_field.set_xlim(combined_xlim_cell)
+#    
+#    if bins_cell_t is not None and bins_field_t is not None:
+#        combined_xlim_cell_t = (min(bins_cell_t.min(), bins_field_t.min()), max(bins_cell_t.max(), bins_field_t.max()))
+#        axs_cell_t.set_xlim(combined_xlim_cell_t)
+#        axs_field_t.set_xlim(combined_xlim_cell_t)
+#
+#    max_count_1 = max(max_count_cell, max_count_field)
+#    axs_cell.set_ylim(0, max_count_1 * 1.01)
+#    axs_field.set_ylim(0, max_count_1 * 1.01)
+#    
+#    max_count_2 = max(max_count_cell_t, max_count_field_t)
+#    axs_cell_t.set_ylim(0, max_count_2 * 1.01)
+#    axs_field_t.set_ylim(0, max_count_2 * 1.01)
 
 ##everything works 
 #def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field,
@@ -898,20 +959,35 @@ def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax):
     # Convert p-value to asterisks using your custom function
     annotations = [bpf.convert_pvalue_to_asterisks(p) for p in pval_list]
     
-    # Step 7: Create the box plot on a single axis
-    sns.boxplot(
+#    # Step 7: Create the box plot on a single axis
+#    sns.boxplot(
+#        data=data_to_plot, 
+#        x='Category', 
+#        y='Normalised Mean', 
+#        ax=ax, 
+#        boxprops=dict(facecolor='grey', edgecolor='darkgrey'),
+#        medianprops=dict(color='black'),
+#        whiskerprops=dict(color='darkgrey'),
+#        capprops=dict(color='darkgrey'),
+#        flierprops=dict(markerfacecolor='black', marker='o', 
+#                        markersize=3, linestyle='none',alpha=0.4)
+#    )
+
+
+    sns.violinplot(
         data=data_to_plot, 
         x='Category', 
         y='Normalised Mean', 
         ax=ax, 
-        boxprops=dict(facecolor='grey', edgecolor='darkgrey'),
-        medianprops=dict(color='black'),
-        whiskerprops=dict(color='darkgrey'),
-        capprops=dict(color='darkgrey'),
-        flierprops=dict(markerfacecolor='black', marker='o', 
-                        markersize=3, linestyle='none',alpha=0.4)
+        inner='quartile',  # Adds quartile lines within the violin
+        cut=0,             # Ensures violins don't extend beyond data range
+        scale='width',     # Scales width of violins to the number of observations
+        linewidth=1,       # Line thickness for the violin edges
+        #palette='Set2',    # Example palette; customize as needed
+        palette=['gray']
+
     )
-    
+
     # Remove right and top spines
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -920,7 +996,7 @@ def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax):
     ax.set_ylabel('Normalised\nmean')
     
     # Set x-axis label to "Variance" and remove the title
-    ax.set_xlabel('Variance')
+    ax.set_xlabel(None)
     ax.set_xticklabels(['EPSP', 'LFP'])
     
     # Step 8: Use `statannotations.Annotator` for annotation
@@ -1077,29 +1153,31 @@ def plot_figure_1(pickle_file_path,
     #move_axis([axs_cell],xoffset=-0.05,yoffset=0,pltscale=1)
     #axs_field = fig.add_subplot(gs[6:9,3:5])
     #move_axis([axs_field],xoffset=0.015,yoffset=0,pltscale=1)
-
-
-
-
-    axs_cell = fig.add_subplot(gs[6:8,0:1])
-    move_axis([axs_cell],xoffset=0,yoffset=0,pltscale=1)
-    axs_field = fig.add_subplot(gs[6:8,1:2])
-    move_axis([axs_field],xoffset=0,yoffset=0,pltscale=1)
-    axs_cell_t =fig.add_subplot(gs[6:8,3:4]) 
-    axs_field_t=fig.add_subplot(gs[6:8,4:5]) 
-
-
-    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field,
-                     axs_cell_t,axs_field_t)
-    label_axis([axs_cell,axs_field,
-               ],"E",xpos=-0.1, ypos=1)
-    label_axis([axs_cell_t,axs_field_t],"F",xpos=-0.1, ypos=1)
-
-
-    axs_stat_dist = fig.add_subplot(gs[6:8,6:8])   
+    
+    axs_stat_dist = fig.add_subplot(gs[6:8,1:3])   
     plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_stat_dist)
-    axs_stat_dist.text(-0.2,1,'G',transform=axs_stat_dist.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_stat_dist.text(-0.2,1,'E',transform=axs_stat_dist.transAxes,    
+                       fontsize=16, fontweight='bold', ha='center', va='center')
+
+
+
+
+
+
+    #axs_cell = fig.add_subplot(gs[6:8,0:1])
+    #move_axis([axs_cell],xoffset=0,yoffset=0,pltscale=1)
+    #axs_field = fig.add_subplot(gs[6:8,1:2])
+    #move_axis([axs_field],xoffset=0,yoffset=0,pltscale=1)
+    axs_cell_t =fig.add_subplot(gs[6:8,4:6]) 
+    axs_field_t=fig.add_subplot(gs[6:8,6:8]) 
+
+
+    #plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field,
+    #                 axs_cell_t,axs_field_t)
+    plot_trace_stats(alltrial_Df,fig,
+                     axs_cell_t,axs_field_t)
+    label_axis([axs_cell_t,axs_field_t],"F",xpos=-0.1, ypos=1.1)
+
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_1_with_time.png"

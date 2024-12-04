@@ -521,15 +521,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
     # Check if colors are provided; if not, use custom colors
     if colors is None:
         # Define custom colors that are not in the default plots
-        colors = ['#00796B', '#D81B60', '#FFC107']
-        #colors = ['#228B22', '#FF6F61', '#6A5ACD'] 
-        #colors = ['#00796B','#FF6F61','#FFC107']
-        #colors = ['#191970', '#FFD700', '#2E8B57']
-        #colors = ['teal', 'orange', 'purple']
-        #colors = ['#00BFFF', '#FA8072', '#808000']
-        #colors = ['#4682B4', '#FFDAB9', '#9ACD32']
-        #colors = ['#800000', '#FFBF00', '#228B22']
-        #colors = ['#40E0D0', '#E6E6FA', '#CC5500']
+        colors = ['teal', 'orange', 'purple']
 
     # Determine the x-axis limits as desired
     x_min, x_max = -50, 600  # Adjust these values as needed
@@ -570,7 +562,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
             label=pattern_labels[pattern],  # Use the mapped label
             color=color,
             alpha=0.6,
-            edgecolor=color,
+            edgecolor='black',
             linewidth=0.5
         )
 
@@ -1325,7 +1317,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_2.png"
+    outpath = f"{outdir}/figure_2_fnorm.png"
     #outpath = f"{outdir}/figure_2.svg"
     #outpath = f"{outdir}/figure_2.pdf"
     plt.savefig(outpath,bbox_inches='tight')

@@ -857,7 +857,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
                 #        ha='center', va='bottom', fontsize=8, color='black')
     
     # Customize axes for learners
-    axs_lr.set_ylim(-50, 1200)
+    axs_lr.set_ylim(-50, 500)
     axs_lr.set_ylabel("% change in\nEPSP amplitude")
     axs_lr.set_xlabel("point no")
     axs_lr.spines[['right', 'top']].set_visible(False)
@@ -2438,7 +2438,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_4.png"
+    outpath = f"{outdir}/figure_4_norm.png"
     #outpath = f"{outdir}/figure_4.svg"
     #outpath = f"{outdir}/figure_4.pdf"
     plt.savefig(outpath,bbox_inches='tight')

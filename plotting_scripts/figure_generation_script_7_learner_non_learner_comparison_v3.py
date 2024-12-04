@@ -647,7 +647,9 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
 
 
 
-def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_dict, cell_type, fig, axs1, axs2, axs3):
+def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df,
+                                         sc_data_dict, cell_type, fig, axs1,
+                                         axs2, axs3,axs4):
     """
     Plots the expected vs observed responses for all trials, separated by learners and non-learners.
     """
@@ -708,7 +710,6 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
                     axs[pat_num].set_ylim(-0.5, 12)
                     axs[pat_num].set_xticks(np.arange(-0.5, 12, 4))
                     axs[pat_num].set_yticks(np.arange(-0.5, 12, 4))
-                    
                     if pat_num == 0:
                         axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
                     else:
@@ -724,6 +725,12 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
     for pat_num in range(3):
         pre_responses, post_responses = response_dict[pat_num]
         eq_fit(pre_responses, post_responses, pat_num, cell_type, fig, axs[pat_num])
+    # Fit and plot the gamma model for pos_3 trained v/s non-overlap
+    pre_trained, post_trained = response_dict[0]
+    pre_nonoverlap, post_nonoverlap = response_dict[2]
+    eq_fit(post_trained, post_nonoverlap, pat_num, cell_type, fig, axs4)
+
+
 
     # Add a legend for non-learners in pattern 1
     if cell_type == "non-learners":
@@ -1169,10 +1176,11 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     axs_ex_sm1 = fig.add_subplot(gs[4:6,0:2])
     axs_ex_sm2 = fig.add_subplot(gs[4:6,2:4])
     axs_ex_sm3 = fig.add_subplot(gs[4:6,4:6])
+    axs_ex_sm3_ = fig.add_subplot(gs[9:11,0:2])
     plot_expected_vs_observed_all_trials(alltrial_Df,
                                          feature_extracted_data,
                                          sc_data_dict,"learners",
-                              fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
+                              fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3,axs_ex_sm3_)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
     label_axis(axs_ex_sm_l_list, "B", xpos=-0.1, ypos=1.08)
     #axs_ex_sm2.set_title("learners")
@@ -1180,10 +1188,11 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     axs_ex_sm4 = fig.add_subplot(gs[6:8,0:2])
     axs_ex_sm5 = fig.add_subplot(gs[6:8,2:4])
     axs_ex_sm6 = fig.add_subplot(gs[6:8,4:6])
+    axs_ex_sm6_ = fig.add_subplot(gs[9:11,2:4])
     plot_expected_vs_observed_all_trials(alltrial_Df,
                                          feature_extracted_data,
                                          sc_data_dict,"non-learners",
-                              fig,axs_ex_sm4,axs_ex_sm5,axs_ex_sm6)
+                              fig,axs_ex_sm4,axs_ex_sm5,axs_ex_sm6,axs_ex_sm6_)
     #axs_ex_sm5.set_title("non-learners")
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
