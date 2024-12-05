@@ -1149,11 +1149,11 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
 
 
-    #plot sumamtion illustration
-    axs_illu = fig.add_subplot(gs[0:3,1:5])
-    plot_image(sum_illust,axs_illu,-0.125,0,2)
-    axs_illu.text(0.05,0.925,'A',transform=axs_illu.transAxes,
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    ##plot sumamtion illustration
+    #axs_illu = fig.add_subplot(gs[0:3,1:5])
+    #plot_image(sum_illust,axs_illu,-0.125,0,2)
+    #axs_illu.text(0.05,0.925,'A',transform=axs_illu.transAxes,
+    #             fontsize=16, fontweight='bold', ha='center', va='center')
     #plot patterns
     axs_pat_1 = fig.add_subplot(gs[3:4,0:1])
     axs_pat_2 = fig.add_subplot(gs[3:4,2:3])
@@ -1172,7 +1172,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
                                          sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
-    label_axis(axs_ex_sm_l_list, "B", xpos=-0.1, ypos=1.08)
+    label_axis(axs_ex_sm_l_list, "A", xpos=-0.1, ypos=1.08)
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
     axs_ex_sm4 = fig.add_subplot(gs[6:8,0:2])
@@ -1186,7 +1186,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
     move_axis(axs_ex_sm_nl_list,xoffset=0,yoffset=-0.01,pltscale=1) 
-    label_axis(axs_ex_sm_nl_list,"C", xpos=-0.1, ypos=1.08)
+    label_axis(axs_ex_sm_nl_list,"B", xpos=-0.1, ypos=1.08)
 
 
 

@@ -170,7 +170,8 @@ def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweigh
 
 
 def plot_raw_trace_time_points(single_cell_df,
-                               deselect_list,fig,gs):
+                               deselect_list,fig,gs,
+                               xoffset=0,yoffset=0):
     single_cell_df = single_cell_df[~single_cell_df["frame_status"].isin(deselect_list)]
     sampling_rate = 20000 # for patterns
     sc_pat_grp = single_cell_df.groupby(by="frame_id")
@@ -193,6 +194,7 @@ def plot_raw_trace_time_points(single_cell_df,
                 time = np.linspace(0,time_to_plot,len(trace))*1000
                 axs_trace.plot(time,pre_trace, color=bpf.pre_color,
                                label="baseline response")
+                move_axis([axs_trace],xoffset=xoffset,yoffset=yoffset,pltscale=1)
                 if pat_num==1:
                     axs_trace.set_ylabel("membrane potential(mV)")
                 else:
@@ -219,6 +221,7 @@ def plot_raw_trace_time_points(single_cell_df,
                                #color=bpf.colorFader(bpf.post_color,
                                #                     bpf.post_late,
                                #                     (idx/len(pps_grp))))
+                move_axis([axs_trace],xoffset=xoffset,yoffset=yoffset,pltscale=1)
                 axs_trace.set_ylabel(None)
                 axs_trace.set_yticklabels([])
                 if pat_num==0:
@@ -1244,7 +1247,7 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
                      0.5, 0.5, 0.5, 0.5, 0.2]       # Adjust these values as needed
 
-    fig = plt.figure(figsize=(8,18))
+    fig = plt.figure(figsize=(9,16))
     gs = GridSpec(11, 7,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
@@ -1267,17 +1270,18 @@ def plot_figure_2(extracted_feature_pickle_file_path,
     axs_vpat1=fig.add_subplot(gs[3,0])
     axs_vpat2=fig.add_subplot(gs[4,0])
     axs_vpat3=fig.add_subplot(gs[5,0])
-    plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,0,2)
+    plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,-0.015,2)
     axs_vpat1.text(-0.07,1.35,'C',transform=axs_vpat1.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
-    plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs)
+    plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs,
+                              xoffset=0,yoffset=-0.01)
     
-    #plot pattern projections 
-    axs_pat1 = fig.add_subplot(gs[6,0])
-    axs_pat2 = fig.add_subplot(gs[6,2])
-    axs_pat3 = fig.add_subplot(gs[6,4])
-    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.04,1)
+    
+    
+    
+    
+    
     
     
 
@@ -1295,6 +1299,16 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                                                  axs_slp3)
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
     label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
+
+    #plot pattern projections 
+    axs_pat1 = fig.add_subplot(gs[6,0])
+    axs_pat2 = fig.add_subplot(gs[6,2])
+    axs_pat3 = fig.add_subplot(gs[6,4])
+    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.055,1)
+
+
+
+
 
     axs_dist = fig.add_subplot(gs[9:10,0:4])
     plot_frequency_distribution(sc_data_df, "max_trace", fig, 

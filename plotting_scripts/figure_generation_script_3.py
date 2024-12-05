@@ -304,8 +304,8 @@ def plot_threshold_timing(training_data, sc_data_dict, fig, axs):
     by_label = dict(zip(labels, handles))
 
     # Set a custom legend
-    fig.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, 0.32),
-               ncol=6, loc='upper center')
+    fig.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.775, 0.28),
+               ncol=1, loc='upper center')
 
     # Remove the axis legend
     axs.legend_.remove()
@@ -1887,7 +1887,7 @@ def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter, leg
                 axs.legend(handles=custom_handles, 
                            loc='center', 
                            frameon=False, 
-                           bbox_to_anchor=(-0.1,-3.155),
+                           bbox_to_anchor=(-0.1,-3.5),
                            ncol=3)
                 legend_added = True  # Ensure legend is added only once
             
@@ -2273,7 +2273,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                      #1, 1
                     ]       # Adjust these values as needed
 
-    fig = plt.figure(figsize=(8,18))
+    fig = plt.figure(figsize=(9,16))
     #gs = GridSpec(12, 8,width_ratios=width_ratios,
     gs = GridSpec(10, 8,width_ratios=width_ratios,
                   height_ratios=height_ratios,figure=fig)
@@ -2315,7 +2315,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
     axs_pie.text(-0.025,0.85,'D',transform=axs_pie.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
-    move_axis([axs_pie],-0.075,0.115,1)
+    move_axis([axs_pie],-0.075,0.095,1)
     
     #plot F-I curve
     axs_fi = fig.add_subplot(gs[4:6,0:2])
@@ -2323,7 +2323,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot_fi_curve_with_mixed_anova(firing_properties,sc_data_dict,fig,axs_fi)
     #plot_fi_curve_with_ks(firing_properties,sc_data_dict,fig,axs_fi)
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
-    move_axis([axs_fi],-0.05,0,1)
+    move_axis([axs_fi],-0.05,-0.05,1)
     axs_fi.text(-0.1,1.1,'E',transform=axs_fi.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
 
@@ -2332,9 +2332,10 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_rmp = fig.add_subplot(gs[4:6,6:8])
     compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
-    move_axis([axs_inr],-0.045,0,1)
+    move_axis([axs_inr],-0.045,-0.05,1)
     axs_inr.text(-0.1,1.1,'F',transform=axs_inr.transAxes,    
                 fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_rmp],-0.045,-0.05,1)
     axs_rmp.text(-0.1,1.1,'G',transform=axs_rmp.transAxes,    
                 fontsize=16, fontweight='bold', ha='center', va='center')
     
@@ -2347,9 +2348,9 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #axs_mini_comp_freq = fig.add_subplot(gs[7:8,6:8])
     plot_mini_distribution(all_trial_df,sc_data_dict, fig, 
                            axs_mini_amp,axs_mini_freq,)
-    move_axis([axs_mini_amp],-0.05,0.05,0.9)
+    move_axis([axs_mini_amp],-0.05,0,0.9)
     #move_axis([axs_mini_comp_amp],-0.05,0.05,0.9)
-    move_axis([axs_mini_freq],0.05,0.05,0.9)
+    move_axis([axs_mini_freq],0.05,0,0.9)
     #move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
     axs_mini_list = [axs_mini_amp,axs_mini_freq]
     label_axis(axs_mini_list,"H")    
@@ -2357,14 +2358,14 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot training timing details
     axs_trn = fig.add_subplot(gs[7:8,5:7])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
-    move_axis([axs_trn],0.05,0.05,1)
+    move_axis([axs_trn],0.05,0,1)
     axs_trn.text(-0.1,1.1,'I',transform=axs_trn.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
     
     #plot sag
     axs_inr = fig.add_subplot(gs[8:9,3:6])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    move_axis([axs_inr],0.1,0,1)
+    move_axis([axs_inr],0,0,1)
     axs_inr.text(-0.05,1,'K',transform=axs_inr.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')            
 
