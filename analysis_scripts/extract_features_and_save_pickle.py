@@ -175,21 +175,27 @@ def process_cell(args):
                                           ttl_trace, cell_rmp, mepsp_amp, mepsp_time, num_mepsp, freq_mepsp])
     return cell_list
 
-def extract_cell_features_all_trials(cells_df, outdir):
+def extract_cell_features_all_trials(cells_df, outdir, mp_processes=8):
+    """
+    Extract cell features for all trials with configurable multiprocessing
+    """
     cell_grp = cells_df.groupby(by="cell_ID")
     cell_list = []
 
     # Convert the groupby object to a list for multiprocessing
     cell_grp_list = list(cell_grp)
+    print(f"Processing {len(cell_grp_list)} cells using {mp_processes} processes")
 
     # Prepare arguments for the worker function
     args_list = [(c, cell) for c, cell in cell_grp_list]
 
-    # Create a multiprocessing Pool
-    pool = mp.Pool(processes=6)
+    # Create a multiprocessing Pool with configurable processes
+    pool = mp.Pool(processes=mp_processes)
 
     # Use tqdm to display progress
-    for result in tqdm(pool.imap_unordered(process_cell, args_list), total=len(args_list)):
+    for result in tqdm(pool.imap_unordered(process_cell, args_list), 
+                      total=len(args_list), 
+                      desc="Processing cells"):
         cell_list.extend(result)
 
     # Close the pool and wait for all processes to finish
@@ -200,14 +206,19 @@ def extract_cell_features_all_trials(cells_df, outdir):
                     "trial_no", "min_trace", "max_trace", "abs_area", "pos_area",
                     "neg_area", "onset_time", "max_field", "min_field", "slope",
                     "intercept", "min_trace_t", "max_trace_t", "max_field_t",
-                    "min_field_t", "trace", "field", "ttl", "mean_rmp", "mepsp_amp", "mepsp_time", "num_mepsp", "freq_mepsp"]
-
-    pd_cell_list = pd.concat(pd.DataFrame([i], columns=clist_header) for i in tqdm(cell_list))
-    pd_cell_list = pd_cell_list[pd_cell_list["pre_post_status"] != "post_5"]
+                    "min_field_t", "mean_trace", "mean_field", "mean_ttl", "mean_rmp",
+                    "mepsp_amp", "mepsp_time", "num_mepsp", "freq_mepsp"]
+    
+    print(f"Creating DataFrame from {len(cell_list)} processed entries...")
+    pd_all_cells_all_trials = pd.concat([pd.DataFrame([i], columns=clist_header) 
+                                        for i in tqdm(cell_list, desc="Creating DataFrame")])
+    
     outpath = f"{outdir}/pd_all_cells_all_trials"
-    write_pkl(pd_cell_list, outpath)
-    print(f"All cells all trials features extracted, file: {outpath}")
-    return pd_cell_list
+    print(f"Saving to {outpath}.pickle...")
+    write_pkl(pd_all_cells_all_trials, outpath)
+    print(f"All trials all cells features saved, file: {outpath}")
+    
+    return pd_all_cells_all_trials
 
 
 
@@ -429,12 +440,11 @@ def process_cell_group(args):
     return cell_type_list
 
 # Main function with parallelization
-def extract_cell_features_mean(all_data_with_training_df, outdir):
+def extract_cell_features_mean(all_data_with_training_df, outdir, mp_processes=6):
     cell_grp = list(all_data_with_training_df.groupby(by="cell_ID"))  # Convert to list for parallel processing
 
     # Use multiprocessing to parallelize the processing
-    num_processes = 6#mp.cpu_count()
-    with mp.Pool(processes=num_processes) as pool:
+    with mp.Pool(processes=mp_processes) as pool:
         results = list(tqdm(pool.imap(process_cell_group, cell_grp), total=len(cell_grp), desc="Processing Cells"))
 
     # Flatten the results
@@ -762,43 +772,104 @@ def cell_classifier_with_fnorm(pd_all_cells_mean,outdir):
 
 def main():
     # Argument parser.
-    description = '''Opens all cell pickle and save extracted features'''
+    description = '''Opens all cell pickle and save extracted features with complete pipeline'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
-                        , required = False,default ='./', type=str
+                        , required = False,default ='./data/pickle_files/all_data_with_training_df.pickle', type=str
                         , help = 'path to the giant pickle file with all cells'
                        )
     parser.add_argument('--cellstat-path', '-s'
-                        , required = False,default ='./', type=str
+                        , required = False,default ='./data/pickle_files/cell_stats.h5', type=str
                         , help = 'path to cell stats data'
                        )
     parser.add_argument('--outdir-path','-o'
-                        ,required = False, default ='./', type=str
+                        ,required = False, default ='./analysis_scripts', type=str
                         ,help = 'where to save the generated pickle files'
                        )
-    #    parser.parse_args(namespace=args_)
+    parser.add_argument('--use-full-ram', action='store_true',
+                        help='Use full system RAM (32GB) for processing')
     args = parser.parse_args()
+    
+    # Configure for full RAM usage if requested
+    if args.use_full_ram:
+        print("Configuring for full 32GB RAM usage...")
+        # Set pandas options for large datasets
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.max_rows', None)
+        # Configure multiprocessing to use more cores
+        mp_processes = min(mp.cpu_count(), 12)  # Use up to 12 cores
+        print(f"Using {mp_processes} processes for multiprocessing")
+    else:
+        mp_processes = 6
+    
     pklpath = Path(args.pikl_path)
     statpath = Path(args.cellstat_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'pickle_files_from_analysis'
+    globoutdir = globoutdir / 'pickle_files_from_analysis'
     globoutdir.mkdir(exist_ok=True, parents=True)
     
-    cell_stats =pd.read_hdf(str(statpath))
+    print(f"Loading cell stats from: {statpath}")
+    cell_stats = pd.read_hdf(str(statpath))
+    
+    print(f"Loading main data from: {pklpath}")
+    print(f"This may take a while due to the large file size ({pklpath.stat().st_size / (1024**3):.1f} GB)...")
     all_data_with_training_df = read_pkl(str(pklpath))
     
-    baseline_data_extractor(all_data_with_training_df,globoutdir)
-    extract_cell_inR_features(all_data_with_training_df,globoutdir)
-    extract_cell_features_all_trials(all_data_with_training_df,globoutdir)
-    #pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df,globoutdir)
-    #extract_training_data(all_data_with_training_df,globoutdir)
-    #cell_group_classifier(pd_all_cells_mean,globoutdir)
-    #cell_classifier_with_fnorm(pd_all_cells_mean,globoutdir)
+    print(f"Data loaded successfully. Shape: {all_data_with_training_df.shape}")
+    print(f"Columns: {list(all_data_with_training_df.columns)}")
+    print(f"Unique cells: {len(all_data_with_training_df['cell_ID'].unique())}")
     
+    # Run complete analysis pipeline
+    print("\n" + "="*60)
+    print("STARTING COMPLETE ANALYSIS PIPELINE")
+    print("="*60)
+    
+    print("\n1. Extracting baseline data...")
+    baseline_data_extractor(all_data_with_training_df, globoutdir)
+    
+    print("\n2. Extracting input resistance features...")
+    extract_cell_inR_features(all_data_with_training_df, globoutdir)
+    
+    print("\n3. Extracting cell features for all trials...")
+    extract_cell_features_all_trials(all_data_with_training_df, globoutdir, mp_processes)
+    
+    print("\n4. Extracting mean cell features...")
+    pd_all_cells_mean = extract_cell_features_mean(all_data_with_training_df, globoutdir, mp_processes)
+    
+    print("\n5. Extracting training data...")
+    extract_training_data(all_data_with_training_df, globoutdir)
+    
+    print("\n6. Classifying cell groups (standard analysis)...")
+    all_cells, ap_cells_df, an_cells_df, all_cells_dic = cell_group_classifier(pd_all_cells_mean, globoutdir)
+    
+    print("\n7. Classifying cell groups (field normalized analysis)...")
+    all_cells_fnorm, ap_cells_df_fnorm, an_cells_df_fnorm, all_cells_dic_fnorm = cell_classifier_with_fnorm(pd_all_cells_mean, globoutdir)
+    
+    print("\n" + "="*60)
+    print("ANALYSIS PIPELINE COMPLETED SUCCESSFULLY")
+    print("="*60)
+    print(f"Output directory: {globoutdir}")
+    print(f"Files generated:")
+    
+    # List all generated files
+    for pickle_file in globoutdir.glob("*.pickle"):
+        file_size = pickle_file.stat().st_size / (1024**2)  # MB
+        print(f"  - {pickle_file.name} ({file_size:.1f} MB)")
+    
+    # Print summary statistics
+    print(f"\nSummary Statistics:")
+    print(f"  - Total cells processed: {len(all_data_with_training_df['cell_ID'].unique())}")
+    print(f"  - Cells with potentiation (learners): {len(ap_cells_df['cell_ID'].unique())}")
+    print(f"  - Cells with depression (non-learners): {len(an_cells_df['cell_ID'].unique())}")
+    print(f"  - Field normalized - learners: {len(ap_cells_df_fnorm['cell_ID'].unique())}")
+    print(f"  - Field normalized - non-learners: {len(an_cells_df_fnorm['cell_ID'].unique())}")
+    
+    return globoutdir
+
 
 if __name__  == '__main__':
     #timing the run with time.time
     ts =time.time()
-    main(**vars(args_)) 
+    main() 
     tf =time.time()
     print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

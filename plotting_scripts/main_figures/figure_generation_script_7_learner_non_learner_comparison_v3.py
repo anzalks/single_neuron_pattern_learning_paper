@@ -34,7 +34,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
                             subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
+                            post_color, post_late, CB_color_cycle, color_fader,
+                            map_points_to_patterns)
 from matplotlib.lines import Line2D
 
 # Initialize utilities
@@ -700,7 +701,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df,
                     if pat_num not in response_dict:
                         continue
 
-                    point_list = bpf.map_points_to_patterns(pat)
+                    point_list = map_points_to_patterns(pat)
                     matching_values = ppresp.loc[ppresp["frame_id"] == pat, "max_trace"]
                     if len(matching_values) != 1:
                         raise ValueError(f"Expected exactly one matching row for frame_id={pat}, but found {len(matching_values)}.")
@@ -827,149 +828,6 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df,
 #                        axs[pat_num].set_xticklabels([])
 #                    else:
 #                        if pat_num == 1:
-#                            axs[pat_num].set_xlabel("expected response (mV)")
-#
-#    # Fit and plot the gamma model for each pattern
-#    for pat_num in range(3):
-#        pre_responses, post_responses = response_dict[pat_num]
-#        eq_fit(pre_responses, post_responses, pat_num, cell_type, fig, axs[pat_num])
-
-
-
-#def gama_fit(expt,alp,bet,gam):
-#    bet=1
-#    alp=0
-#    return expt-(((bet*expt)/(gam+expt))*expt)-alp
-#
-#def eq_fit(list_of_x_y_responses_pre,list_of_x_y_responses,pat_num,
-#           cell_type,fig, axs):
-#    x_y_responses = np.array(list_of_x_y_responses)
-#    pre_x_y = np.array(list_of_x_y_responses_pre)
-#    pre_arr1,pre_arr2=np.split(pre_x_y,2,axis=1)
-#    pre_arr1 =np.ravel(pre_arr1)
-#    pre_arr2 =np.ravel(pre_arr2)
-#    arr1,arr2=np.split(x_y_responses,2,axis=1)
-#    arr1 = np.ravel(arr1)
-#    arr2 = np.ravel(arr2)
-#    print(f"array shape: {np.shape(pre_arr2)}")
-#
-#    param_pre, _param_pre = scipy.optimize.curve_fit(gama_fit,pre_arr1,pre_arr2, bounds=(0,60))
-#    param, _param = scipy.optimize.curve_fit(gama_fit,arr1,arr2, bounds=(0,60))
-#
-#    #pre_x = np.arange(int(np.floor(np.min(pre_arr1))),int(np.ceil(np.max(pre_arr2))),0.5)
-#    pre_x  = np.linspace(-0.5, 10,len(pre_arr2))
-#    #pre_x  = np.linspace(0, np.max(pre_arr2)+3,len(pre_arr2))
-#    #x = np.arange(int(np.floor(np.min(arr1))),int(np.ceil(np.max(arr1))),0.5)
-#    #x  = np.linspace(0, np.max(arr2)+3,len(arr2))
-#    x  = np.linspace(-0.5, 10,len(arr2))
-#    pre_y = gama_fit(pre_x,param_pre[0],param_pre[1],param_pre[2])
-#    y = gama_fit(x,param[0],param[1],param[2])
-#    if cell_type=="learners":
-#        color=CB_color_cycle[0]
-#    else:
-#        color= CB_color_cycle[1]
-#    axs.plot(pre_x, pre_y, color='k', linestyle='-', alpha=0.8, label="pre_training",linewidth=3)
-#    axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
-#    #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10)
-#    axs.set_aspect(0.6)
-#    axs.text(0.5,0.9,f'γ_post = {np.around(param[-1],1)}',transform=axs.transAxes,    
-#             fontsize=12, ha='center', va='center')
-#    axs.text(0.5,0.7,f'γ_pre = {np.around(param_pre[-1],1)}',transform=axs.transAxes,
-#             fontsize=12, ha='center', va='center')
-#    
-#    return x, y
-#
-#def plot_expected_vs_observed_all_trials(alltrial_Df,
-#                                         mean_all_cell_df,
-#                                         sc_data_dict,
-#                                         cell_type,
-#                                         fig,axs1,axs2,axs3):
-#    if cell_type=="learners":
-#        lrn=sc_data_dict["ap_cells"]["cell_ID"].unique()
-#        alltrial_Df = alltrial_Df[alltrial_Df["cell_ID"].isin(lrn)]
-#    elif cell_type=="non-learners":
-#        nlrn=sc_data_dict["an_cells"]["cell_ID"].unique()
-#        alltrial_Df=alltrial_Df[alltrial_Df["cell_ID"].isin(nlrn)]
-#    cell_grp  = alltrial_Df.groupby(by='cell_ID')
-#    axs=[axs1,axs2,axs3]
-#    all_resp_pat_0 =[]
-#    all_resp_pat_1 =[]
-#    all_resp_pat_2 =[]
-#    pre_all_resp_pat_0 =[]
-#    pre_all_resp_pat_1 =[]
-#    pre_all_resp_pat_2 =[]
-#    
-#    for c, cell in cell_grp:
-#        if c=="2022_12_12_cell_5":
-#            continue
-#        pp_grps = cell.groupby(by="pre_post_status")
-#        for pp, pp_data in pp_grps:
-#            if pp not in ['pre','post_3']:
-#                continue
-#            else:
-#                pp =pp
-#                #print(f"found pp stat")
-#            if pp=="pre":
-#                color=pre_color
-#            else:
-#                if cell_type=="learners":
-#                    color = CB_color_cycle[0]
-#                else:
-#                    color = CB_color_cycle[1]
-#            pats= pp_data[pp_data["frame_status"]=="pattern"]["frame_id"].unique()
-#            trial_grp  = pp_data.groupby(by="trial_no")
-#            for trial, trial_data in trial_grp:
-#                ppresp =pp_data.copy()
-#                ppresp = ppresp[ppresp["trial_no"]==trial]
-#                ppresp.reset_index(drop=True)
-#                for pat in pats:
-#                    pat_num = int(pat.split("_")[-1])
-#                    point_list = bpf.map_points_to_patterns(pat)
-#                    pat_val=float(ppresp[ppresp["frame_id"]==pat]["max_trace"].values)
-#                    point_sum_val =np.sum(np.array(ppresp[ppresp["frame_id"].isin(point_list)]["max_trace"]))
-#                    pat_val_nrm = pat_val#-pat_val
-#                    point_sum_val_nrm = point_sum_val#-pat_val
-#                    #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
-#                    if pp!="pre":
-#                        if pat_num==0:
-#                            all_resp_pat_0.append([point_sum_val_nrm,pat_val_nrm])
-#                        elif pat_num==1:
-#                            all_resp_pat_1.append([point_sum_val_nrm,pat_val_nrm])
-#                        elif pat_num==2:
-#                            all_resp_pat_2.append([point_sum_val_nrm,pat_val_nrm])
-#                        else:
-#                            continue
-#                    elif pp=="pre":
-#                        if pat_num==0:
-#                            pre_all_resp_pat_0.append([point_sum_val_nrm,pat_val_nrm])
-#                        elif pat_num==1:
-#                            pre_all_resp_pat_1.append([point_sum_val_nrm,pat_val_nrm])
-#                        elif pat_num==2:
-#                            pre_all_resp_pat_2.append([point_sum_val_nrm,pat_val_nrm])
-#                        else:
-#                            continue
-#                    axs[pat_num].axline([0,0], [1,1], linestyle=':',
-#                                        color=CB_color_cycle[6], label="linear sum",linewidth=2)
-#                    axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,
-#                                         color=color, label=pp, alpha=0.8,
-#                                         linewidth=1,marker=".")
-#                    axs[pat_num].spines[['right', 'top']].set_visible(False)
-#                    axs[pat_num].set_xlim(-0.5,12)
-#                    axs[pat_num].set_ylim(-0.5,12)
-#                    axs[pat_num].set_xticks(np.arange(-0.5,12,4))
-#                    axs[pat_num].set_yticks(np.arange(-0.5,12,4))
-#                    
-#                    if pat_num==0:
-#                        axs[pat_num].set_ylabel("observed\nresponse (mV)", fontsize=14)
-#                        
-#                    else:
-#                        axs[pat_num].set_yticklabels([])
-#                    if cell_type=="learners":
-#                        axs[pat_num].set_title(None)
-#                        axs[pat_num].set_xlabel(None)
-#                        axs[pat_num].set_xticklabels([])
-#                    else:
-#                        if pat_num==1:
 #                            axs[pat_num].set_xlabel("expected response (mV)")
 #                        else:
 #                            axs[pat_num].set_title(None)
@@ -1232,58 +1090,162 @@ def plot_figure_7(extracted_feature_pickle_file_path,
 
 
 def main():
-    # Argument parser.
+    """Main function using shared utilities system"""
     description = '''Generates figure 7'''
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--pikl-path', '-f'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with extracted features'
-                       )
-    parser.add_argument('--sortedcell-path', '-s'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
-                        'exrracted data'
-                       )
-    parser.add_argument('--alltrials-path', '-t'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with all trials'
-                        'all cells data in pickle'
-                       )
-    parser.add_argument('--cellstat-path', '-c'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
-                        'exrracted data'
-                       )
-    parser.add_argument('--illustration-path', '-i'
-                        , required = False,default ='./', type=str
-                        , help = 'path to the image file in png format'
-                       )
-
-    parser.add_argument('--outdir-path','-o'
-                        ,required = False, default ='./', type=str
-                        ,help = 'where to save the generated figure image'
-                       )
-    #    parser.parse_args(namespace=args_)
+    parser.add_argument('--data-dir', type=str, default='.', 
+                       help='Base data directory')
+    parser.add_argument('--analysis-type', type=str, default='standard',
+                       choices=['standard', 'field_normalized'],
+                       help='Analysis type')
     args = parser.parse_args()
-    pklpath = Path(args.pikl_path)
-    scpath = Path(args.sortedcell_path)
-    sum_illustration_path = Path(args.illustration_path)
-    cell_stat_path = Path(args.cellstat_path)
-    all_trials_path= Path(args.alltrials_path)
-    globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_7'
-    globoutdir.mkdir(exist_ok=True, parents=True)
-    print(f"pkl path : {pklpath}")
-    plot_figure_7(pklpath,sum_illustration_path,
-                  scpath,cell_stat_path,all_trials_path,globoutdir)
-    #print(f"illustration path: {illustration_path}")
+
+    # Initialize utilities
+    utils = PatternLearningUtils(config_path=os.path.join(args.data_dir, 'config.yaml'))
+    
+    try:
+        # Load figure data using the utilities system
+        figure_data = utils.load_figure_data('figure_7', args.analysis_type)
+        
+        # Extract data components
+        pd_all_cells_mean = figure_data['pd_all_cells_mean']
+        all_cells_classified_dict = figure_data['all_cells_classified_dict']
+        figure_6_1 = figure_data['figure_6_1']
+        cell_stats = figure_data['cell_stats']
+        pd_all_cells_all_trials = figure_data['pd_all_cells_all_trials']
+        
+        # Generate figure using the loaded data
+        fig = plot_figure_7_new(pd_all_cells_mean, all_cells_classified_dict,
+                               figure_6_1, cell_stats, pd_all_cells_all_trials,
+                               args.analysis_type)
+        
+        # Save figure using standardized output manager
+        saved_files = utils.output_manager.save_figure(
+            fig, 'figure_7', 'main_figures', args.analysis_type
+        )
+        
+        utils.logger.info(f"Figure 7 generated successfully: {saved_files}")
+        
+        plt.close(fig)
+        
+    except Exception as e:
+        utils.logger.error(f"Error generating Figure 7: {e}")
+        raise
 
 
 
+def plot_figure_7_new(pd_all_cells_mean, all_cells_classified_dict, figure_6_1, 
+                     cell_stats, pd_all_cells_all_trials, analysis_type):
+    """Generate Figure 7 using the loaded data"""
+    # Use existing plot_figure_7 function logic but adapted for new data loading
+    
+    # Convert new data format to the format expected by existing functions
+    extracted_feature_pickle_file_path = pd_all_cells_mean  # DataFrame instead of path
+    sum_illustration_path = figure_6_1  # Image path
+    cell_categorised_pickle_file = all_cells_classified_dict  # Dict instead of path
+    cell_stats_pickle_file = cell_stats  # Data instead of path
+    all_trials_path = pd_all_cells_all_trials  # DataFrame instead of path
+    
+    # Create temporary output directory (will be managed by utilities)
+    outdir = Path('temp_output')
+    outdir.mkdir(exist_ok=True, parents=True)
+    
+    # Call the adapted plot function with data objects instead of file paths
+    return plot_figure_7_adapted(extracted_feature_pickle_file_path, sum_illustration_path,
+                                cell_categorised_pickle_file, cell_stats_pickle_file, 
+                                all_trials_path, outdir)
 
-if __name__  == '__main__':
-    #timing the run with time.time
-    ts =time.time()
-    main(**vars(args_)) 
-    tf =time.time()
-    print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')
+
+def plot_figure_7_adapted(pd_all_cells_mean, sum_illustration_path, 
+                         all_cells_classified_dict, cell_stats, 
+                         pd_all_cells_all_trials, outdir):
+    """Adapted version of plot_figure_7 that works with data objects instead of file paths"""
+    
+    set_plot_properties()
+    deselect_list = ["no_frame", "inR", "point"]
+    
+    # Use the data objects directly instead of loading from files
+    feature_extracted_data = pd_all_cells_mean
+    cell_stats_df = cell_stats
+    alltrial_Df = pd_all_cells_all_trials
+    single_cell_df = feature_extracted_data.copy()
+    sc_data_dict = all_cells_classified_dict
+    sc_data_df = pd.concat([sc_data_dict["ap_cells"],
+                           sc_data_dict["an_cells"]]).reset_index(drop=True)
+    
+    # sum_illustration_path is already a PIL Image object from the utilities
+    sum_illust = sum_illustration_path
+    
+    # Check if the image has an alpha channel (transparency) - handling PIL Image
+    if sum_illust.mode == 'RGBA':
+        # Create a white background using the correct Image class method
+        white_bg = pillow.Image.new("RGB", sum_illust.size, (255, 255, 255))
+        # Paste the image on top of the white background, handling transparency
+        white_bg.paste(sum_illust, mask=sum_illust.split()[3])  # 3 is the alpha channel
+        sum_illust = white_bg
+
+    # If the image is not RGB, convert it to RGB
+    if sum_illust.mode != "RGB":
+        sum_illust = sum_illust.convert("RGB")
+    
+    # Define the width and height ratios
+    height_ratios = [1, 1, 1, 1, 1, 
+                     1, 1, 1, 1, 1,
+                    ]
+                     
+    width_ratios = [1, 1, 1, 1, 1, 
+                    1, 1, 1
+                   ]
+
+    fig = plt.figure(figsize=(12,9))
+    gs = GridSpec(10, 8, width_ratios=width_ratios,
+                  height_ratios=height_ratios, figure=fig)
+    gs.update(wspace=0.1, hspace=1)
+
+    # Plot summation illustration
+    axs_illu = fig.add_subplot(gs[0:3,1:5])
+    plot_image(sum_illust, axs_illu, -0.125, 0, 2)
+    axs_illu.text(0.05, 0.925, 'A', transform=axs_illu.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    
+    # Plot patterns
+    axs_pat_1 = fig.add_subplot(gs[3:4,0:1])
+    axs_pat_2 = fig.add_subplot(gs[3:4,2:3])
+    axs_pat_3 = fig.add_subplot(gs[3:4,4:5])
+    plot_patterns(axs_pat_1, axs_pat_2, axs_pat_3, 0.05, 0, 1)
+
+    # Plot summation for learners and non-learners
+    axs_ex_sm1 = fig.add_subplot(gs[4:6,0:2])
+    axs_ex_sm2 = fig.add_subplot(gs[4:6,2:4])
+    axs_ex_sm3 = fig.add_subplot(gs[4:6,4:6])
+    axs_ex_sm3_ = fig.add_subplot(gs[9:11,0:2])
+    plot_expected_vs_observed_all_trials(alltrial_Df, feature_extracted_data,
+                                         sc_data_dict, "learners",
+                                         fig, axs_ex_sm1, axs_ex_sm2, axs_ex_sm3, axs_ex_sm3_)
+    axs_ex_sm_l_list = [axs_ex_sm1, axs_ex_sm2, axs_ex_sm3]
+    label_axis(axs_ex_sm_l_list, "B", xpos=-0.1, ypos=1.08)
+    axs_ex_sm2.set_xlabel(None)
+    
+    axs_ex_sm4 = fig.add_subplot(gs[6:8,0:2])
+    axs_ex_sm5 = fig.add_subplot(gs[6:8,2:4])
+    axs_ex_sm6 = fig.add_subplot(gs[6:8,4:6])
+    axs_ex_sm6_ = fig.add_subplot(gs[9:11,2:4])
+    plot_expected_vs_observed_all_trials(alltrial_Df, feature_extracted_data,
+                                         sc_data_dict, "non-learners",
+                                         fig, axs_ex_sm4, axs_ex_sm5, axs_ex_sm6, axs_ex_sm6_)
+    
+    axs_ex_sm_nl_list = [axs_ex_sm4, axs_ex_sm5, axs_ex_sm6]
+    move_axis(axs_ex_sm_nl_list, xoffset=0, yoffset=-0.01, pltscale=1) 
+    label_axis(axs_ex_sm_nl_list, "C", xpos=-0.1, ypos=1.08)
+
+    plt.tight_layout()
+    
+    return fig
+
+
+if __name__ == '__main__':
+    import time
+    ts = time.time()
+    main()
+    tf = time.time()
+    print(f'Total time = {np.around(((tf-ts)/60), 1)} (mins)')

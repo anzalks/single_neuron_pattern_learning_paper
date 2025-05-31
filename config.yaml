@@ -38,19 +38,21 @@ data_paths:
     figure_3_1: "data/illustations/Figure_3_1.png"
     figure_5_1: "data/illustations/Figure_5_1.png"
     figure_6_1: "data/illustations/Figure_6_1.png"
+    inr_sag_illustration: "data/illustations/inR_sag_illustration.png"
 
 # =============================================================================
-# OUTPUT CONFIGURATION - SIMPLIFIED
+# OUTPUT CONFIGURATION - CORRECTED STRUCTURE
 # =============================================================================
 output:
-  # Base output directory - simple structure
-  base_output_dir: "./outputs"
+  # Base output directory - proper outputs folder
+  base_output_dir: "outputs"
   
-  # Simplified directory structure
+  # Proper directory structure under outputs/
   directories:
-    main_figures: "Figure_1"  # Will be dynamically replaced with Figure_N
-    supplementary_figures: "Supplementary_Figure_1"  # Will be dynamically replaced
-    field_normalized: "Figure_1_fnorm"  # Will be dynamically replaced
+    # Main figures go here: outputs/main_figures/
+    main_figures: "main_figures"
+    # Supplementary figures (including all f_norm) go here: outputs/supplementary_figures/
+    supplementary_figures: "supplementary_figures"
     
     # Simple data outputs
     processed_data: "data"
@@ -70,7 +72,7 @@ output:
   figure_formats: ["png"]
   figure_dpi: 300
   
-  # Simplified file naming convention
+  # Proper file naming convention
   filename_template: "figure_{figure_num}"
   
   # Health stats naming
@@ -95,7 +97,7 @@ figures:
       analysis_types: ["standard"]
       
     figure_2:
-      script: "plotting_scripts/main_figures/figure_generation_script_2_fnorm.py"
+      script: "plotting_scripts/main_figures/figure_generation_script_2.py"
       name: "EPSP Amplitude Analysis"
       data_dependencies:
         - pd_all_cells_mean
@@ -104,7 +106,7 @@ figures:
         - figure_2_1
         - figure_2_2
         - figure_2_3
-      analysis_types: ["standard", "field_normalized"]
+      analysis_types: ["standard"]
       
     figure_3:
       script: "plotting_scripts/main_figures/figure_generation_script_3.py"
@@ -119,7 +121,10 @@ figures:
         - all_cell_all_trial_firing_properties
         - all_cells_inR
         - figure_2_2
-      analysis_types: ["standard", "field_normalized"]
+        - baseline_traces_all_cells
+        - screenshot_2023
+        - inr_sag_illustration
+      analysis_types: ["standard"]
       
     figure_4:
       script: "plotting_scripts/main_figures/figure_generation_script_4.py"
@@ -130,7 +135,7 @@ figures:
         - figure_3_1
         - cell_stats
         - pd_all_cells_all_trials
-      analysis_types: ["standard", "field_normalized"]
+      analysis_types: ["standard"]
       
     figure_5:
       script: "plotting_scripts/main_figures/figure_generation_script_5.py"
@@ -141,7 +146,7 @@ figures:
         - figure_5_1
         - cell_stats
         - pd_all_cells_all_trials
-      analysis_types: ["standard", "field_normalized"]
+      analysis_types: ["standard"]
       
     figure_6:
       script: "plotting_scripts/main_figures/figure_generation_script_6_v2.py"
@@ -151,7 +156,7 @@ figures:
         - all_cells_classified_dict
         - figure_3_1
         - cell_stats
-      analysis_types: ["standard", "field_normalized"]
+      analysis_types: ["standard"]
       
     figure_7:
       script: "plotting_scripts/main_figures/figure_generation_script_7_learner_non_learner_comparison_v3.py"
@@ -162,7 +167,7 @@ figures:
         - figure_6_1
         - cell_stats
         - pd_all_cells_all_trials
-      analysis_types: ["standard", "field_normalized"]
+      analysis_types: ["standard"]
       
     figure_8:
       script: "plotting_scripts/main_figures/figure_generation_script_8.py"
@@ -173,6 +178,38 @@ figures:
       analysis_types: ["standard"]
 
   supplementary_figures:
+    # Field normalized versions of main figures (now supplementary)
+    supp_figure_2_fnorm:
+      script: "plotting_scripts/main_figures/figure_generation_script_2_fnorm.py"
+      name: "EPSP Amplitude Analysis (Field Normalized)"
+      data_dependencies:
+        - pd_all_cells_mean
+        - all_cells_fnorm_classified_dict
+        - all_cells_inR
+        - figure_2_1
+        - figure_2_2
+        - figure_2_3
+      analysis_types: ["field_normalized"]
+      
+    supp_figure_3_fnorm:
+      script: "plotting_scripts/main_figures/figure_generation_script_3_fnorm.py"
+      name: "Learning Curve Analysis (Field Normalized)"
+      data_dependencies:
+        - pd_all_cells_mean
+        - all_cells_fnorm_classified_dict
+        - figure_3_1
+        - cell_stats
+        - pd_all_cells_all_trials
+        - pd_training_data_all_cells_all_trials
+        - all_cell_all_trial_firing_properties
+        - all_cells_inR
+        - figure_2_2
+        - baseline_traces_all_cells
+        - screenshot_2023
+        - inr_sag_illustration
+      analysis_types: ["field_normalized"]
+      
+    # Original supplementary figures
     supp_figure_1:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_supp_1.py"
       name: "Supplementary Analysis 1"
@@ -265,6 +302,10 @@ environment:
     - h5py
     - neo
     
-  # Memory and performance
-  memory_limit: "8GB"
-  temp_dir: "/tmp/pattern_learning" 
+  # Memory and performance - Use full 32GB system RAM
+  memory_limit: "32GB"
+  temp_dir: "/tmp/pattern_learning"
+  
+  # Parallel processing settings
+  max_parallel_jobs: 8
+  chunk_size: 1000  # For large data processing 

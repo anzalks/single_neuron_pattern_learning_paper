@@ -734,171 +734,9 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #    ax.spines['top'].set_visible(False)
 #    ax.spines['right'].set_visible(False)
 #
-#    # Ensure x and y ticks are shown by commenting out this line
-#    # ax.tick_params(axis='both', which='both', length=0)
-#
-#
-#    return ax
-
-
-
-#def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
-#                                time_point='post_3', colors=None):
-#    """
-#    Plots a frequency distribution (histogram) for the specified time point,
-#    comparing 'pattern_0', 'pattern_1', and 'pattern_2', and overlays a scaled KDE.
-#
-#    Parameters:
-#    - cell_list: pandas DataFrame containing the data
-#    - val_to_plot: string, name of the column to plot
-#    - fig: matplotlib Figure object
-#    - ax: matplotlib Axes object
-#    - time_point: string, the time point to filter on (default is 'post_3')
-#    - colors: list of colors for each pattern (default is None)
-#
-#    Returns:
-#    - ax: matplotlib Axes object with the plot
-#    """
-#
-#    # Define the patterns within the function
-#    patterns = ['pattern_0', 'pattern_1', 'pattern_2']
-#
-#    # Run cell_list through norm_values before filtering the data
-#    cell_list = norm_values(cell_list, val_to_plot)
-#    norm_val_to_plot = f'{val_to_plot}'
-#
-#    # Check if colors are provided; if not, use custom colors
-#    if colors is None:
-#        # Define custom colors that are not in the default plots
-#        colors = ['teal', 'orange', 'purple']
-#
-#    # Determine the x-axis limits as desired
-#    x_min, x_max = -50, 700  # Adjust these values as needed
-#    ax.set_xlim(x_min, x_max)
-#
-#    # Define the bins
-#    bins = np.linspace(x_min, x_max, num=11)  # Adjust 'num' for number of bins
-#
-#    # Loop over each pattern and plot the histogram with KDE
-#    for pattern, color in zip(patterns, colors):
-#        # Filter the data for the current pattern and time point
-#        data_filtered = cell_list[
-#            (cell_list['frame_id'] == pattern) &
-#            (cell_list['pre_post_status'] == time_point)
-#        ]
-#
-#        # Extract the normalized values to plot
-#        values = data_filtered[norm_val_to_plot]
-#
-#        # Remove NaN and infinite values
-#        values = values.replace([np.inf, -np.inf], np.nan).dropna()
-#
-#        # Plot the histogram with counts
-#        counts, bin_edges, patches = ax.hist(
-#            values,
-#            bins=bins,
-#            label=pattern.replace('_', ' ').capitalize(),
-#            color=color,
-#            alpha=0.6,
-#            edgecolor='black',
-#            linewidth=0.5
-#        )
-#
-#        # Compute the KDE
-#        if len(values) > 1:  # Need at least two data points for KDE
-#            kde = gaussian_kde(values)
-#            x_range = np.linspace(x_min, x_max, 1000)
-#            kde_values = kde.evaluate(x_range)
-#
-#            # Scale the KDE to match counts
-#            bin_width = np.diff(bins)[0]
-#            scaled_kde = kde_values * len(values) * bin_width
-#
-#            # Plot the scaled KDE
-#            ax.plot(x_range, scaled_kde, color=color)
-#        else:
-#            print(f"Not enough data points for KDE for {pattern}.")
-#
-#    # Customize the plot
-#    #ax.set_title(f'Frequency Distribution of {val_to_plot} at {time_point}')
-#    ax.set_xlabel(f'% change in EPSP amplitude\npost 30 mins of training')
-#    ax.set_ylabel('Number of cells')  # Since we're plotting counts
-#    ax.legend(title='Patterns')
-#
-#    # Ensure x-axis limits are exactly as defined
-#    ax.set_xlim(x_min, x_max)
-#
-#    # Remove top and right spines (similar to sns.despine)
-#    ax.spines['top'].set_visible(False)
-#    ax.spines['right'].set_visible(False)
-#
 #    # Optionally, adjust tick parameters to match Seaborn's style
 #    ax.tick_params(axis='both', which='both', length=0)
 #
-#    return ax
-
-
-
-#def plot_frequency_distribution(cell_list, val_to_plot, fig, ax, time_point='post_3', bins=10, colors=None):
-#    """
-#    Plots a frequency distribution (histogram) for the specified time point,
-#    comparing 'pattern_0', 'pattern_1', and 'pattern_2'.
-#
-#    Parameters:
-#    - cell_list: pandas DataFrame containing the data
-#    - val_to_plot: string, name of the column to plot
-#    - fig: matplotlib Figure object
-#    - ax: matplotlib Axes object
-#    - time_point: string, the time point to filter on (default is 'post_3')
-#    - bins: int or sequence, number of bins or bin edges for the histogram
-#    - colors: list of colors for each pattern (default is None)
-#
-#    Returns:
-#    - ax: matplotlib Axes object with the plot
-#    """
-#
-#    # Define the patterns within the function
-#    patterns = ['pattern_0', 'pattern_1', 'pattern_2']
-#
-#    # Run cell_list through norm_values before filtering the data
-#    cell_list = norm_values(cell_list, val_to_plot)
-#    norm_val_to_plot = f'{val_to_plot}'
-#
-#    # Check if colors are provided; if not, use default seaborn palette
-#    if colors is None:
-#        colors = sns.color_palette('Set1', n_colors=len(patterns))
-#
-#    # Loop over each pattern and plot the histogram
-#    for pattern, color in zip(patterns, colors):
-#        # Filter the data for the current pattern and time point
-#        data_filtered = cell_list[
-#            (cell_list['frame_id'] == pattern) &
-#            (cell_list['pre_post_status'] == time_point)
-#        ]
-#
-#        # Extract the normalized values to plot
-#        values = data_filtered[norm_val_to_plot]
-#
-#        # Plot the histogram
-#        sns.histplot(
-#            values,
-#            bins=bins,
-#            kde=False,
-#            label=pattern.replace('_', ' ').capitalize(),
-#            color=color,
-#            ax=ax,
-#            alpha=0.6,
-#            edgecolor='black'
-#        )
-#
-#    # Customize the plot
-#    ax.set_title(f'Frequency Distribution of {val_to_plot} at {time_point}')
-#    ax.set_xlabel(f'Normalized {val_to_plot} (% of Pre)')
-#    ax.set_ylabel('Frequency')
-#    ax.legend(title='Patterns')
-#    sns.despine(ax=ax, trim=True)
-#
-#    fig.tight_layout()
 #    return ax
 
 
@@ -1224,180 +1062,141 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
     
     
 
-def plot_figure_2(extracted_feature_pickle_file_path,
-                  cell_categorised_pickle_file,
-                  inR_all_Cells_df,
-                  illustration_path,
-                  inRillustration_path,
-                  patillustration_path,
-                  outdir,cell_to_plot=cell_to_plot):
-    deselect_list = ["no_frame","inR","point"]
-    feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
-    single_cell_df = feature_extracted_data.copy()
-    single_cell_df = single_cell_df[(single_cell_df["cell_ID"]==cell_to_plot)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
-    sc_data = pd.read_pickle(cell_categorised_pickle_file)
-    sc_data_df = pd.concat([sc_data["ap_cells"],
-                            sc_data["an_cells"]]).reset_index(drop=True)
-    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
-    illustration = pillow.Image.open(illustration_path)
-    inRillustration = pillow.Image.open(inRillustration_path)
-    patillustration = pillow.Image.open(patillustration_path)
+def plot_figure_2_new(pd_all_cells_mean, all_cells_classified_dict, all_cells_inR,
+                     figure_2_1, figure_2_2, figure_2_3, cell_to_plot, analysis_type):
+    """Generate Figure 2 using the loaded data with field normalized analysis"""
+    set_plot_properties()
+    
+    deselect_list = ["no_frame", "inR", "point"]
+    
+    # Filter data for specific cell and time points
+    single_cell_df = pd_all_cells_mean.copy()
+    single_cell_df = single_cell_df[
+        (single_cell_df["cell_ID"] == cell_to_plot) &
+        (single_cell_df["pre_post_status"].isin(selected_time_points))
+    ]
+    
+    # Combine classified cell data
+    sc_data_df = pd.concat([
+        all_cells_classified_dict["ap_cells"],
+        all_cells_classified_dict["an_cells"]
+    ]).reset_index(drop=True)
+    
     # Define the width and height ratios
-    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
-    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
-                     0.5, 0.5, 0.5, 0.5, 0.2]       # Adjust these values as needed
+    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]
+    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5, 0.2]
 
-    fig = plt.figure(figsize=(8,18))
-    gs = GridSpec(11, 7,width_ratios=width_ratios,
-                  height_ratios=height_ratios,figure=fig)
-    #gs.update(wspace=0.2, hspace=0.8)
+    fig = plt.figure(figsize=(9, 16))
+    gs = GridSpec(11, 7, width_ratios=width_ratios,
+                  height_ratios=height_ratios, figure=fig)
     gs.update(wspace=0.2, hspace=0.2)
-    #place illustration
+    
+    # Place main illustration
     axs_img = fig.add_subplot(gs[:3, :6])
-    plot_image(illustration,axs_img,-0.1,-0.01,1)
+    plot_image(figure_2_1, axs_img, -0.1, -0.01, 1)
+    axs_img.text(0, 0.95, 'A', transform=axs_img.transAxes,
+                fontsize=16, fontweight='bold', ha='center', va='center')
     
-    
-
-    axs_img.text(0,0.95,'A',transform=axs_img.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')
-    
+    # Place pattern illustration
     axs_pat_ill = fig.add_subplot(gs[:3, 6:])
-    plot_image(patillustration,axs_pat_ill,-0.15,-0.02,2.2)    
-    
-    axs_pat_ill.text(0.01,0.9,'B',transform=axs_pat_ill.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    plot_image(figure_2_3, axs_pat_ill, -0.15, -0.02, 2.2)
+    axs_pat_ill.text(0.01, 0.9, 'B', transform=axs_pat_ill.transAxes,
+                    fontsize=16, fontweight='bold', ha='center', va='center')
 
-    axs_vpat1=fig.add_subplot(gs[3,0])
-    axs_vpat2=fig.add_subplot(gs[4,0])
-    axs_vpat3=fig.add_subplot(gs[5,0])
-    plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,0,2)
-    axs_vpat1.text(-0.07,1.35,'C',transform=axs_vpat1.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    # Plot vertical patterns
+    axs_vpat1 = fig.add_subplot(gs[3, 0])
+    axs_vpat2 = fig.add_subplot(gs[4, 0])
+    axs_vpat3 = fig.add_subplot(gs[5, 0])
+    plot_patterns(axs_vpat1, axs_vpat2, axs_vpat3, -0.075, -0.015, 2)
+    axs_vpat1.text(-0.07, 1.35, 'C', transform=axs_vpat1.transAxes,
+                  fontsize=16, fontweight='bold', ha='center', va='center')
 
-    plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs)
+    # Plot raw trace time points
+    plot_raw_trace_time_points(single_cell_df, deselect_list, fig, gs)
     
-    #plot pattern projections 
-    axs_pat1 = fig.add_subplot(gs[6,0])
-    axs_pat2 = fig.add_subplot(gs[6,2])
-    axs_pat3 = fig.add_subplot(gs[6,4])
-    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.04,1)
+    # Plot pattern projections
+    axs_pat1 = fig.add_subplot(gs[6, 0])
+    axs_pat2 = fig.add_subplot(gs[6, 2])
+    axs_pat3 = fig.add_subplot(gs[6, 4])
+    plot_patterns(axs_pat1, axs_pat2, axs_pat3, 0.05, -0.055, 1)
     
+    # Plot amplitudes over time using field normalized data
+    feature_extracted_data = pd_all_cells_mean[
+        ~pd_all_cells_mean["frame_status"].isin(deselect_list)
+    ]
     
-
-    #plot amplitudes over time
-    feature_extracted_data =feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
-    cell_grp = feature_extracted_data.groupby(by="cell_ID")
-    axs_slp1 = fig.add_subplot(gs[7:9,0:2])
+    axs_slp1 = fig.add_subplot(gs[7:9, 0:2])
     axs_slp1.set_ylabel("slope (mV/ms)")
-    axs_slp2 = fig.add_subplot(gs[7:9,2:4])
+    axs_slp2 = fig.add_subplot(gs[7:9, 2:4])
     axs_slp2.set_yticklabels([])
-    axs_slp3 = fig.add_subplot(gs[7:9,4:6])
+    axs_slp3 = fig.add_subplot(gs[7:9, 4:6])
     axs_slp3.set_yticklabels([])
-    plot_field_normalised_feature_multi_patterns(sc_data_df,"max_trace",
-                                                 fig,axs_slp1,axs_slp2,
-                                                 axs_slp3)
-    axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
-
-    axs_dist = fig.add_subplot(gs[9:10,0:4])
-    plot_frequency_distribution(sc_data_df, "max_trace", fig, 
-                                axs_dist, time_point='post_3', 
-                                colors=None)
-    axs_dist.text(-0.07,1,'E',transform=axs_dist.transAxes,    
-                   fontsize=16, fontweight='bold', ha='center', va='center')
-    move_axis([axs_dist],xoffset=0,yoffset=-0.03,pltscale=1)
     
-    #axs_inr = fig.add_subplot(gs[9:10,3:6])
-    #inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    #axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
-    #         fontsize=16, fontweight='bold', ha='center', va='center')            
+    plot_field_normalised_feature_multi_patterns(sc_data_df, "max_trace",
+                                                 fig, axs_slp1, axs_slp2, axs_slp3)
+    axs_slp_list = [axs_slp1, axs_slp2, axs_slp3]
+    label_axis(axs_slp_list, "D", xpos=-0.1, ypos=1.1)
 
-
-    #axs_inrill = fig.add_subplot(gs[9:10,0:3])
-    #plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
-    #axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')            
-
-
-    #handles, labels = plt.gca().get_legend_handles_labels()
-    #by_label = dict(zip(labels, handles))
-    #fig.legend(by_label.values(), by_label.keys(), 
-    #           bbox_to_anchor =(0.5, 0.175),
-    #           ncol = 6,title="Legend",
-    #           loc='upper center')#,frameon=False)#,loc='lower center'    
-    #
+    # Plot frequency distribution
+    axs_dist = fig.add_subplot(gs[9:10, 0:4])
+    plot_frequency_distribution(sc_data_df, "max_trace", fig,
+                               axs_dist, time_point='post_3', colors=None)
+    axs_dist.text(-0.07, 1, 'E', transform=axs_dist.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_dist], xoffset=0, yoffset=-0.03, pltscale=1)
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_2_fnorm.png"
-    #outpath = f"{outdir}/figure_2.svg"
-    #outpath = f"{outdir}/figure_2.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
-
+    return fig
 
 
 def main():
-    # Argument parser.
-    description = '''Generates figure 2'''
+    """Main function using shared utilities system"""
+    description = '''Generates figure 2 with field normalized analysis'''
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--pikl-path', '-f'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with extracted features'
-                       )
-    parser.add_argument('--sortedcell-path', '-s'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
-                        'exrracted data'
-                       )
-    parser.add_argument('--inR-path', '-r'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with inR data'
-                       )
-    parser.add_argument('--patillustration-path', '-m'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with inR data'
-                       )
-    parser.add_argument('--illustration-path', '-i'
-                        , required = False,default ='./', type=str
-                        , help = 'path to the image file in png format'
-                       )
-
-    parser.add_argument('--inRillustration-path', '-p'
-                        , required = False,default ='./', type=str
-                        , help = 'path to the image file in png format'
-                       )
-    
-
-    parser.add_argument('--outdir-path','-o'
-                        ,required = False, default ='./', type=str
-                        ,help = 'where to save the generated figure image'
-                       )
-    #    parser.parse_args(namespace=args_)
+    parser.add_argument('--data-dir', type=str, default='.', 
+                       help='Base data directory')
+    parser.add_argument('--analysis-type', type=str, default='field_normalized',
+                       choices=['standard', 'field_normalized'],
+                       help='Analysis type')
     args = parser.parse_args()
-    pklpath = Path(args.pikl_path)
-    scpath = Path(args.sortedcell_path)
-    inR_path = Path(args.inR_path)
-    illustration_path = Path(args.illustration_path)
-    patillustration_path =Path(args.patillustration_path) 
-    inRillustration_path = Path(args.inRillustration_path)
-    globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_2'
-    globoutdir.mkdir(exist_ok=True, parents=True)
-    print(f"pkl path : {pklpath}")
-    plot_figure_2(pklpath,scpath,inR_path,illustration_path,
-                  inRillustration_path,
-                  patillustration_path,
-                  globoutdir)
-    print(f"illustration path: {illustration_path}")
+
+    # Initialize utilities
+    utils = PatternLearningUtils(config_path=os.path.join(args.data_dir, 'config.yaml'))
+    
+    try:
+        # Load figure data using the utilities system
+        figure_data = utils.load_figure_data('figure_2', args.analysis_type)
+        
+        # Extract data components
+        pd_all_cells_mean = figure_data['pd_all_cells_mean']
+        all_cells_classified_dict = figure_data['all_cells_classified_dict']
+        all_cells_inR = figure_data['all_cells_inR']
+        figure_2_1 = figure_data['figure_2_1']
+        figure_2_2 = figure_data['figure_2_2']
+        figure_2_3 = figure_data['figure_2_3']
+        
+        # Generate figure (same function as the standard version, but with field normalized data)
+        fig = plot_figure_2_new(pd_all_cells_mean, all_cells_classified_dict,
+                               all_cells_inR, figure_2_1, figure_2_2, figure_2_3,
+                               cell_to_plot, args.analysis_type)
+        
+        # Save figure using standardized output manager
+        saved_files = utils.output_manager.save_figure(
+            fig, 'supp_figure_2_fnorm', 'supplementary_figures', args.analysis_type
+        )
+        
+        utils.logger.info(f"Figure 2 (field normalized) generated successfully: {saved_files}")
+        
+        plt.close(fig)
+        
+    except Exception as e:
+        utils.logger.error(f"Error generating Figure 2 (field normalized): {e}")
+        raise
 
 
-
-
-if __name__  == '__main__':
-    #timing the run with time.time
-    ts =time.time()
-    main(**vars(args_)) 
-    tf =time.time()
-    print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')
+if __name__ == '__main__':
+    import time
+    ts = time.time()
+    main()
+    tf = time.time()
+    print(f'Total time = {np.around(((tf-ts)/60), 1)} (mins)')

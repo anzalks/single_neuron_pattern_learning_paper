@@ -34,7 +34,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
                             subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
+                            post_color, post_late, CB_color_cycle, color_fader,
+                            create_grid_points_with_text)
 import re
 
 # Initialize utilities
@@ -100,19 +101,23 @@ def plot_points(axs_points_img,xoffset,yoffset,zoom):
     first_spot_grid_points = [1, 3, 5, 7, 9, 
                               11, 13, 
                               16, 18, 20, 22, 24]
-    points_img = bpf.create_grid_points_with_text(first_spot_grid_points,
-                                                  spot_proportional_size=3,
-                                                  image_size=(300, 200),
-                                                  grid_size=(24, 24), 
-                                                  spot_color=(0,0,0),
-                                                  padding=30, 
-                                                  background_color=(255,255,255),
-                                                  text_color=(0, 0, 0), 
-                                                  font_size=150,
-                                                  show_text=True, 
-                                                  num_columns=12,
-                                                  txt_spacing=100,
-                                                  min_padding_above_text=300)
+    points_img = create_grid_points_with_text(
+        first_spot_grid_points, 
+        spot_proportional_size=0.5, 
+        image_size=(300, 100), 
+        grid_size=(24, 24), 
+        spot_color=(0, 0, 0), 
+        padding=30, 
+        background_color=(255, 255, 255), 
+        text_color=(0, 0, 0), 
+        font_size=20, 
+        show_text=True, 
+        num_columns=3, 
+        txt_spacing=20, 
+        min_padding_above_text=10,
+        image_background_color=(255, 255, 255),
+        border=True
+    )
 
     axs_points_img.imshow(points_img)
     axs_points_img.axis('off')
@@ -398,10 +403,6 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
 #                            left=False, bottom=False, offset=None, trim=False)
 #                axs.set_ylabel(None)
 #                axs.set_yticklabels([])
-#                if cell_type=="dep_cells":
-#                    axs.set_xlabel(x_label)
-#                else:
-#                    axs.set_xlabel(None)
 #            elif pat_num==2:
 #                sns.despine(fig=None, ax=axs, top=True, right=True, 
 #                            left=False, bottom=False, offset=None, trim=False)
@@ -512,7 +513,6 @@ def plot_response_summary_bar(sc_data_dict, fig, axs):
 
 def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
                                axs_lr, axs_nl):
-    pre_color = pre_color
     lrn_post_color = CB_color_cycle[0]
     non_lrn_post_color = CB_color_cycle[1]
     
@@ -609,6 +609,8 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     #axs_nl.set_ylabel(None)
     #axs_nl.set_yticklabels([])
     axs_nl.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
+
+
 
 
 def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
@@ -987,268 +989,176 @@ def plot_peak_perc_comp(
 
 
 
-def plot_figure_5(extracted_feature_pickle_file_path,
-                  PSH_illustration_path,
-                  all_trial_path,
-                  cell_categorised_pickle_file,
-                  cell_stats_pickle_file,
-                  outdir,learner_cell=learner_cell,
-                  non_learner_cell=non_learner_cell):
+def plot_figure_5_new(pd_all_cells_mean, all_cells_classified_dict, figure_5_1, 
+                     cell_stats, pd_all_cells_all_trials, analysis_type):
+    """Generate Figure 5 using the loaded data"""
+    # Use existing plot_figure_5 function logic but adapted for new data loading
+    
+    # Convert new data format to the format expected by existing functions
+    pklpath = None  # Not needed with new approach
+    PSH_illustration_path = figure_5_1  # Image path
+    all_trial_path = pd_all_cells_all_trials  # DataFrame instead of path
+    cell_categorised_pickle_file = all_cells_classified_dict  # Dict instead of path
+    cell_stats_pickle_file = cell_stats  # Data instead of path
+    
+    # Create temporary output directory (will be managed by utilities)
+    outdir = Path('temp_output')
+    outdir.mkdir(exist_ok=True, parents=True)
+    
+    # Call the existing plot function with adapted parameters
+    # Note: We'll need to modify this to work with data objects instead of file paths
+    return plot_figure_5_adapted(pd_all_cells_mean, PSH_illustration_path,
+                                all_trial_path, cell_categorised_pickle_file,
+                                cell_stats_pickle_file, outdir)
+
+
+def plot_figure_5_adapted(pd_all_cells_mean, PSH_illustration_path,
+                         pd_all_cells_all_trials, all_cells_classified_dict,
+                         cell_stats, outdir):
+    """Adapted version of plot_figure_5 that works with data objects instead of file paths"""
+    
+    set_plot_properties()
     deselect_list = ["no_frame","inR","point"]
-    feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
-    cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
-    cell_features_all_trials = pd.read_pickle(all_trial_path)
-    print(f"cell stat df : {cell_stats_df}")
-    single_cell_df = feature_extracted_data.copy()
-    learner_cell_df = single_cell_df.copy()
-    non_learner_cell_df = single_cell_df.copy()
-    learner_cell_df = single_cell_df[(single_cell_df["cell_ID"]==learner_cell)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
-    non_learner_cell_df = single_cell_df[(single_cell_df["cell_ID"]==non_learner_cell)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
-    sc_data_dict = pd.read_pickle(cell_categorised_pickle_file)
-    sc_data_df = pd.concat([sc_data_dict["ap_cells"],
-                            sc_data_dict["an_cells"]]).reset_index(drop=True)
-    print(f"sc data : {sc_data_df['cell_ID'].unique()}")
     
-    psh_illust= pillow.Image.open(PSH_illustration_path)
-    # Check if the image has an alpha channel (transparency)
-    if psh_illust.mode == 'RGBA':
-        # Create a white background using the correct Image class method
-        white_bg = pillow.Image.new("RGB", psh_illust.size, (255, 255, 255))
-        # Paste the image on top of the white background, handling transparency
-        white_bg.paste(psh_illust, mask=psh_illust.split()[3])  # 3 is the alpha channel
-        psh_illust = white_bg
-
-    # If the image is not RGB, convert it to RGB
-    if psh_illust.mode != "RGB":
-        psh_illust = psh_illust.convert("RGB")
-
+    # Use the data objects directly instead of loading from files
+    cell_features_all_trials = pd_all_cells_all_trials
+    sc_data_dict = all_cells_classified_dict
+    cell_stats_data = cell_stats
     
-    # Define the width and height ratios
-    height_ratios = [1, 1, 1, 1, 1, 
-                     1, 1, 1, 1, 1,
-                     1, 1, 1, 1, 1,
-                     1, 1, 1, 1, 1,
-                     1, 1
-                     ]  # Adjust these values as needed
-    width_ratios = [1, 1, 1, 1, 1, 
-                    1, 1, 1, 1, 1, 
-                    1, 1]# Adjust these values as needed
-
-    fig = plt.figure(figsize=(14,16))
-    gs = GridSpec(22, 12,width_ratios=width_ratios,
-                  height_ratios=height_ratios,figure=fig)
-    #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.4, hspace=0.5)
-
-
-    #plot illustration of PSH
-    axs_illu = fig.add_subplot(gs[0:2,1:3])
-    plot_image(psh_illust,axs_illu,0,0,1.5)
-    move_axis([axs_illu],0.1,0.035,1)
-    axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    # PSH_illustration_path is already a PIL Image object from the utilities
+    PSH_illustration = PSH_illustration_path
     
-    #plot patterns
-    axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
-    axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
-    axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
-    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.04,1)
+    # Set up the figure
+    width_ratios = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    height_ratios = [0.2, 0.8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, 0.4, 0.3, 0.8, 0.8, 0.8, 0.8]
 
-    #plot distribution epsp for learners and non-leaners
-    axs_ex_pat1 = fig.add_subplot(gs[2:7,0:3])
-    axs_ex_pat2 = fig.add_subplot(gs[2:7,3:6])
-    axs_ex_pat3 = fig.add_subplot(gs[2:7,6:9])
+    fig = plt.figure(figsize=(9, 16))
+    gs = GridSpec(19, 9, width_ratios=width_ratios,
+                  height_ratios=height_ratios, figure=fig)
+    gs.update(wspace=0.2, hspace=0.2)
+
+    # Plot main illustration
+    axs_img = fig.add_subplot(gs[:2, :])
+    plot_image(PSH_illustration, axs_img, -0.01, -0.005, 1)
+    axs_img.text(0, 1, 'A', transform=axs_img.transAxes,
+                fontsize=16, fontweight='bold', ha='center', va='center')
+
+    # Plot distribution epsp for learners and non-learners
+    axs_ex_pat1 = fig.add_subplot(gs[2:7, 0:3])
+    axs_ex_pat2 = fig.add_subplot(gs[2:7, 3:6])
+    axs_ex_pat3 = fig.add_subplot(gs[2:7, 6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
-                                                "min_trace",fig,axs_ex_pat1,
-                                                axs_ex_pat2,axs_ex_pat3,
-                                                "pot_cells"
-                                               )
-    axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"B",xpos=-0.1, ypos=1.1)
+                                                "min_trace", fig, axs_ex_pat1,
+                                                axs_ex_pat2, axs_ex_pat3,
+                                                "pot_cells")
+    axs_ex_list = [axs_ex_pat1, axs_ex_pat2, axs_ex_pat3]
+    label_axis(axs_ex_list, "B", xpos=-0.1, ypos=1.1)
 
-
-    axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
-    axs_in_pat2 = fig.add_subplot(gs[7:12,3:6])
-    axs_in_pat3 = fig.add_subplot(gs[7:12,6:9])
+    axs_in_pat1 = fig.add_subplot(gs[7:12, 0:3])
+    axs_in_pat2 = fig.add_subplot(gs[7:12, 3:6])
+    axs_in_pat3 = fig.add_subplot(gs[7:12, 6:9])
     plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
-                                                "min_trace",fig,axs_in_pat1,
-                                                axs_in_pat2,axs_in_pat3,
-                                                "dep_cells"
-                                               )
-    axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"C",xpos=0.1, ypos=0.9)
+                                                "min_trace", fig, axs_in_pat1,
+                                                axs_in_pat2, axs_in_pat3,
+                                                "dep_cells")
+    axs_in_list = [axs_in_pat1, axs_in_pat2, axs_in_pat3]
+    label_axis(axs_in_list, "C", xpos=0.1, ypos=0.9)
 
-    axs_bar = fig.add_subplot(gs[12:14,0:2])
-    plot_response_summary_bar(sc_data_dict,fig,axs_bar)
-    move_axis([axs_bar],0,-0.03,1)
-    axs_bar.text(-0.1,1,'D',transform=axs_bar.transAxes,    
+    axs_bar = fig.add_subplot(gs[12:14, 0:2])
+    plot_response_summary_bar(sc_data_dict, fig, axs_bar)
+    move_axis([axs_bar], 0, -0.03, 1)
+    axs_bar.text(-0.1, 1, 'D', transform=axs_bar.transAxes,
                  fontsize=16, fontweight='bold', ha='center',
                  va='center')
-#    #comment here
-#    axs_comp_per = fig.add_subplot(gs[18:20,0:3])
-#    plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
-#    move_axis([axs_comp_per],-0.0545,-0.075,1.75)
-#    axs_comp_per.text(-0.05,1.05,'E',transform=axs_comp_per.transAxes,    
-#                        fontsize=16, fontweight='bold', ha='center',
-#                        va='center')
-#    #till here
-#    axs_comp_per_1 = fig.add_subplot(gs[16:18,0:1])
-#    axs_comp_per_2 = fig.add_subplot(gs[16:18,2:3])
-#    #plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
-#    plot_peak_perc_comp(sc_data_dict, fig, axs_comp_per_1, axs_comp_per_2)
-#    move_axis([axs_comp_per_1,axs_comp_per_2],-0.0545,-0.075,1.75)
-#    label_axis([axs_comp_per_1,axs_comp_per_2],"E", xpos=-0.2, ypos=1.1)
-#    #axs_comp_per.text(-0.05,1.05,'D',transform=axs_comp_per.transAxes,    
-#    #                    fontsize=16, fontweight='bold', ha='center',
-#    #                    va='center')
-#    
-#    axs_points_img = fig.add_subplot(gs[12:13,4:9])
-#    plot_points(axs_points_img,-0.075,-0.08,zoom=2)
-#
-#    axs_points_lr = fig.add_subplot(gs[13:16,4:9])
-#    axs_points_nl = fig.add_subplot(gs[16:19,4:9])
-#    plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
-#                               axs_points_lr,axs_points_nl)
-#    move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
-#    label_axis([axs_points_lr,axs_points_nl],"F", xpos=-0.05, ypos=1.05)    
-#    #til here
-    axs_learners_pat_trained = fig.add_subplot(gs[12:14,3:4])
-    axs_learners_pat_overlapping = fig.add_subplot(gs[12:14,4:5]) 
-    axs_learners_pat_non_overlappin = fig.add_subplot(gs[12:14,5:6])
-    axs_non_learners_pat_trained = fig.add_subplot(gs[12:14,6:7])
-    axs_non_learners_pat_overlapping  = fig.add_subplot(gs[12:14,7:8])
-    axs_non_learners_pat_non_overlapping = fig.add_subplot(gs[12:14,8:9])
-    plot_peak_perc_comp(sc_data_dict, 
+
+    # Plot percentage comparisons
+    axs_learners_pat_trained = fig.add_subplot(gs[12:14, 3:4])
+    axs_learners_pat_overlapping = fig.add_subplot(gs[12:14, 4:5])
+    axs_learners_pat_non_overlappin = fig.add_subplot(gs[12:14, 5:6])
+    axs_non_learners_pat_trained = fig.add_subplot(gs[12:14, 6:7])
+    axs_non_learners_pat_overlapping = fig.add_subplot(gs[12:14, 7:8])
+    axs_non_learners_pat_non_overlapping = fig.add_subplot(gs[12:14, 8:9])
+    plot_peak_perc_comp(sc_data_dict,
                         axs_learners_pat_trained,
-                        axs_learners_pat_overlapping, 
+                        axs_learners_pat_overlapping,
                         axs_learners_pat_non_overlappin,
                         axs_non_learners_pat_trained,
-                        axs_non_learners_pat_overlapping, 
+                        axs_non_learners_pat_overlapping,
                         axs_non_learners_pat_non_overlapping)
-    axs_scatr_list= [axs_learners_pat_trained,
-                    axs_learners_pat_overlapping,
-                    axs_learners_pat_non_overlappin,
-                    axs_non_learners_pat_trained,
-                    axs_non_learners_pat_overlapping,
-                    axs_non_learners_pat_non_overlapping
-                    ]
-    move_axis(axs_scatr_list,0,-0.04,1)
-    label_axis(axs_scatr_list,"E", xpos=-0.2, ypos=1.25)
+    axs_scatr_list = [axs_learners_pat_trained,
+                     axs_learners_pat_overlapping,
+                     axs_learners_pat_non_overlappin,
+                     axs_non_learners_pat_trained,
+                     axs_non_learners_pat_overlapping,
+                     axs_non_learners_pat_non_overlapping]
+    move_axis(axs_scatr_list, 0, -0.04, 1)
+    label_axis(axs_scatr_list, "E", xpos=-0.2, ypos=1.25)
 
+    # Plot points images and plasticity distributions
+    axs_points_img_1 = fig.add_subplot(gs[15:16, 0:4])
+    plot_points(axs_points_img_1, -0.05, -0.09, zoom=1.7)
+    axs_points_img_2 = fig.add_subplot(gs[15:16, 5:9])
+    plot_points(axs_points_img_2, -0.05, -0.09, zoom=1.7)
 
-
-
-
-#    #plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
-#    plot_peak_perc_comp(sc_data_dict, fig, axs_comp_per_1, axs_comp_per_2)
-#    move_axis([axs_comp_per_1,axs_comp_per_2],-0.0545,-0.075,1.75)
-#    label_axis([axs_comp_per_1,axs_comp_per_2],"D", xpos=-0.2, ypos=1.1)
-#    #axs_comp_per.text(-0.05,1.05,'D',transform=axs_comp_per.transAxes,    
-#    #                    fontsize=16, fontweight='bold', ha='center',
-#    #                    va='center')
-#    
-    axs_points_img_1 = fig.add_subplot(gs[15:16,0:4])
-    plot_points(axs_points_img_1,-0.05,-0.09,zoom=1.7)
-    axs_points_img_2 = fig.add_subplot(gs[15:16,5:9])
-    plot_points(axs_points_img_2,-0.05,-0.09,zoom=1.7)#
-    
-
-    axs_points_lr = fig.add_subplot(gs[16:19,0:4])
-    axs_points_nl = fig.add_subplot(gs[16:19,5:9])
-    plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
-                               axs_points_lr,axs_points_nl)
-    move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
-    label_axis([axs_points_lr,axs_points_nl],"F", xpos=-0.05, ypos=1.05)
-    
-    
-    
-#    #comment below
-#    axs_points_img = fig.add_subplot(gs[14:15,4:9])
-#    plot_points(axs_points_img,-0.075,-0.08,zoom=2)
-#
-#    axs_points_lr = fig.add_subplot(gs[15:18,4:9])
-#    axs_points_nl = fig.add_subplot(gs[18:21,4:9])
-#    plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
-#                               axs_points_lr,axs_points_nl)
-#    move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
-#    label_axis([axs_points_lr,axs_points_nl],"F")
-#    #till here
-    
-    #label_axis([axs_points_lr,axs_points_nl],"F")
-    #handles, labels = plt.gca().get_legend_handles_labels()
-    #by_label = dict(zip(labels, handles))
-    #fig.legend(by_label.values(), by_label.keys(), 
-    #           bbox_to_anchor =(0.5, 0.175),
-    #           ncol = 6,title="Legend",
-    #           loc='upper center')#,frameon=False)#,loc='lower center'    
-    #
+    axs_points_lr = fig.add_subplot(gs[16:19, 0:4])
+    axs_points_nl = fig.add_subplot(gs[16:19, 5:9])
+    plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
+                               axs_points_lr, axs_points_nl)
+    move_axis([axs_points_lr, axs_points_nl], 0, -0.075, 1)
+    label_axis([axs_points_lr, axs_points_nl], "F", xpos=-0.05, ypos=1.05)
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_5.png"
-    #outpath = f"{outdir}/figure_5.svg"
-    #outpath = f"{outdir}/figure_5.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
-
+    
+    return fig
 
 
 def main():
-    # Argument parser.
+    """Main function using shared utilities system"""
     description = '''Generates figure 5'''
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--pikl-path', '-f'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with extracted features'
-                       )
-    parser.add_argument('--alltrial-path', '-t'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with extracted features'
-                       )
-
-
-
-    parser.add_argument('--sortedcell-path', '-s'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
-                        'exrracted data'
-                       )
-    parser.add_argument('--cellstat-path', '-c'
-                        , required = False,default ='./', type=str
-                        , help = 'path to pickle file with cell sorted'
-                        'exrracted data'
-                       )
-    parser.add_argument('--illustration-path', '-i'
-                        , required = False,default ='./', type=str
-                        , help = 'path to the image file in png format'
-                       )
-
-    parser.add_argument('--outdir-path','-o'
-                        ,required = False, default ='./', type=str
-                        ,help = 'where to save the generated figure image'
-                       )
-    #    parser.parse_args(namespace=args_)
+    parser.add_argument('--data-dir', type=str, default='.', 
+                       help='Base data directory')
+    parser.add_argument('--analysis-type', type=str, default='standard',
+                       choices=['standard', 'field_normalized'],
+                       help='Analysis type')
     args = parser.parse_args()
-    pklpath = Path(args.pikl_path)
-    scpath = Path(args.sortedcell_path)
-    PSH_illustration_path = Path(args.illustration_path)
-    cell_stat_path = Path(args.cellstat_path)
-    all_trial_df_path = Path(args.alltrial_path)
-    globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_5'
-    globoutdir.mkdir(exist_ok=True, parents=True)
-    print(f"pkl path : {pklpath}")
-    plot_figure_5(pklpath,PSH_illustration_path,
-                  all_trial_df_path,scpath,cell_stat_path,globoutdir)
-    #print(f"illustration path: {illustration_path}")
+
+    # Initialize utilities
+    utils = PatternLearningUtils(config_path=os.path.join(args.data_dir, 'config.yaml'))
+    
+    try:
+        # Load figure data using the utilities system
+        figure_data = utils.load_figure_data('figure_5', args.analysis_type)
+        
+        # Extract data components
+        pd_all_cells_mean = figure_data['pd_all_cells_mean']
+        all_cells_classified_dict = figure_data['all_cells_classified_dict']
+        figure_5_1 = figure_data['figure_5_1']
+        cell_stats = figure_data['cell_stats']
+        pd_all_cells_all_trials = figure_data['pd_all_cells_all_trials']
+        
+        # Generate figure using the loaded data
+        fig = plot_figure_5_new(pd_all_cells_mean, all_cells_classified_dict,
+                               figure_5_1, cell_stats, pd_all_cells_all_trials,
+                               args.analysis_type)
+        
+        # Save figure using standardized output manager
+        saved_files = utils.output_manager.save_figure(
+            fig, 'figure_5', 'main_figures', args.analysis_type
+        )
+        
+        utils.logger.info(f"Figure 5 generated successfully: {saved_files}")
+        
+        plt.close(fig)
+        
+    except Exception as e:
+        utils.logger.error(f"Error generating Figure 5: {e}")
+        raise
 
 
-
-
-if __name__  == '__main__':
-    #timing the run with time.time
-    ts =time.time()
-    main(**vars(args_)) 
-    tf =time.time()
-    print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')
+if __name__ == '__main__':
+    import time
+    ts = time.time()
+    main()
+    tf = time.time()
+    print(f'Total time = {np.around(((tf-ts)/60), 1)} (mins)')

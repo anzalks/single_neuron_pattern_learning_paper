@@ -24,9 +24,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 try:
     from shared_utilities import PatternLearningUtils, setup_logging
-except ImportError:
-    print("Error: Could not import shared_utilities. Please ensure src/shared_utilities.py exists.")
-    sys.exit(1)
+except ImportError as e:
+    print(f"Error: Could not import shared_utilities from src directory.")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Script directory: {os.path.dirname(__file__)}")
+    print(f"Expected path: {os.path.join(os.path.dirname(__file__), 'src', 'shared_utilities.py')}")
+    print(f"Import error: {e}")
+    
+    # Try alternative path
+    try:
+        sys.path.insert(0, 'src')
+        from shared_utilities import PatternLearningUtils, setup_logging
+        print("Successfully imported from 'src' directory")
+    except ImportError:
+        print("Failed to import from both paths. Please ensure src/shared_utilities.py exists.")
+        sys.exit(1)
 
 class FigurePipeline:
     """Main pipeline controller for figure generation"""
@@ -166,55 +178,22 @@ class FigurePipeline:
                 if os.path.exists(fnorm_script):
                     script_path = fnorm_script
                 else:
-                    self.logger.warning(f"Field normalized script not found for {figure_name}, using standard script")
+                    self.logger.warning(f"Field normalized script not found for {figure_name}, using standard script with --analysis-type field_normalized")
             
-            # Build command
+            # Build command using the new standardized approach
             python_exec = self.config['environment']['python_executable']
             command = [python_exec, script_path]
             
-            # Add arguments based on dependencies
-            dependencies = fig_config['data_dependencies']
+            # Add standardized arguments that all scripts now accept
+            command.extend(['--data-dir', self.config['data_paths']['base_data_dir']])
+            command.extend(['--analysis-type', analysis_type])
             
-            for dep in dependencies:
-                try:
-                    data_path = self.utils.config_manager.get_data_path(dep)
-                    
-                    # Map dependency to argument flag
-                    arg_map = {
-                        'pd_all_cells_mean': '-f',
-                        'all_cells_classified_dict': '-s',
-                        'all_cells_fnorm_classified_dict': '-s',
-                        'pd_all_cells_all_trials': '-t',
-                        'all_cells_inR': '-r',
-                        'baseline_traces_all_cells': '-f',
-                        'pd_training_data_all_cells_all_trials': '-t',
-                        'all_cell_all_trial_firing_properties': '-q',
-                        'cell_stats': '-c',
-                        'with_fluorescence_pipette': '-i',
-                        'screenshot_2023': '-p',
-                        'figure_2_1': '-i',
-                        'figure_2_2': '-p',
-                        'figure_2_3': '-m',
-                        'figure_3_1': '-i',
-                        'figure_5_1': '-i',
-                        'figure_6_1': '-i'
-                    }
-                    
-                    # Use field normalized classification for fnorm analysis
-                    if dep == 'all_cells_classified_dict' and analysis_type == 'field_normalized':
-                        data_path = self.utils.config_manager.get_data_path('all_cells_fnorm_classified_dict')
-                    
-                    if dep in arg_map:
-                        command.extend([arg_map[dep], data_path])
-                    
-                except Exception as e:
-                    self.logger.warning(f"Could not resolve dependency {dep}: {e}")
-            
+            self.logger.debug(f"Built command for {figure_name}: {' '.join(command)}")
             return command
             
         except Exception as e:
             self.logger.error(f"Error building command for {figure_name}: {e}")
-            return []
+            raise
     
     def execute_figure(self, figure_name: str, figure_type: str, analysis_type: str) -> Dict[str, Any]:
         """Execute a single figure generation"""

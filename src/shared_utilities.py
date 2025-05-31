@@ -115,25 +115,52 @@ class DataManager:
         self._data_cache = {}
     
     def load_pickle(self, data_key: str, use_cache: bool = True) -> Any:
-        """Load pickle file with caching"""
+        """Load pickle file with compatibility handling"""
+        file_path = self.config.get_data_path(data_key)
+        
         if use_cache and data_key in self._data_cache:
-            self.logger.debug(f"Loading {data_key} from cache")
+            self.logger.debug(f"Loading from cache: {data_key}")
             return self._data_cache[data_key]
         
-        file_path = self.config.get_data_path(data_key)
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Data file not found: {file_path}")
-        
-        self.logger.info(f"Loading pickle: {file_path}")
         try:
-            with open(file_path, 'rb') as f:
-                data = pickle.load(f)
+            self.logger.info(f"Loading pickle: {file_path}")
+            
+            # Try standard pickle loading first
+            try:
+                with open(file_path, 'rb') as f:
+                    data = pickle.load(f)
+            except (ModuleNotFoundError, AttributeError) as e:
+                if 'pandas' in str(e):
+                    # Handle pandas compatibility issues
+                    self.logger.warning(f"Pandas compatibility issue, trying alternative loading: {e}")
+                    try:
+                        # Try loading with ignore_unknown_types
+                        import pandas as pd
+                        import warnings
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            with open(file_path, 'rb') as f:
+                                # Try to load with protocol compatibility
+                                data = pickle.load(f, encoding='latin1')
+                    except Exception:
+                        # Last resort: try using joblib if available
+                        try:
+                            import joblib
+                            self.logger.warning("Trying joblib.load as fallback")
+                            data = joblib.load(file_path)
+                        except ImportError:
+                            # If joblib not available, raise original error
+                            raise e
+                else:
+                    raise e
             
             if use_cache:
                 self._data_cache[data_key] = data
             
             return data
+            
         except Exception as e:
+            self.logger.error(f"Error loading pickle file {file_path}: {e}")
             raise ValueError(f"Error loading pickle file {file_path}: {e}")
     
     def load_hdf5(self, data_key: str) -> Any:
@@ -346,21 +373,29 @@ class OutputManager:
     def save_figure(self, fig: plt.Figure, figure_name: str, 
                    figure_type: str = "main_figures", 
                    analysis_type: str = "standard") -> List[str]:
-        """Save figure in simplified directory structure"""
+        """Save figure in proper directory structure"""
         
-        # Extract figure number from figure name
-        if figure_name.startswith('figure_'):
-            figure_num = figure_name.replace('figure_', '')
-        elif figure_name.startswith('supp_figure_'):
-            figure_num = figure_name.replace('supp_figure_', 'S')
+        # Determine the correct base directory
+        if figure_name.startswith('supp_') or figure_type == "supplementary_figures":
+            base_dir = self.get_output_path("supplementary_figures")
+            # Extract supplementary figure number
+            if figure_name.startswith('supp_figure_'):
+                figure_num = figure_name.replace('supp_figure_', 'S')
+            else:
+                figure_num = figure_name.replace('figure_', 'S')
         else:
-            figure_num = figure_name
+            base_dir = self.get_output_path("main_figures") 
+            # Extract main figure number
+            if figure_name.startswith('figure_'):
+                figure_num = figure_name.replace('figure_', '')
+            else:
+                figure_num = figure_name
         
-        # Create simple output directory: Figure_N or Figure_N_fnorm
+        # Create specific output directory: Figure_N or Figure_N_fnorm
         if analysis_type == "field_normalized":
-            output_dir = f"Figure_{figure_num}_fnorm"
+            output_dir = os.path.join(base_dir, f"Figure_{figure_num}_fnorm")
         else:
-            output_dir = f"Figure_{figure_num}"
+            output_dir = os.path.join(base_dir, f"Figure_{figure_num}")
         
         # Ensure directory exists
         os.makedirs(output_dir, exist_ok=True)
@@ -593,22 +628,151 @@ class PatternLearningUtils:
         if not self.data_manager.validate_dependencies(dependencies):
             raise ValueError(f"Missing dependencies for {figure_name}")
         
-        # Load data
+        # Load data with improved type detection
         data = {}
         for dep in dependencies:
             try:
-                if dep.endswith('_dict') or dep.startswith('pd_') or dep.startswith('all_'):
+                # Get the actual file path to check extension
+                file_path = self.config_manager.get_data_path(dep)
+                file_ext = os.path.splitext(file_path)[1].lower()
+                
+                if dep == 'cell_stats' or file_ext in ['.h5', '.hdf5']:
+                    # HDF5 files
+                    data[dep] = self.data_manager.load_hdf5(dep)
+                elif file_ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']:
+                    # Image files
+                    data[dep] = self.data_manager.load_image(dep)
+                elif file_ext in ['.pickle', '.pkl'] or dep.endswith('_dict') or dep.startswith('pd_') or dep.startswith('all_') or 'traces' in dep:
+                    # Pickle files - handle field normalized analysis
                     if dep == 'all_cells_classified_dict' and analysis_type == 'field_normalized':
                         data[dep] = self.data_manager.load_pickle('all_cells_fnorm_classified_dict')
                     else:
                         data[dep] = self.data_manager.load_pickle(dep)
-                elif dep == 'cell_stats':
-                    data[dep] = self.data_manager.load_hdf5(dep)
                 else:
-                    # Assume it's an image
-                    data[dep] = self.data_manager.load_image(dep)
+                    # Default to pickle for unknown extensions or legacy data
+                    self.logger.warning(f"Unknown file type for {dep} ({file_path}), attempting pickle loader")
+                    data[dep] = self.data_manager.load_pickle(dep)
+                    
             except Exception as e:
                 self.logger.error(f"Error loading {dep}: {e}")
                 raise
         
         return data 
+
+def create_grid_points_with_text(
+    first_spot_grid_points, 
+    spot_proportional_size=0.5, 
+    image_size=(300, 100), 
+    grid_size=(24, 24), 
+    spot_color=(0, 0, 0), 
+    padding=30, 
+    background_color=(255, 255, 255), 
+    text_color=(0, 0, 0), 
+    font_size=20, 
+    show_text=True, 
+    num_columns=3, 
+    txt_spacing=20, 
+    min_padding_above_text=10,
+    image_background_color=(255, 255, 255),
+    border=True
+):
+    """
+    Creates a single image composed of multiple individual images arranged in multiple rows. 
+    Optionally, text is shown above each spot.
+    
+    Parameters:
+    - first_spot_grid_points (list of int): A list of grid points for the bright spots
+    - spot_proportional_size (int): The proportional size of the bright spots
+    - image_size (tuple): The size of each individual image (width, height)
+    - grid_size (tuple): The size of the grid (columns, rows)
+    - spot_color (tuple): The color of the bright spots (R, G, B)
+    - padding (int): The padding (in pixels) to add between each image
+    - background_color (tuple): The background color for the padding
+    - text_color (tuple): The color of the text
+    - font_size (int): Font size for the text label
+    - show_text (bool): Whether to display text above each spot
+    - num_columns (int): Number of images to display in each row
+    - txt_spacing (int): Additional space between text and image
+    - min_padding_above_text (int): Minimum space above text
+    - image_background_color (tuple): Background color for each individual image
+    - border (bool): Whether to add a border around each individual image
+    
+    Returns:
+    - PIL.Image: The combined image with all individual images arranged in multiple rows
+    """
+    from PIL import Image, ImageDraw, ImageFont
+    
+    num_images = len(first_spot_grid_points)
+    num_rows = (num_images + num_columns - 1) // num_columns
+
+    # Calculate the total height of the image
+    text_height = font_size + txt_spacing + min_padding_above_text
+    combined_image_height = (image_size[1] + (text_height if show_text else 0)) * num_rows + padding * (num_rows + 1)
+    combined_image_width = image_size[0] * num_columns + padding * (num_columns + 1)
+
+    # Create the base combined image
+    combined_image = Image.new("RGB", (combined_image_width, combined_image_height), background_color)
+    
+    # Use a TrueType font if available
+    try:
+        font_path = "/Library/Fonts/Arial.ttf"
+        font = ImageFont.truetype(font_path, font_size)
+    except IOError:
+        print("TrueType font not found. Using default bitmap font.")
+        font = ImageFont.load_default()
+
+    for idx, spot_grid_point in enumerate(first_spot_grid_points):
+        # Create each individual image with specified background color
+        image = Image.new("RGB", image_size, image_background_color)
+        draw = ImageDraw.Draw(image)
+
+        # Calculate grid cell size
+        grid_cell_width = image_size[0] // grid_size[0]
+        grid_cell_height = image_size[1] // grid_size[1]
+
+        # Calculate the size of the bright spot
+        spot_width = int(grid_cell_width * spot_proportional_size)
+        spot_height = int(grid_cell_height * spot_proportional_size)
+
+        # Ensure the starting grid point keeps the spot inside the image
+        spot_grid_point_adjusted = min(spot_grid_point, grid_size[0] - 1)
+
+        # Calculate the starting position for the bright spot
+        first_spot_x = spot_grid_point_adjusted * grid_cell_width
+        y = (image_size[1] - spot_height) // 2
+
+        # Add a single bright spot at the defined grid point
+        draw.rectangle([first_spot_x, y, first_spot_x + spot_width, y + spot_height], fill=spot_color)
+
+        # Add border if specified
+        if border:
+            draw.rectangle([0, 0, image_size[0] - 1, image_size[1] - 1], outline="black")
+
+        # Calculate position for this image in the combined grid
+        col = idx % num_columns
+        row = idx // num_columns
+        
+        x_position = col * image_size[0] + padding * (col + 1)
+        y_position = row * (image_size[1] + text_height if show_text else 0) + padding * (row + 1)
+
+        # Paste the individual image into the combined image
+        combined_image.paste(image, (x_position, y_position))
+
+        # Add text if show_text is True
+        if show_text:
+            text = f"{idx + 1}"
+
+            # Get text dimensions
+            draw_combined = ImageDraw.Draw(combined_image)
+            text_bbox = draw_combined.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+
+            # Position text centered above the image
+            text_x = x_position + (image_size[0] - text_width) // 2
+            text_y = max(min_padding_above_text, y_position - (padding // 2 + txt_spacing))
+
+            # Draw the text label
+            draw_combined.text((text_x, text_y), text, fill=text_color, font=font)
+
+    return combined_image 
