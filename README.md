@@ -78,6 +78,28 @@ python run_plotting_scripts.py --figures figure_1 figure_2
 python run_plotting_scripts.py --figures figure_1_fnorm figure_2_fnorm
 ```
 
+## Latest Version Management
+
+**🎯 All scripts now use only the latest versions from main branch:**
+
+### Version Control Summary
+- **Figure 6**: Uses `figure_generation_script_6_v2.py` (latest, 2024-11-28)
+- **Figure 7 Learner Comparison**: Uses `figure_generation_script_7_learner_non_learner_comparison_v3.py` (latest, 2024-12-04)
+- **All other figures**: Use the most recent versions from main branch
+
+### Script Organization
+- **Main Figures**: 6 scripts (Figures 1-6, latest versions only)
+- **Supplementary Figures**: 14 scripts (f_norm variants, supplementary figures)
+- **Not Used**: Older versions moved to `plotting_scripts/not_used/`
+
+### Benefits
+- ✅ **No Version Confusion**: Only one version per figure type
+- ✅ **Exact Main Branch Match**: Results identical to main branch
+- ✅ **Clean Configuration**: `plotting_config.yaml` references latest versions only
+- ✅ **Maintained Functionality**: All plotting capabilities preserved
+
+See `LATEST_VERSIONS_CLEANUP_SUMMARY.md` for detailed cleanup documentation.
+
 ## Detailed Usage
 
 ### Data Organization
@@ -87,7 +109,7 @@ python run_plotting_scripts.py --figures figure_1_fnorm figure_2_fnorm
 - **HDF5 Files**: Cell statistics and converted data in `data/hdf5_files/`
 
 ### Script Configuration
-- **Plotting**: Configure in `config.yaml`
+- **Plotting**: Configure in `plotting_config.yaml`
 - **Analysis/Conversion**: Configure in `analysis_config.yaml`
 
 ### Workflows Available
@@ -100,7 +122,7 @@ python run_plotting_scripts.py --figures figure_1_fnorm figure_2_fnorm
 ### Core Scripts
 - `run_analysis_conversion.py` - Wrapper for analysis and conversion scripts
 - `run_plotting_scripts.py` - Wrapper for plotting scripts
-- `config.yaml` - Plotting configuration
+- `plotting_config.yaml` - Plotting configuration
 - `analysis_config.yaml` - Analysis and conversion configuration
 
 ### Analysis Scripts

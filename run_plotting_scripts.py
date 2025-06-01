@@ -5,7 +5,7 @@ Pattern Learning Paper - Plotting Script Runner
 Author: Anzal KS (anzal.ks@gmail.com)
 Repository: https://github.com/anzalks/
 
-This script reads the configuration from config.yaml and runs plotting scripts
+This script reads the configuration from plotting_config.yaml and runs plotting scripts
 with the appropriate arguments based on the analysis type (standard or field_normalized).
 """
 
@@ -16,7 +16,7 @@ import argparse
 import subprocess
 from pathlib import Path
 
-def load_config(config_path="config.yaml"):
+def load_config(config_path="plotting_config.yaml"):
     """Load configuration from YAML file."""
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
@@ -90,12 +90,12 @@ def run_script(script_path, args_dict, output_dir=None):
         return False
 
 def main():
-    parser = argparse.ArgumentParser(description='Run plotting scripts based on config.yaml')
+    parser = argparse.ArgumentParser(description='Run plotting scripts based on plotting_config.yaml')
     parser.add_argument('--figures', nargs='+', help='Specific figures to generate (e.g., figure_1 figure_2)')
     parser.add_argument('--analysis_type', choices=['standard', 'field_normalized'], 
                        default='standard', help='Analysis type to run')
     parser.add_argument('--output_dir', help='Output directory for figures')
-    parser.add_argument('--config', default='config.yaml', help='Path to config file')
+    parser.add_argument('--config', default='plotting_config.yaml', help='Path to config file')
     parser.add_argument('--list', action='store_true', help='List available figures')
     
     args = parser.parse_args()

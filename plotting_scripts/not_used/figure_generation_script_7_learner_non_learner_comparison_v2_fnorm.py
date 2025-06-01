@@ -27,7 +27,7 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-from shared_utils import baisic_plot_fuctnions_and_features as bpf
+from shared_utils from shared_utils import baisic_plot_fuctnions_and_features as bpf
 from matplotlib.lines import Line2D
 from scipy.stats import ttest_rel, mannwhitneyu, wilcoxon, permutation_test, ks_2samp
 import multiprocessing as mp
