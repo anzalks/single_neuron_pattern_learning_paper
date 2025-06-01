@@ -1,6 +1,17 @@
 # single_neuron_pattern_learning_paper
 All scripts that's associated with the pattern learning paper
 
+## Recent Updates
+
+### 🔧 Bug Fix: Extract Features Script Path Issue (2024-12-04)
+**Fixed hardcoded path in `extract_features_and_save_pickle.py`**
+
+**Issue**: The `pd_all_cells_mean.pickle` file (144MB) was being saved to the repository root instead of the designated tagged folder due to a hardcoded path in line 461.
+
+**Fix**: Updated `write_pkl(pd_all_cells_mean, "pd_all_cells_mean")` to `write_pkl(pd_all_cells_mean, outpath)` to use the proper output directory path.
+
+**Result**: All analysis files now correctly save to `data/pickle_files/extract_features/pickle_files_from_analysis/` maintaining the organized tagged folder structure.
+
 ## Project Organization
 
 ### Data Structure

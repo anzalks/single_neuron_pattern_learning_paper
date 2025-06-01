@@ -459,7 +459,7 @@ def extract_cell_features_mean(all_data_with_training_df, outdir, mp_processes=6
 
     pd_all_cells_mean = pd.concat(pd.DataFrame([i], columns=ctype_header) for i in tqdm(cell_type_list))
     outpath = f"{outdir}/pd_all_cells_mean"
-    write_pkl(pd_all_cells_mean, "pd_all_cells_mean")
+    write_pkl(pd_all_cells_mean, outpath)
     print(f"All cells mean of features saved to file {outpath}")
     return pd_all_cells_mean
 

@@ -4,10 +4,17 @@
 
 # Data paths
 data_paths:
+  abf_cells_path: "./data/abf_all_cells"
   raw_cells_path: "./data/cells_min_30mins_long"
   pickle_files_path: "./data/pickle_files"
   hdf5_files_path: "./data/hdf5_files"
-  analysis_output_path: "./data/pickle_files/analysis"
+  # Tagged analysis paths
+  abf_to_hdf5_base: "./data/hdf5_files/abf_to_hdf5"
+  abf_to_hdf5_cells: "./data/hdf5_files/abf_to_hdf5/all_cells_hdf"
+  abf_to_hdf5_stats: "./data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+  compile_cells_pickle: "./data/pickle_files/compile_cells_to_pickle"
+  compile_firing_data: "./data/pickle_files/compile_firing_data"
+  extract_features_output: "./data/pickle_files/extract_features"
 
 # Conversion Scripts Configuration
 conversion_scripts:
@@ -17,8 +24,8 @@ conversion_scripts:
     arguments:
       cells_path:
         flag: "--cells-path"
-        default: "./data/cells_min_30mins_long"
-        description: "Path to folder containing cell data folders"
+        default: "./data/abf_all_cells"
+        description: "Path to folder containing cell data folders with ABF files"
         
   compile_cells_to_pickle:
     script: "conversion_scripts/compile_cell_dfs_to_pickle.py"
@@ -26,18 +33,25 @@ conversion_scripts:
     arguments:
       cells_path:
         flag: "--cells-path"
-        default: "./data/hdf5_files"
+        default: "./data/hdf5_files/abf_to_hdf5/all_cells_hdf"
         description: "Path to folder containing HDF5 cell data"
       cell_stat:
         flag: "--cell-stat"
-        default: "./data/hdf5_files/cell_stats.h5"
+        default: "./data/hdf5_files/abf_to_hdf5/cell_stats.h5"
         description: "Path to cell statistics HDF5 file"
         
   compile_firing_data:
     script: "conversion_scripts/compile_firing_data_protocols_to_pickle_and_extract_features.py"
     description: "Compile firing data protocols and extract features"
     arguments:
-      # Add arguments when script is examined
+      cells_path:
+        flag: "--cells-path"
+        default: "./data/abf_all_cells"
+        description: "Path to folder containing cell data for firing analysis"
+      cellstat_path:
+        flag: "--cellstat-path"
+        default: "./data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+        description: "Path to cell statistics HDF5 file"
 
 # Analysis Scripts Configuration  
 analysis_scripts:
@@ -47,15 +61,15 @@ analysis_scripts:
     arguments:
       pikl_path:
         flag: "--pikl-path"
-        default: "./data/pickle_files/all_data_with_training_df.pickle"
+        default: "./data/pickle_files/compile_cells_to_pickle/all_data_df.pickle"
         description: "Path to the main pickle file with all cell data"
       cellstat_path:
         flag: "--cellstat-path"
-        default: "./data/hdf5_files/cell_stats.h5"
+        default: "./data/hdf5_files/abf_to_hdf5/cell_stats.h5"
         description: "Path to cell statistics data"
       outdir_path:
         flag: "--outdir-path"
-        default: "./data/pickle_files/analysis"
+        default: "./data/pickle_files/extract_features"
         description: "Output directory for generated pickle files"
       use_full_ram:
         flag: "--use-full-ram"

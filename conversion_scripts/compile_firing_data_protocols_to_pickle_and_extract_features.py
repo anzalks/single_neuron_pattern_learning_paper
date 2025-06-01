@@ -111,6 +111,14 @@ def extract_spike_frequency(trial_data,traial_no):
     return spike_frequency, injected_current
 
 def extract_spike_properties(cell_firing_data_all_cells,outdir):
+    # Handle case where no firing data was found
+    if cell_firing_data_all_cells.empty:
+        print("Warning: No firing data to extract spike properties from. Creating empty properties DataFrame.")
+        empty_props = pd.DataFrame(columns=['cell_ID', 'trial_no', 'spike_frequency', 'injected_current'])
+        out_file = f"{outdir / 'all_cell_all_trial_firing_properties'}"
+        write_pkl(empty_props, out_file)
+        return empty_props
+    
     cell_grp = cell_firing_data_all_cells.groupby(by="cell_ID")
     firing_properties=[]
     for cell, cell_data in cell_grp:
@@ -124,8 +132,8 @@ def extract_spike_properties(cell_firing_data_all_cells,outdir):
             trial_df["injected_current"]=injected_current
             firing_properties.append(trial_df)
     firing_properties = pd.concat(firing_properties).reset_index(drop=True)
-    out_file=f"{outdir/'all_cell_all_trial_firing_properties'}"
-    write_pkl(firing_properties,out_file)
+    out_file = f"{outdir / 'all_cell_all_trial_firing_properties'}"
+    write_pkl(firing_properties, out_file)
     return firing_properties
 
 def convert_non_optical_data_to_pickle(folder_list_with_cell_data,cell_stats_h5_file,outdir):
@@ -144,10 +152,20 @@ def convert_non_optical_data_to_pickle(folder_list_with_cell_data,cell_stats_h5_
                     firing_data_df = abf_to_df(abf)
                     firing_data_df.insert(loc=0, column='cell_ID', value=cell.stem)
                     cell_firing_data_all_cells.append(firing_data_df)
-    cell_firing_data_all_cells= pd.concat(cell_firing_data_all_cells,ignore_index=True)
+    
+    # Check if any data was found before concatenation
+    if not cell_firing_data_all_cells:
+        print("Warning: No firing data found. Creating empty DataFrame.")
+        # Create empty DataFrame with expected structure
+        empty_df = pd.DataFrame(columns=['cell_ID', 'sampling_rate(Hz)', 'trial_no', 'cell_trace(mV)', 'injected_current(pA)', 'time(s)'])
+        out_file = f"{outdir / 'all_cell_firing_traces'}"
+        write_pkl(empty_df, out_file)
+        return empty_df
+    
+    cell_firing_data_all_cells = pd.concat(cell_firing_data_all_cells,ignore_index=True)
     cell_firing_data_all_cells.reset_index(drop=True)
-    out_file=f"{outdir/'all_cell_firing_traces'}"
-    write_pkl(cell_firing_data_all_cells,out_file)
+    out_file = f"{outdir / 'all_cell_firing_traces'}"
+    write_pkl(cell_firing_data_all_cells, out_file)
     return cell_firing_data_all_cells
 
 
@@ -156,29 +174,44 @@ def main():
     description = '''conversion script for abf files to hdf5.'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--cells-path', '-f'
-                        , required = False,default ='./', type=str
+                        , required = False,default =None, type=str
                         , help = 'path of folder with folders as cell data '
                        )
     parser.add_argument('--cellstat-path', '-s'
-                        , required = False,default ='./', type=str
+                        , required = False,default =None, type=str
                         , help = 'path of folder with folders as cell data '
                        )
 
-#    parser.parse_args(namespace=args_)
     args = parser.parse_args()
-    p = Path(args.cells_path)
-    stats_path = Path(args.cellstat_path)
-    outdir = p/'pickle_format_files_firing_rate_data'
+    
+    # Dynamically find the repository root (where this script is located)
+    script_dir = Path(__file__).parent  # conversion_scripts/
+    repo_root = script_dir.parent        # main repository root
+    
+    # Set default paths if not provided
+    if args.cells_path is None:
+        p = repo_root / 'data' / 'cells_min_30mins_long'
+    else:
+        p = Path(args.cells_path)
+    
+    if args.cellstat_path is None:
+        stats_path = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5' / 'cell_stats.h5'
+    else:
+        stats_path = Path(args.cellstat_path)
+    
+    # Output to pickle_files directory with analysis tag
+    outdir = repo_root / 'data' / 'pickle_files' / 'compile_firing_data'
     outdir.mkdir(exist_ok=True, parents=True)
+    
     cells = list_folder(p)
-    cell_stats_h5_file=pd.read_hdf(stats_path)
-    cell_firing_data_all_cells= convert_non_optical_data_to_pickle(cells,cell_stats_h5_file,outdir)
-    extract_spike_properties(cell_firing_data_all_cells,outdir)
+    cell_stats_h5_file = pd.read_hdf(stats_path)
+    cell_firing_data_all_cells = convert_non_optical_data_to_pickle(cells, cell_stats_h5_file, outdir)
+    extract_spike_properties(cell_firing_data_all_cells, outdir)
 
 
 if __name__  == '__main__':
     #timing the run with time.time
     ts =time.time()
-    main(**vars(args_)) 
+    main()
     tf =time.time()
     print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

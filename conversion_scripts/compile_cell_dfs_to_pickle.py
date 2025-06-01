@@ -56,28 +56,43 @@ def main():
     description = '''Script to analyse cell health and plot relevent values'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--cells-path', '-f'
-                        , required = False,default ='./', type=str
+                        , required = False,default =None, type=str
                         , help = 'folder path to cell data in h5 format'
                        )
     parser.add_argument('--cell-stat', '-s'
-                        , required = False,default ='./', type=str
+                        , required = False,default =None, type=str
                         , help = 'path of dataframe with cell stats in h5 format'
                        )
     
     args = parser.parse_args()
-    #print(args.cells_path)
-    h5_folder_path = Path(args.cells_path)
+    
+    # Dynamically find the repository root (where this script is located)
+    script_dir = Path(__file__).parent  # conversion_scripts/
+    repo_root = script_dir.parent        # main repository root
+    
+    # Set default paths if not provided
+    if args.cells_path is None:
+        h5_folder_path = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5' / 'all_cells_hdf'
+    else:
+        h5_folder_path = Path(args.cells_path)
+    
+    if args.cell_stat is None:
+        cell_stat_path = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5' / 'cell_stats.h5'
+    else:
+        cell_stat_path = Path(args.cell_stat)
+    
     h5_files = list_h5(h5_folder_path)
-    cell_stats =pd.read_hdf(args.cell_stat)
-#    print(cell_stats)
-    outdir = h5_folder_path/'pickle_file_all_cells_trail_corrected'
+    cell_stats = pd.read_hdf(cell_stat_path)
+    
+    # Output to pickle_files directory with analysis tag
+    outdir = repo_root / 'data' / 'pickle_files' / 'compile_cells_to_pickle'
     outdir.mkdir(exist_ok=True, parents=True)
-    combine_multicell_to_pkl(cell_stats,h5_files,outdir)
+    combine_multicell_to_pkl(cell_stats, h5_files, outdir)
 
 
 if __name__  == '__main__':
     #timing the run with time.time
     ts =time.time()
-    main(**vars(args_)) 
+    main()
     tf =time.time()
     print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

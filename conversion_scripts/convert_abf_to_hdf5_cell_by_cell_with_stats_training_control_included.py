@@ -528,20 +528,49 @@ def main():
     description = '''conversion script for abf files to hdf5.'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--cells-path', '-f'
-                        , required = False,default ='./', type=str
+                        , required = False,default =None, type=str
                         , help = 'path of folder with folders as cell data '
                        )
 
 
 #    parser.parse_args(namespace=args_)
     args = parser.parse_args()
-    p = Path(args.cells_path)
-    outdir = p/'hdf_format_files_with_training'
+    
+    # Dynamically find the repository root (where this script is located)
+    script_dir = Path(__file__).parent  # conversion_scripts/
+    repo_root = script_dir.parent        # main repository root
+    
+    # Set default input path if not provided
+    if args.cells_path is None:
+        input_path = repo_root / 'data' / 'abf_all_cells'
+    else:
+        input_path = Path(args.cells_path)
+    
+    # Create output directory structure relative to repo root
+    analysis_dir = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5'
+    analysis_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Cell data goes in all_cells_hdf subfolder
+    outdir = analysis_dir / 'all_cells_hdf'
     outdir.mkdir(exist_ok=True, parents=True)
-    cells = list_folder(p)
+    
+    # Cell stats file goes alongside the all_cells_hdf folder (not inside it)
+    cell_stats_path = analysis_dir / 'cell_stats.h5'
+    
+    # Verify input path exists
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input path does not exist: {input_path}")
+    
+    cells = list_folder(input_path)
     cells_dict = pd.DataFrame()
     total_cells = len(cells)
     cell_stat =[] 
+    
+    print(f"Repository root: {repo_root}")
+    print(f"Processing {total_cells} cells from: {input_path}")
+    print(f"Output directory: {outdir}")
+    print(f"Cell stats will be saved to: {cell_stats_path}")
+    
     with multiprocessing.Pool(processes=6) as pool:
         futures = []
         for cell_no, cell in enumerate(cells):
@@ -563,11 +592,14 @@ def main():
     cell_stat = pd.DataFrame(cell_stat, columns=['cell_ID','cell_stats'])
     cell_stat.set_index('cell_ID',inplace = True)
     print(cell_stat)
-    cell_stat.to_hdf(f'{outdir}/cell_stats.h5',key='cell_stat')
+    
+    # Save cell stats to the correct path
+    cell_stat.to_hdf(str(cell_stats_path), key='cell_stat')
+    print(f"Cell statistics saved to: {cell_stats_path}")
 
 if __name__  == '__main__':
     #timing the run with time.time
     ts =time.time()
-    main(**vars(args_)) 
+    main()
     tf =time.time()
     print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

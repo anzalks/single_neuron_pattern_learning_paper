@@ -12,22 +12,22 @@ data_paths:
   
   # Analysis pickle files - updated to organized structure
   analysis_pickles:
-    pd_all_cells_mean: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-    all_cells_classified_dict: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
-    all_cells_fnorm_classifeied_dict: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
-    pd_all_cells_all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
-    all_cells_inR: "data/pickle_files/analysis/all_cells_inR.pickle"
-    baseline_traces_all_cells: "data/pickle_files/analysis/baseline_traces_all_cells.pickle"
-    pd_training_data_all_cells_all_trials: "data/pickle_files/analysis/pd_training_data_all_cells_all_trials.pickle"
-    all_cell_all_trial_firing_properties: "data/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle"
+    pd_all_cells_mean: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+    all_cells_classified_dict: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
+    all_cells_fnorm_classifeied_dict: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
+    pd_all_cells_all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
+    all_cells_inR: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
+    baseline_traces_all_cells: "data/pickle_files/extract_features/pickle_files_from_analysis/baseline_traces_all_cells.pickle"
+    pd_training_data_all_cells_all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle"
+    all_cell_all_trial_firing_properties: "data/pickle_files/compile_firing_data/all_cell_all_trial_firing_properties.pickle"
   
   # Cell statistics
-  cell_stats: "data/hdf5_files/cell_stats.h5"
+  cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
   
   # Raw data for analysis script
   raw_data:
-    all_data_with_training_df: "data/pickle_files/all_data_with_training_df.pickle"
-    cell_stats_h5: "data/hdf5_files/cell_stats.h5"
+    all_data_with_training_df: "data/pickle_files/compile_cells_to_pickle/all_data_df.pickle"
+    cell_stats_h5: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
   
   # Illustration images - updated to organized structure
   illustrations:
@@ -83,19 +83,19 @@ figures:
       name: "Experimental Setup and Basic Properties"
       args:
         standard:
-          file: "data/pickle_files/analysis/baseline_traces_all_cells.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/baseline_traces_all_cells.pickle"
           image: "data/images/with fluorescence and pipette.bmp"
           projimg: "data/images/Screenshot 2023-06-28 at 22.21.46.jpeg"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     figure_2:
       script: "plotting_scripts/main_figures/figure_generation_script_2.py"
       name: "EPSP Amplitude Analysis"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
-          resistance: "data/pickle_files/analysis/all_cells_inR.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
+          resistance: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
           image_i: "data/illustations/figure_2_1.jpg"
           image_p: "data/illustations/figure_2_2.jpg"
           image_m: "data/illustations/figure_2_3.png"
@@ -105,14 +105,14 @@ figures:
       name: "Learning Curve Analysis"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_3_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
-          training: "data/pickle_files/analysis/pd_training_data_all_cells_all_trials.pickle"
-          firing: "data/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle"
-          resistance: "data/pickle_files/analysis/all_cells_inR.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
+          training: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle"
+          firing: "data/pickle_files/compile_firing_data/all_cell_all_trial_firing_properties.pickle"
+          resistance: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
           projimg: "data/illustations/figure_2_2.jpg"
           
     figure_4:
@@ -120,32 +120,32 @@ figures:
       name: "Plasticity Mechanisms"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     figure_5:
       script: "plotting_scripts/main_figures/figure_generation_script_5.py"
       name: "Temporal Dynamics"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_5_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     figure_6:
       script: "plotting_scripts/main_figures/figure_generation_script_6_v2.py"
       name: "Synaptic Properties (Latest Version)"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_3_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
 
   supplementary_figures:
     # Field normalized versions of main figures (LATEST VERSIONS ONLY)
@@ -154,9 +154,9 @@ figures:
       name: "EPSP Amplitude Analysis (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
-          resistance: "data/pickle_files/analysis/all_cells_inR.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
+          resistance: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
           image_i: "data/illustations/figure_2_1.jpg"
           image_p: "data/illustations/figure_2_2.jpg"
           image_m: "data/illustations/figure_2_3.png"
@@ -166,14 +166,14 @@ figures:
       name: "Learning Curve Analysis (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
-          training: "data/pickle_files/analysis/pd_training_data_all_cells_all_trials.pickle"
-          firing: "data/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle"
-          resistance: "data/pickle_files/analysis/all_cells_inR.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
+          training: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle"
+          firing: "data/pickle_files/compile_firing_data/all_cell_all_trial_firing_properties.pickle"
+          resistance: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
           projimg: "data/illustations/figure_2_2.jpg"
           
     figure_4_fnorm:
@@ -181,32 +181,32 @@ figures:
       name: "Plasticity Mechanisms (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     figure_5_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_5_fnorm.py"
       name: "Temporal Dynamics (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_5_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     figure_6_v2_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_6_v2_fnorm.py"
       name: "Synaptic Properties (Latest Version, Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
           
     # Figure 7 - Latest version (v3) and its field normalized variant
     figure_7_v3:
@@ -214,22 +214,22 @@ figures:
       name: "Learner vs Non-Learner Comparison (Latest Version)"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_6_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     figure_7_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_7_fnorm.py"
       name: "Learner vs Non-Learner Analysis (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_6_1.png"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     # Figure 8
     figure_8:
@@ -237,8 +237,8 @@ figures:
       name: "Summary Analysis"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           
     # Dedicated supplementary figures
     supp_1:
@@ -246,66 +246,66 @@ figures:
       name: "Supplementary Figure 1"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     supp_1_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_supp_1_fnorm.py"
       name: "Supplementary Figure 1 (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     supp_2:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_supp_2.py"
       name: "Supplementary Figure 2"
       args:
         standard:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     supp_2_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_supp_2_fnorm.py"
       name: "Supplementary Figure 2 (Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     supp_2_field_norm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_supp_2_field_norm.py"
       name: "Supplementary Figure 2 (Field Norm)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           
     supp_2_field_norm_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_supp_2_field_norm_fnorm.py"
       name: "Supplementary Figure 2 (Field Norm + Field Normalized)"
       args:
         field_normalized:
-          file: "data/pickle_files/analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/analysis/all_cells_fnorm_classifeied_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.jpg"
-          cell_stats: "data/hdf5_files/cell_stats.h5"
-          all_trials: "data/pickle_files/analysis/pd_all_cells_all_trials.pickle"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
 
 # =============================================================================
 # SYSTEM CONFIGURATION
