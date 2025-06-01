@@ -27,24 +27,14 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import sys
-import os
-
-# Add the src directory to the path to import our shared utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
-                            subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 from matplotlib.lines import Line2D
-
-# Initialize utilities
-utils = PatternLearningUtils()
-
 from scipy.stats import gaussian_kde
 from scipy.stats import levene
+from PIL import ImageDraw, ImageFont
 
 # plot features are defines in bpf
-set_plot_properties()
+bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
@@ -130,15 +120,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(0,1.2)
+            pat_fr = bpf.create_grid_image(0,1.2)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(4,1.2)
+            pat_fr = bpf.create_grid_image(4,1.2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(17,1.2)
+            pat_fr = bpf.create_grid_image(17,1.2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -198,12 +188,12 @@ def plot_raw_trace_time_points(single_cell_df,
             if pps_data[0]=="pre":
                 axs_trace = fig.add_subplot(gs[3+pat_num,1])
                 trace = pps_data[-1]["mean_trace"][0]
-                trace = subtract_baseline(trace)
+                trace = bpf.substract_baseline(trace)
                 trace = trace[:int(sampling_rate*time_to_plot)]
-                pre_trace = subtract_baseline(pre_trace)
+                pre_trace = bpf.substract_baseline(pre_trace)
                 pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
                 time = np.linspace(0,time_to_plot,len(trace))*1000
-                axs_trace.plot(time,pre_trace, color=pre_color,
+                axs_trace.plot(time,pre_trace, color=bpf.pre_color,
                                label="baseline response")
                 move_axis([axs_trace],xoffset=xoffset,yoffset=yoffset,pltscale=1)
                 if pat_num==1:
@@ -219,18 +209,18 @@ def plot_raw_trace_time_points(single_cell_df,
             else:
                 axs_trace = fig.add_subplot(gs[3+pat_num,idx+2])
                 trace = pps_data[-1]["mean_trace"][0]
-                trace = subtract_baseline(trace)
+                trace = bpf.substract_baseline(trace)
                 trace = trace[:int(sampling_rate*time_to_plot)]
-                pre_trace = subtract_baseline(pre_trace)
+                pre_trace = bpf.substract_baseline(pre_trace)
                 pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
                 time = np.linspace(0,time_to_plot,len(trace))*1000
-                axs_trace.plot(time,pre_trace, color=pre_color,
+                axs_trace.plot(time,pre_trace, color=bpf.pre_color,
                               alpha=0.6,label="pre training\nEPSP trace")
                 axs_trace.plot(time,trace,
-                               color=post_late,
+                               color=bpf.post_late,
                                label="post 30 mins of\ntraining EPSP trace")
-                               #color=color_fader(post_color,
-                               #                     post_late,
+                               #color=bpf.colorFader(bpf.post_color,
+                               #                     bpf.post_late,
                                #                     (idx/len(pps_grp))))
                 move_axis([axs_trace],xoffset=xoffset,yoffset=yoffset,pltscale=1)
                 axs_trace.set_ylabel(None)
@@ -342,7 +332,7 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
             # Create the stripplot for individual cells (with legend label)
             stripplot = sns.stripplot(
                 data=pat, x="pre_post_status", y=f"{val_to_plot}",
-                order=order, ax=axs_slp, color=CB_color_cycle[2],
+                order=order, ax=axs_slp, color=bpf.CB_color_cycle[2],
                 alpha=0.6, size=5, label='single cell'
             )
             
@@ -387,7 +377,7 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
                 axs_slp.plot([x1_pos, x2_pos], [base_y + idx * step_y] * 2, color='black', linewidth=1)
 
                 # Add the p-value text above the line
-                annotation_text = convert_pvalue_to_asterisks(pval)
+                annotation_text = bpf.convert_pvalue_to_asterisks(pval)
                 axs_slp.text(
                     (x1_pos + x2_pos) / 2, base_y + idx * step_y + 2, 
                     annotation_text, ha='center', va='bottom', fontsize=8
@@ -609,7 +599,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
         print(f"Levene's test statistic: {levene_stat}, p-value: {levene_p}")
 
         # Display the Levene's test p-value on the plot
-        ax.text(0.16, 0.95, f"{convert_pvalue_to_asterisks(levene_p)}",
+        ax.text(0.16, 0.95, f"{bpf.convert_pvalue_to_asterisks(levene_p)}",
                 transform=ax.transAxes,
                 fontsize=10, va='top', ha='right')
 
@@ -775,7 +765,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #            # Create the stripplot for individual cells (with legend label)
 #            sns.stripplot(
 #                data=pat, x="pre_post_status", y=f"{val_to_plot}",
-#                order=order, ax=axs_slp, color=CB_color_cycle[2],
+#                order=order, ax=axs_slp, color=bpf.CB_color_cycle[2],
 #                alpha=0.6, size=5, label='single cell'
 #            )
 #            
@@ -809,7 +799,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #            annotator = Annotator(axs_slp, anotp_list, data=pat,
 #                                  x="pre_post_status", y=f"{val_to_plot}",
 #                                  order=order, fontsize=8)
-#            annotator.set_custom_annotations([convert_pvalue_to_asterisks(a) for a in pvalList])
+#            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
 #            annotator.annotate()
 #
 #            # Adjust axis labels and despine
@@ -872,7 +862,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #            # Create the stripplot for individual cells (with legend label)
 #            stripplot = sns.stripplot(
 #                data=pat, x="pre_post_status", y=f"{val_to_plot}",
-#                order=order, ax=axs_slp, color=CB_color_cycle[2],
+#                order=order, ax=axs_slp, color=bpf.CB_color_cycle[2],
 #                alpha=0.6, size=5, label='single cell'
 #            )
 #            
@@ -908,7 +898,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #            annotator = Annotator(axs_slp, anotp_list, data=pat,
 #                                  x="pre_post_status", y=f"{val_to_plot}",
 #                                  order=order, fontsize=8)
-#            annotator.set_custom_annotations([convert_pvalue_to_asterisks(a) for a in pvalList])
+#            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
 #            annotator.annotate()
 #            # Adjust axis labels and despine
 #            if pat_num == 0:
@@ -956,11 +946,11 @@ def plot_field_normalised_feature_multi_patterns(cell_list,val_to_plot,
                                                 fig,axs1,axs2,axs3):
     cell_list= norm_values(cell_list,val_to_plot)
     plot_cell_type_features(cell_list,"pattern_0",fig, axs1,val_to_plot,
-                            CB_color_cycle[5])
+                            bpf.CB_color_cycle[5])
     plot_cell_type_features(cell_list,"pattern_1",fig, axs2,val_to_plot,
-                            CB_color_cycle[5])
+                            bpf.CB_color_cycle[5])
     plot_cell_type_features(cell_list,"pattern_2",fig, axs3,val_to_plot,
-                            CB_color_cycle[5])
+                            bpf.CB_color_cycle[5])
     
 
 #["cell_ID","frame_status","pre_post_status","frame_id","min_trace","max_trace","abs_area","pos_area",
@@ -976,10 +966,10 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
     g1 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="inR",
                        capsize=0.2, ci='sd', order=order, color="k")
     g2 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="sag",
-                       capsize=0.2, ci='sd', order=order, color=CB_color_cycle[4])
+                       capsize=0.2, ci='sd', order=order, color=bpf.CB_color_cycle[4])
     
     # Plot individual points using stripplot
-    sns.stripplot(data=inR_all_Cells_df, color=CB_color_cycle[4],
+    sns.stripplot(data=inR_all_Cells_df, color=bpf.CB_color_cycle[4],
                   x="pre_post_status", y="sag",
                   order=order, alpha=0.2)
 
@@ -991,18 +981,18 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
     print(f"p-value: {pvalList}")
     anotp_list = ("pre", "post_3")
     annotator = Annotator(axs, [anotp_list], data=inR_all_Cells_df, x="pre_post_status", y="sag", order=order)
-    annotator.set_custom_annotations([convert_pvalue_to_asterisks(pvalList)])
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
 
     # Manually create legend entries
     legend_elements = [
         Line2D([0], [0], marker='o', color='k', label='input resistance', markersize=8, linestyle='None'),
-        Line2D([0], [0], marker='o', color=CB_color_cycle[4], label='sag value', markersize=8, linestyle='None')
+        Line2D([0], [0], marker='o', color=bpf.CB_color_cycle[4], label='sag value', markersize=8, linestyle='None')
     ]
 
     #legend_elements = [
     #    Line2D([0], [0], color='k', label='input resistance', linewidth=2),
-    #    Line2D([0], [0], color=CB_color_cycle[4], label='sag value', linewidth=2)
+    #    Line2D([0], [0], color=bpf.CB_color_cycle[4], label='sag value', linewidth=2)
     #]
     axs.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.05), loc='center', frameon=False)
 
@@ -1033,8 +1023,8 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
 #                    label="input\nresistance")
 #    sns.pointplot(data=inR_all_Cells_df,x="pre_post_status",y="sag",
 #                  capsize=0.2,ci=('sd'),order=order,
-#                  color=CB_color_cycle[4], label="sag value")
-#    sns.stripplot(data=inR_all_Cells_df,color=CB_color_cycle[4],
+#                  color=bpf.CB_color_cycle[4], label="sag value")
+#    sns.stripplot(data=inR_all_Cells_df,color=bpf.CB_color_cycle[4],
 #                  x="pre_post_status",y="sag",
 #                  order=order,alpha=0.2)
 #
@@ -1046,7 +1036,7 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
 #    anotp_list=("pre","post_3")
 #    annotator = Annotator(axs,[anotp_list],data=inR_all_Cells_df, x="pre_post_status",y="sag",order=order)
 #    #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
-#    annotator.set_custom_annotations([convert_pvalue_to_asterisks(pvalList)])
+#    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
 #    annotator.annotate()
 #    if axs.legend_ is not None:
 #        axs.legend_.remove()
@@ -1074,142 +1064,191 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
     
     
 
-def plot_figure_2_new(pd_all_cells_mean, all_cells_classified_dict, all_cells_inR,
-                     figure_2_1, figure_2_2, figure_2_3, cell_to_plot, analysis_type):
-    """Generate Figure 2 using the loaded data with standardized utilities"""
-    set_plot_properties()
-    
-    deselect_list = ["no_frame", "inR", "point"]
-    
-    # Filter data for specific cell and time points
-    single_cell_df = pd_all_cells_mean.copy()
-    single_cell_df = single_cell_df[
-        (single_cell_df["cell_ID"] == cell_to_plot) &
-        (single_cell_df["pre_post_status"].isin(selected_time_points))
-    ]
-    
-    # Combine classified cell data
-    sc_data_df = pd.concat([
-        all_cells_classified_dict["ap_cells"],
-        all_cells_classified_dict["an_cells"]
-    ]).reset_index(drop=True)
-    
+def plot_figure_2(extracted_feature_pickle_file_path,
+                  cell_categorised_pickle_file,
+                  inR_all_Cells_df,
+                  illustration_path,
+                  inRillustration_path,
+                  patillustration_path,
+                  outdir,cell_to_plot=cell_to_plot):
+    deselect_list = ["no_frame","inR","point"]
+    feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
+    single_cell_df = feature_extracted_data.copy()
+    single_cell_df = single_cell_df[(single_cell_df["cell_ID"]==cell_to_plot)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
+    sc_data = pd.read_pickle(cell_categorised_pickle_file)
+    sc_data_df = pd.concat([sc_data["ap_cells"],
+                            sc_data["an_cells"]]).reset_index(drop=True)
+    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
+    illustration = pillow.Image.open(illustration_path)
+    inRillustration = pillow.Image.open(inRillustration_path)
+    patillustration = pillow.Image.open(patillustration_path)
     # Define the width and height ratios
-    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]
-    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5, 0.2]
+    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
+    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
+                     0.5, 0.5, 0.5, 0.5, 0.2]       # Adjust these values as needed
 
-    fig = plt.figure(figsize=(9, 16))
-    gs = GridSpec(11, 7, width_ratios=width_ratios,
-                  height_ratios=height_ratios, figure=fig)
+    fig = plt.figure(figsize=(9,16))
+    gs = GridSpec(11, 7,width_ratios=width_ratios,
+                  height_ratios=height_ratios,figure=fig)
+    #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.2, hspace=0.2)
-    
-    # Place main illustration
+    #place illustration
     axs_img = fig.add_subplot(gs[:3, :6])
-    plot_image(figure_2_1, axs_img, -0.1, -0.01, 1)
-    axs_img.text(0, 0.95, 'A', transform=axs_img.transAxes,
-                fontsize=16, fontweight='bold', ha='center', va='center')
+    plot_image(illustration,axs_img,-0.1,-0.01,1)
     
-    # Place pattern illustration
+    
+
+    axs_img.text(0,0.95,'A',transform=axs_img.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')
+    
     axs_pat_ill = fig.add_subplot(gs[:3, 6:])
-    plot_image(figure_2_3, axs_pat_ill, -0.15, -0.02, 2.2)
-    axs_pat_ill.text(0.01, 0.9, 'B', transform=axs_pat_ill.transAxes,
-                    fontsize=16, fontweight='bold', ha='center', va='center')
-
-    # Plot vertical patterns
-    axs_vpat1 = fig.add_subplot(gs[3, 0])
-    axs_vpat2 = fig.add_subplot(gs[4, 0])
-    axs_vpat3 = fig.add_subplot(gs[5, 0])
-    plot_patterns(axs_vpat1, axs_vpat2, axs_vpat3, -0.075, -0.015, 2)
-    axs_vpat1.text(-0.07, 1.35, 'C', transform=axs_vpat1.transAxes,
-                  fontsize=16, fontweight='bold', ha='center', va='center')
-
-    # Plot raw trace time points
-    plot_raw_trace_time_points(single_cell_df, deselect_list, fig, gs,
-                              xoffset=0, yoffset=-0.01)
-
-    # Plot amplitudes over time using field normalized data if specified
-    feature_extracted_data = pd_all_cells_mean[
-        ~pd_all_cells_mean["frame_status"].isin(deselect_list)
-    ]
+    plot_image(patillustration,axs_pat_ill,-0.15,-0.02,2.2)    
     
-    axs_slp1 = fig.add_subplot(gs[7:9, 0:2])
-    axs_slp1.set_ylabel("slope (mV/ms)")
-    axs_slp2 = fig.add_subplot(gs[7:9, 2:4])
-    axs_slp2.set_yticklabels([])
-    axs_slp3 = fig.add_subplot(gs[7:9, 4:6])
-    axs_slp3.set_yticklabels([])
-    
-    plot_field_normalised_feature_multi_patterns(sc_data_df, "max_trace",
-                                                 fig, axs_slp1, axs_slp2, axs_slp3)
-    axs_slp_list = [axs_slp1, axs_slp2, axs_slp3]
-    label_axis(axs_slp_list, "D", xpos=-0.1, ypos=1.1)
-
-    # Plot pattern projections
-    axs_pat1 = fig.add_subplot(gs[6, 0])
-    axs_pat2 = fig.add_subplot(gs[6, 2])
-    axs_pat3 = fig.add_subplot(gs[6, 4])
-    plot_patterns(axs_pat1, axs_pat2, axs_pat3, 0.05, -0.055, 1)
-
-    # Plot frequency distribution
-    axs_dist = fig.add_subplot(gs[9:10, 0:4])
-    plot_frequency_distribution(sc_data_df, "max_trace", fig,
-                               axs_dist, time_point='post_3', colors=None)
-    axs_dist.text(-0.07, 1, 'E', transform=axs_dist.transAxes,
+    axs_pat_ill.text(0.01,0.9,'B',transform=axs_pat_ill.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
-    move_axis([axs_dist], xoffset=0, yoffset=-0.03, pltscale=1)
+
+    axs_vpat1=fig.add_subplot(gs[3,0])
+    axs_vpat2=fig.add_subplot(gs[4,0])
+    axs_vpat3=fig.add_subplot(gs[5,0])
+    plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,-0.015,2)
+    axs_vpat1.text(-0.07,1.35,'C',transform=axs_vpat1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+
+    plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs,
+                              xoffset=0,yoffset=-0.01)
+    
+    
+    
+    
+    
+    
+    
+    
+
+    #plot amplitudes over time
+    feature_extracted_data =feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
+    cell_grp = feature_extracted_data.groupby(by="cell_ID")
+    axs_slp1 = fig.add_subplot(gs[7:9,0:2])
+    axs_slp1.set_ylabel("slope (mV/ms)")
+    axs_slp2 = fig.add_subplot(gs[7:9,2:4])
+    axs_slp2.set_yticklabels([])
+    axs_slp3 = fig.add_subplot(gs[7:9,4:6])
+    axs_slp3.set_yticklabels([])
+    plot_field_normalised_feature_multi_patterns(sc_data_df,"max_trace",
+                                                 fig,axs_slp1,axs_slp2,
+                                                 axs_slp3)
+    axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
+    label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
+
+    #plot pattern projections 
+    axs_pat1 = fig.add_subplot(gs[6,0])
+    axs_pat2 = fig.add_subplot(gs[6,2])
+    axs_pat3 = fig.add_subplot(gs[6,4])
+    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.055,1)
+
+
+
+
+
+    axs_dist = fig.add_subplot(gs[9:10,0:4])
+    plot_frequency_distribution(sc_data_df, "max_trace", fig, 
+                                axs_dist, time_point='post_3', 
+                                colors=None)
+    axs_dist.text(-0.07,1,'E',transform=axs_dist.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_dist],xoffset=0,yoffset=-0.03,pltscale=1)
+    
+    #axs_inr = fig.add_subplot(gs[9:10,3:6])
+    #inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
+    #axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
+    #         fontsize=16, fontweight='bold', ha='center', va='center')            
+
+
+    #axs_inrill = fig.add_subplot(gs[9:10,0:3])
+    #plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
+    #axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')            
+
+
+    #handles, labels = plt.gca().get_legend_handles_labels()
+    #by_label = dict(zip(labels, handles))
+    #fig.legend(by_label.values(), by_label.keys(), 
+    #           bbox_to_anchor =(0.5, 0.175),
+    #           ncol = 6,title="Legend",
+    #           loc='upper center')#,frameon=False)#,loc='lower center'    
+    #
 
     plt.tight_layout()
-    return fig
+    outpath = f"{outdir}/figure_2.png"
+    #outpath = f"{outdir}/figure_2.svg"
+    #outpath = f"{outdir}/figure_2.pdf"
+    plt.savefig(outpath,bbox_inches='tight')
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 
 
 def main():
-    """Main function using shared utilities system"""
+    # Argument parser.
     description = '''Generates figure 2'''
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--data-dir', type=str, default='.', 
-                       help='Base data directory')
-    parser.add_argument('--analysis-type', type=str, default='standard',
-                       choices=['standard', 'field_normalized'],
-                       help='Analysis type')
-    args = parser.parse_args()
+    parser.add_argument('--pikl-path', '-f'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with extracted features'
+                       )
+    parser.add_argument('--sortedcell-path', '-s'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data'
+                       )
+    parser.add_argument('--inR-path', '-r'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with inR data'
+                       )
+    parser.add_argument('--patillustration-path', '-m'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with inR data'
+                       )
+    parser.add_argument('--illustration-path', '-i'
+                        , required = False,default ='./', type=str
+                        , help = 'path to the image file in png format'
+                       )
 
-    # Initialize utilities
-    utils = PatternLearningUtils(config_path=os.path.join(args.data_dir, 'config.yaml'))
+    parser.add_argument('--inRillustration-path', '-p'
+                        , required = False,default ='./', type=str
+                        , help = 'path to the image file in png format'
+                       )
     
-    try:
-        # Load figure data using the utilities system
-        figure_data = utils.load_figure_data('figure_2', args.analysis_type)
-        
-        # Extract data components
-        pd_all_cells_mean = figure_data['pd_all_cells_mean']
-        all_cells_classified_dict = figure_data['all_cells_classified_dict']
-        all_cells_inR = figure_data['all_cells_inR']
-        figure_2_1 = figure_data['figure_2_1']
-        figure_2_2 = figure_data['figure_2_2']
-        figure_2_3 = figure_data['figure_2_3']
-        
-        # Generate figure
-        fig = plot_figure_2_new(pd_all_cells_mean, all_cells_classified_dict,
-                               all_cells_inR, figure_2_1, figure_2_2, figure_2_3,
-                               cell_to_plot, args.analysis_type)
-        
-        # Save figure using standardized output manager
-        saved_files = utils.output_manager.save_figure(
-            fig, 'figure_2', 'main_figures', args.analysis_type
-        )
-        
-        utils.logger.info(f"Figure 2 generated successfully: {saved_files}")
-        
-        plt.close(fig)
-        
-    except Exception as e:
-        utils.logger.error(f"Error generating Figure 2: {e}")
-        raise
+
+    parser.add_argument('--outdir-path','-o'
+                        ,required = False, default ='./', type=str
+                        ,help = 'where to save the generated figure image'
+                       )
+    #    parser.parse_args(namespace=args_)
+    args = parser.parse_args()
+    pklpath = Path(args.pikl_path)
+    scpath = Path(args.sortedcell_path)
+    inR_path = Path(args.inR_path)
+    illustration_path = Path(args.illustration_path)
+    patillustration_path =Path(args.patillustration_path) 
+    inRillustration_path = Path(args.inRillustration_path)
+    globoutdir = Path(args.outdir_path)
+    globoutdir= globoutdir/'Figure_2'
+    globoutdir.mkdir(exist_ok=True, parents=True)
+    print(f"pkl path : {pklpath}")
+    plot_figure_2(pklpath,scpath,inR_path,illustration_path,
+                  inRillustration_path,
+                  patillustration_path,
+                  globoutdir)
+    print(f"illustration path: {illustration_path}")
 
 
-if __name__ == '__main__':
-    import time
-    ts = time.time()
-    main()
-    tf = time.time()
-    print(f'Total time = {np.around(((tf-ts)/60), 1)} (mins)')
+
+
+if __name__  == '__main__':
+    #timing the run with time.time
+    ts =time.time()
+    main(**vars(args_)) 
+    tf =time.time()
+    print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

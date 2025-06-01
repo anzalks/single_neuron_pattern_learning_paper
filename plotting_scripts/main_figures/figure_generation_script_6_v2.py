@@ -27,21 +27,11 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import sys
-import os
-
-# Add the src directory to the path to import our shared utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
-                            subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
-
-
-# Initialize utilities
-utils = PatternLearningUtils()
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
+from PIL import ImageDraw, ImageFont
 
 # plot features are defines in bpf
-set_plot_properties()
+bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
@@ -67,15 +57,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,2)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -126,6 +116,35 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
         axs.set_position(new_pos)
 
 
+#def norm_values_all_trials(cell_list, val_to_plot):
+#    cell_list = cell_list.copy()
+#    # Group by 'cell_ID'
+#    cell_grp = cell_list.groupby(by="cell_ID")
+#    for c, cell in cell_grp:
+#        pat_grp = cell.groupby(by="frame_id")
+#        for p, pat in pat_grp:
+#            pre_val = pat[pat["pre_post_status"] == "pre"][val_to_plot].values
+#            #trial_grp = pat.groupby(by="trial_no")
+#            #for trial, trial_data in trial_grp:
+#            #    pre_val = trial_data[trial_data["pre_post_status"] == "pre"][val_to_plot].values
+#            if len(pre_val) == 0:
+#                continue
+#            else:
+#                pre_val = pre_val[0]  # Assuming there is only one 'pre' value per group
+#                pp_grp = pat.groupby(by="pre_post_status")
+#                for pr, pp in pp_grp:
+#                    norm_val = pp[val_to_plot].values
+#                    norm_val = (norm_val / pre_val) * 100
+#                    # Using vectorized operations for efficiency
+#                    mask_cell_ID = cell_list["cell_ID"] == c
+#                    mask_frame_id = cell_list["frame_id"] == p
+#                    mask_pre_post_status = cell_list["pre_post_status"] == pr
+#                    #mask_trial_no = cell_list["trial_no"] == trial
+#                    combined_mask = mask_cell_ID & mask_frame_id & mask_pre_post_status
+#                    cell_list.loc[combined_mask, val_to_plot] = norm_val
+#    return cell_list
+
+
 def norm_values_all_trials(cell_list, val_to_plot):
     """
     Normalize values in 'cell_list' based on their corresponding 'pre' values within each frame and pre-post status.
@@ -166,6 +185,8 @@ def norm_values_all_trials(cell_list, val_to_plot):
     return cell_list
 
 
+
+
 def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_type, axs1, axs2, axs3):
     """
     Plot field amplitudes as a time series for different pre-post statuses and patterns.
@@ -184,9 +205,9 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
 
     patterns = pd_cell_data_mean["frame_id"].unique()
     if cell_type == "learners":
-        pltcolor = CB_color_cycle[0]
+        pltcolor = bpf.CB_color_cycle[0]
     else:
-        pltcolor = CB_color_cycle[1]
+        pltcolor = bpf.CB_color_cycle[1]
 
     axslist = [axs1, axs2, axs3]
     learnt_pat_post_3_mean = pd_cell_data_mean[
@@ -202,7 +223,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
             g = sns.stripplot(
                 data=pd_cell_data_mean[pd_cell_data_mean["frame_id"] == pat_num],
                 x="pre_post_status", y=trace_property,
-                alpha=0.8, color=CB_color_cycle[6],
+                alpha=0.8, color=bpf.CB_color_cycle[6],
                 order=order, ax=axslist[ax_no], label=pat_num
             )
 
@@ -244,7 +265,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
                 data=pd_cell_data_mean[pd_cell_data_mean["frame_id"] == pat_num],
                 x="pre_post_status", y=trace_property, order=order
             )
-            annotator.set_custom_annotations([convert_pvalue_to_asterisks(a) for a in pvalList])
+            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
             annotator.annotate()
 
             # Customize labels for learners and non-learners
@@ -275,6 +296,115 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
         g.legend_.remove()
 
 
+#def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_type,axs1,axs2,axs3):
+#    pd_cell_data_mean = pd_cell_data_mean[pd_cell_data_mean["pre_post_status"]!="post_4"]
+#    order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
+#    pd_cell_data_mean_cell_grp = pd_cell_data_mean.groupby(by='cell_ID')
+#    
+#    #cells_ =[]
+#    #for c, cell in pd_cell_data_mean_cell_grp:
+#    #    cell["min_f_norm"] = cell["min_field"]
+#    #    pat_grp = cell.groupby(by="frame_id")
+#    #    for pa, pat in pat_grp:
+#    #        if "pattern" in pa:
+#    #            #print(pa)
+#    #            pat_num = int(pa.split("_")[-1])
+#    #            pps = pat["pre_post_status"].unique()
+#    #            pre_minf_resp = float(pat[pat["pre_post_status"]=="pre"][trace_property])
+#    #            
+#    #            #print(f"pre_minf_resp={np.abs(pre_minf_resp)}")
+#    #            for p in pps:
+#    #                cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),trace_property] = np.abs(pat[pat["pre_post_status"]==f"{p}"][trace_property])/np.abs(pre_minf_resp)*100
+#    #                field_raw = cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),trace_property]
+#    #                #print(f'pps= {p}:::: field: {field_raw}')
+#    #                pl_dat = cell[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}")]
+#    #                replaced_ = cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),trace_property]
+#    #            #sns.stripplot(data=pat,x="pre_post_status", y= "min_f_norm", ax=axs[pat_num])
+#    #            
+#    #        else:
+#    #            continue
+#    #    cell=cell[cell["frame_status"]!="point"]
+#    #    cells_.append(cell)            
+#
+#    #pd_cell_data_mean= pd.concat(cells_)
+#    pd_cell_data_mean = norm_values_all_trials(pd_cell_data_mean, trace_property)
+#    #sns.stripplot(data=pd_cell_data_mean,x="pre_post_status", y= "min_field", hue="cell_ID", alpha=0.5, palette="colorblind")
+#    patterns = pd_cell_data_mean["frame_id"].unique()
+#    cb_cyclno = [5,1,0]
+#    if cell_type=="learners":
+#        pltcolor = bpf.CB_color_cycle[0]
+#    else:
+#        pltcolor= bpf.CB_color_cycle[1]
+#
+#    axslist = [axs1,axs2,axs3]
+#    learnt_pat_post_3_mean = pd_cell_data_mean[(pd_cell_data_mean["frame_id"]=="pattern_0")&(pd_cell_data_mean["pre_post_status"]=="post_3")][trace_property].mean()
+#    for pat_num in patterns:
+#        if "pattern" in pat_num:
+#            ax_no = int(pat_num.split("_")[-1])
+#            g= sns.stripplot(data=pd_cell_data_mean[pd_cell_data_mean["frame_id"]==pat_num],x="pre_post_status",
+#                          y= trace_property, alpha=0.8, color=bpf.CB_color_cycle[6], order=order, ax=axslist[ax_no],label=pat_num)
+#            sns.pointplot(data=pd_cell_data_mean[pd_cell_data_mean["frame_id"]==pat_num],x="pre_post_status",
+#                          y= trace_property,
+#                          color=pltcolor,errorbar="sd",capsize=0.1,
+#                          order=order, ax=axslist[ax_no], label=pat_num)
+#
+#            pps_grp  = pd_cell_data_mean.groupby(by="pre_post_status")
+#            sns.despine(fig=None, ax=axslist[ax_no], top=True, right=True, left=False, bottom=False, offset=None, trim=False)
+#
+#            pvalList = []
+#            anotp_list = []
+#            for i in order[1:]:
+#                posti ="post{i}"
+#                posti=spst.wilcoxon(pd_cell_data_mean[(pd_cell_data_mean["pre_post_status"]=='pre')&(pd_cell_data_mean["frame_id"]==pat_num)]["min_field"],pd_cell_data_mean[(pd_cell_data_mean["pre_post_status"]==i)&(pd_cell_data_mean["frame_id"]==pat_num)][trace_property],zero_method="wilcox", correction=True)
+#                pvalList.append(posti.pvalue)
+#                anotp_list.append(("pre",i))
+#            annotator = Annotator(axslist[ax_no],anotp_list,data=pat_num, x="pre_post_status",y=trace_property,order=order)
+#            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
+#            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+#            #annotator.annotate()
+#            #"""
+#            axslist[ax_no].axhline(100,color='k', linestyle=':', alpha=0.4,linewidth=2)
+#            axslist[ax_no].axhline(learnt_pat_post_3_mean, color='r', linestyle='-.', alpha=0.5,linewidth=2)
+#            axslist[ax_no].set_xticklabels(["pre","0", "10", "20","30"])
+#            #axs[ax_no].axhline(125, color='r', linestyle=':', alpha=0.6,linewidth=3)
+#
+#
+#
+#            handles, labels = axslist[ax_no].get_legend_handles_labels()
+#            if g.legend_ is not None:
+#                g.legend_.remove()
+#            if cell_type=="learners":
+#                g.set_xlabel(None)
+#                g.set_xticklabels([])
+#                if pat_num=="pattern_0":
+#                    g.set_ylabel("field response\n%change")
+#
+#                else:
+#                    g.set_ylabel(None)
+#                    g.set_yticklabels([])
+#                    pass
+#                if pat_num=="pattern_1":
+#                    #g.set_title(cell_type)
+#                    g.set_xlabel(None)
+#                else:
+#                    g.set_title(None)
+#            else:
+#                if pat_num=="pattern_1":
+#                    g.set_xlabel("time points (mins)")
+#                    #g.set_title(cell_type)
+#                else:
+#                    #g.set_title(None)
+#                    g.set_xlabel(None)
+#                if pat_num=="pattern_0":
+#                    g.set_ylabel("field response\n%change")
+#                else:
+#                    g.set_ylabel(None)
+#                    g.set_yticklabels([])
+#            g.set_ylim(-50,250)
+#        else:
+#            pass
+
+
 def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot, 
                     cell_type,fig, axs):
     df_cells=df_cells.copy()
@@ -288,19 +418,19 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot,
     x_pre=np.array(df_cells[(df_cells["pre_post_status"]=="pre")&(df_cells["frame_id"]==pattern_num)]["pre_post_status"])
     x_post=np.array(df_cells[(df_cells["pre_post_status"]==timepoint_to_plot)&(df_cells["frame_id"]==pattern_num)]["pre_post_status"])
     if cell_type=="learners":
-        pltcolor = CB_color_cycle[0]
+        pltcolor = bpf.CB_color_cycle[0]
     else:
-        pltcolor= CB_color_cycle[1]
+        pltcolor= bpf.CB_color_cycle[1]
 
-    axs.scatter(x_pre,pre_pat0,color=CB_color_cycle[6],alpha=0.8)
-    axs.scatter(x_post,post4_pat0,color=CB_color_cycle[6],alpha=0.8)
+    axs.scatter(x_pre,pre_pat0,color=bpf.CB_color_cycle[6],alpha=0.8)
+    axs.scatter(x_post,post4_pat0,color=bpf.CB_color_cycle[6],alpha=0.8)
     for i in range(len(x_pre)):
-        axs.plot([x_pre[i], x_post[i]], [pre_pat0[i], post4_pat0[i]], color=CB_color_cycle[6],alpha=0.8, linestyle='--')
+        axs.plot([x_pre[i], x_post[i]], [pre_pat0[i], post4_pat0[i]], color=bpf.CB_color_cycle[6],alpha=0.8, linestyle='--')
     
     sns.pointplot(data=df_cells[(df_cells["pre_post_status"]==timepoint_to_plot)&(df_cells["frame_id"]==pattern_num)],
                   x="pre_post_status",y=field_to_plot,color=pltcolor,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response post training")
     sns.pointplot(data=df_cells[(df_cells["pre_post_status"]=="pre")&(df_cells["frame_id"]==pattern_num)],
-                  x="pre_post_status",y=field_to_plot,color=pre_color,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response pre training")
+                  x="pre_post_status",y=field_to_plot,color=bpf.pre_color,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response pre training")
     #axs.scatter(pre_pat0,post4_pat0)
     #axs.plot(pre_pat0,post4_pat0)
 
@@ -311,7 +441,7 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot,
     anotp_list=("pre",timepoint_to_plot)
     annotator = Annotator(axs,[anotp_list],data=df_cells[(df_cells["frame_id"]==pattern_num)], x="pre_post_status",y=field_to_plot,order=order)
 
-    annotator.set_custom_annotations([convert_pvalue_to_asterisks(pvalList)])
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
     sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
     
@@ -341,6 +471,214 @@ def plot_field_response_pairs(df_cells,feature,timepoint,cell_grp_type,nomr_stat
     plot_raw_points(df_cells,"pattern_0",feature,timepoint, cell_grp_type, fig, axs1)
     plot_raw_points(df_cells,"pattern_1",feature,timepoint, cell_grp_type, fig, axs2)
     plot_raw_points(df_cells,"pattern_2",feature,timepoint, cell_grp_type, fig, axs3)
+
+#def plot_minf_compare_all_pat(df_cells,sc_data_dict,fig,axs):
+#    learners=sc_data_dict["ap_cells"]["cell_ID"].unique()
+#    non_learners=sc_data_dict["an_cells"]["cell_ID"].unique()
+#    cell_grp= df_cells.groupby(by="cell_ID")
+#    order=np.array(["post_3"])
+#    cells_ =[]
+#    for c, cell in cell_grp:
+#        cell["min_f_norm"] = cell["min_field"]
+#        pat_grp = cell.groupby(by="frame_id")
+#        for pa, pat in pat_grp:
+#            if "pattern" in pa:
+#                #print(pa)
+#                pat_num = int(pa.split("_")[-1])
+#                pps = pat["pre_post_status"].unique()
+#                pre_minf_resp = float(pat[pat["pre_post_status"]=="pre"]["min_field"])
+#                #print(f"pre_minf_resp={np.abs(pre_minf_resp)}")
+#                for p in pps:
+#                    cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]= np.abs(pat[pat["pre_post_status"]==f"{p}"]["min_field"])/np.abs(pre_minf_resp)*100
+#                    field_raw = cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]
+#                    #print(f'pps= {p}:::: field: {field_raw}')
+#                    pl_dat = cell[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}")]
+#                    replaced_ =  cell.loc[(cell["frame_id"]==f"{pa}")&(cell["pre_post_status"]==f"{p}"),"min_field"]
+#            else:
+#                continue
+#            cell=cell[cell["frame_status"]!="point"]
+#            cells_.append(cell)            
+#    all_cell_df= pd.concat(cells_)
+#    cell_grp= all_cell_df.groupby(by="cell_ID") 
+#    learners_all_pat =  all_cell_df[(all_cell_df["cell_ID"].isin(learners))&(all_cell_df["pre_post_status"]=="post_3")]
+#    print(learners_all_pat)
+#    non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners))&(all_cell_df["pre_post_status"]=="post_3")]
+#    sns.pointplot(data=learners_all_pat,x="frame_id",y="min_field",
+#                  color=bpf.CB_color_cycle[0], ax=axs,errorbar='sd',
+#                  capsize=0.15)
+#    sns.pointplot(data=non_learners_all_pat,x="frame_id",y="min_field",
+#                  color=bpf.CB_color_cycle[1], ax=axs,errorbar='sd',
+#                  capsize=0.15)
+#    axs.spines[['right', 'top']].set_visible(False)
+#    axs.set_xticklabels(["trained\npattern","overlapping\npattern",
+#                        "non-overlapping\npattern"
+#                        ],rotation=30)
+#    axs.set_ylabel("% change in field")
+#    axs.set_xlabel("patterns")
+
+
+
+#def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
+#    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
+#    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
+#    cell_grp = df_cells.groupby(by="cell_ID")
+#    order = np.array(["post_3"])
+#    cells_ = []
+#
+#    # Process the data and normalize 'min_field' values
+#    for c, cell in cell_grp:
+#        cell["min_f_norm"] = cell["min_field"]
+#        pat_grp = cell.groupby(by="frame_id")
+#        for pa, pat in pat_grp:
+#            if "pattern" in pa:
+#                pat_num = int(pa.split("_")[-1])
+#                pps = pat["pre_post_status"].unique()
+#                pre_minf_resp = np.abs(float(pat[pat["pre_post_status"] =="pre"]["min_field"]))
+#                for p in pps:
+#                    cell.loc[(cell["frame_id"] == f"{pa}") &
+#                             (cell["pre_post_status"] == f"{p}"), 
+#                             "min_f_norm"]=  np.abs(pat[pat["pre_post_status"] ==f"{p}"]["min_field"]) / pre_minf_resp* 100
+#            else:
+#                continue
+#            cell = cell[cell["frame_status"] != "point"]
+#            cells_.append(cell)
+#
+#    # Combine all processed cells
+#    all_cell_df = pd.concat(cells_)
+#    cell_grp = all_cell_df.groupby(by="cell_ID")
+#    
+#    # Separate learners and non-learners for 'post_3'
+#    learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(learners)) & (all_cell_df["pre_post_status"] == "post_3")]
+#    non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners)) & (all_cell_df["pre_post_status"] == "post_3")]
+#
+#    # Plot learners and non-learners
+#    sns.stripplot(data=learners_all_pat, x="frame_id", y="min_f_norm",
+#                  color=bpf.CB_color_cycle[0], alpha=0.2, ax=axs,zorder=1)    
+#    sns.stripplot(data=non_learners_all_pat, x="frame_id", y="min_f_norm",
+#                  color=bpf.CB_color_cycle[1],alpha=0.2, ax=axs, zorder=1)
+#    sns.pointplot(data=learners_all_pat, x="frame_id", y="min_f_norm",
+#                  color=bpf.CB_color_cycle[0], ax=axs, errorbar='sd', 
+#                  capsize=0.15, zorder=2)
+#    sns.pointplot(data=non_learners_all_pat, x="frame_id", y="min_f_norm",
+#                  color=bpf.CB_color_cycle[1], ax=axs, errorbar='sd', 
+#                  capsize=0.15, zorder=2)
+#    # Set x and y labels and customize the plot
+#    axs.spines[['right', 'top']].set_visible(False)
+#    axs.set_xticklabels(["trained\npattern", "overlapping\npattern", "non-overlapping\npattern"], rotation=30)
+#    axs.set_ylabel("% change in field")
+#    #axs.set_ylabel("LFP (mV)")
+#    axs.axhline(100,linestyle=':',color='k',alpha=0.5)
+#    axs.set_xlabel("patterns")
+#
+#    # Check the actual values in the "frame_id" column
+#    print(all_cell_df["frame_id"].unique())  # This will show the actual values
+#
+#    # Perform Mann-Whitney U test for each pattern
+#    patterns = all_cell_df["frame_id"].unique()  # Use actual unique pattern names from data
+#    p_values = []
+#    for pattern in patterns:
+#        learners_data = learners_all_pat[learners_all_pat["frame_id"] == pattern]["min_field"]
+#        non_learners_data = non_learners_all_pat[non_learners_all_pat["frame_id"] == pattern]["min_field"]
+#        stat_test = spst.mannwhitneyu(learners_data, non_learners_data, alternative='two-sided')
+#        p_values.append(stat_test.pvalue)
+#
+#    # Create a custom Annotator for the significance levels
+#    annotator = Annotator(axs, [(patterns[0], patterns[0]),
+#                                (patterns[1], patterns[1]),
+#                                (patterns[2], patterns[2])],
+#                          data=all_cell_df, x="frame_id", y="min_field")
+#    
+#    # Set custom annotations using p-value converted to asterisks and annotate
+#    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(p) for p in p_values])
+#    annotator.annotate()
+#    axs.set_ylim(10,250)
+
+
+
+
+
+#def plot_minf_compare_all_pat(data_learners, data_non_learners, trace_property, fig, axs1, axs2, axs3):
+#    """
+#    Plot field amplitudes as a time series for learners and non-learners on the same axis
+#    for hard-coded patterns: ["pattern_0", "pattern_1", "pattern_2"].
+#
+#    Parameters:
+#    - data_learners (pd.DataFrame): DataFrame containing data for learners.
+#    - data_non_learners (pd.DataFrame): DataFrame containing data for non-learners.
+#    - trace_property (str): Column name of the property to plot.
+#    - fig (matplotlib.figure.Figure): The figure object for the plot.
+#    - axs1, axs2, axs3 (matplotlib.axes.Axes): Axes objects for the plots, one for each pattern.
+#    """
+#    # Define the specific patterns to plot
+#    patterns = ["pattern_0", "pattern_1", "pattern_2"]
+#    axslist = [axs1, axs2, axs3]
+#
+#    # Filter data for the specific patterns
+#    data_learners = data_learners[(data_learners["pre_post_status"] != "post_4") &
+#                                   (data_learners["frame_id"].isin(patterns))]
+#    data_non_learners = data_non_learners[(data_non_learners["pre_post_status"] != "post_4") &
+#                                          (data_non_learners["frame_id"].isin(patterns))]
+#
+#    # Normalize values for both datasets
+#    data_learners = norm_values_all_trials(data_learners, trace_property)
+#    data_non_learners = norm_values_all_trials(data_non_learners, trace_property)
+#
+#    # Define x-axis order and assign colors
+#    order = np.array(("pre", "post_0", "post_1", "post_2", "post_3"), dtype=object)
+#
+#    for pat_num, ax in zip(patterns, axslist):
+#        # Filter data for the current pattern
+#        learners_pattern_data = data_learners[data_learners["frame_id"] == pat_num]
+#        non_learners_pattern_data = data_non_learners[data_non_learners["frame_id"] == pat_num]
+#
+#        # Plot stripplot for learners
+#        sns.stripplot(data=learners_pattern_data, x="pre_post_status", y=trace_property,
+#                      alpha=0.8, color=bpf.CB_color_cycle[6], order=order, ax=ax)
+#
+#        # Plot pointplot for learners
+#        sns.pointplot(data=learners_pattern_data, x="pre_post_status", y=trace_property,
+#                      color=bpf.CB_color_cycle[0], errorbar="sd", capsize=0.1, order=order, ax=ax)
+#
+#        # Plot stripplot for non-learners
+#        sns.stripplot(data=non_learners_pattern_data, x="pre_post_status", y=trace_property,
+#                      alpha=0.8, color=bpf.CB_color_cycle[6], order=order, ax=ax)
+#
+#        # Plot pointplot for non-learners
+#        sns.pointplot(data=non_learners_pattern_data, x="pre_post_status", y=trace_property,
+#                      color=bpf.CB_color_cycle[1], errorbar="sd", capsize=0.1, order=order, ax=ax)
+#
+#        # Customize axis
+#        ax.axhline(100, color="k", linestyle=":", alpha=0.4, linewidth=2)
+#        ax.set_xticklabels(["pre", "0", "10", "20", "30"])
+#        ax.set_ylim(-50, 250)
+#        sns.despine(fig=None, ax=ax, top=True, right=True, left=False, bottom=False)
+#
+#        # Add annotations
+#        pvalList = []
+#        anotp_list = []
+#        for i in order[1:]:
+#            posti = spst.wilcoxon(
+#                learners_pattern_data[learners_pattern_data["pre_post_status"] == "pre"][trace_property],
+#                learners_pattern_data[learners_pattern_data["pre_post_status"] == i][trace_property],
+#                zero_method="wilcox", correction=True
+#            )
+#            pvalList.append(posti.pvalue)
+#            anotp_list.append(("pre", i))
+#
+#        annotator = Annotator(
+#            ax, anotp_list,
+#            data=learners_pattern_data, x="pre_post_status", y=trace_property, order=order
+#        )
+#        annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+#
+#        # Customize labels and titles
+#        ax.set_ylabel("field response\n%change" if pat_num == "pattern_0" else None)
+#        ax.set_xlabel("time points (mins)" if pat_num == "pattern_1" else None)
+#        ax.set_title(f"Pattern: {pat_num}")
+#
+#        if ax.legend_ is not None:
+#            ax.legend_.remove()
+
 
 def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig, ax):
     """
@@ -380,11 +718,11 @@ def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig
     
     # Plot learners
     sns.pointplot(data=data_learners, x="pattern_order", y=trace_property, 
-                  color=CB_color_cycle[0], errorbar="sd", capsize=0.1, ax=ax)
+                  color=bpf.CB_color_cycle[0], errorbar="sd", capsize=0.1, ax=ax)
 
     # Plot non-learners
     sns.pointplot(data=data_non_learners, x="pattern_order", y=trace_property, 
-                  color=CB_color_cycle[1], errorbar="sd", capsize=0.1, ax=ax)
+                  color=bpf.CB_color_cycle[1], errorbar="sd", capsize=0.1, ax=ax)
 
     # Define Wilcoxon test pairs
     wilcoxon_pairs = [("pattern_0", "pattern_1"), ("pattern_1", "pattern_2"), ("pattern_0", "pattern_2")]
@@ -419,7 +757,7 @@ def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig
     # Annotate Wilcoxon significance with group labels (only significant ones)
     if pairs_wilcoxon:  # Only annotate if there are significant pairs
         custom_annotations = [
-            f"{label}: {convert_pvalue_to_asterisks(p)}" for p, label in zip(p_values_wilcoxon, labels_wilcoxon)
+            f"{label}: {bpf.convert_pvalue_to_asterisks(p)}" for p, label in zip(p_values_wilcoxon, labels_wilcoxon)
         ]
         annotator_wilcoxon = Annotator(ax, pairs_wilcoxon, data=combined_data, x="pattern_order", y=trace_property)
         annotator_wilcoxon.set_custom_annotations(custom_annotations)
@@ -437,6 +775,180 @@ def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig
 
     ## Add title
     #ax.set_title("Post_3 Response by Pattern")
+
+
+#everything include annotator works but the distance is not fixed for annotator
+#from statannotations.Annotator import Annotator
+#
+#def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig, ax):
+#    """
+#    Plot the last time point (post_3) for all patterns (pattern_0, pattern_1, pattern_2)
+#    on a single axis as a combination of stripplot and pointplot for learners and non-learners,
+#    with Mann-Whitney U test (between learners and non-learners) and Wilcoxon signed-rank test
+#    (within learners and non-learners) for specific pairs of patterns.
+#
+#    Parameters:
+#    - data_learners (pd.DataFrame): DataFrame containing data for learners.
+#    - data_non_learners (pd.DataFrame): DataFrame containing data for non-learners.
+#    - trace_property (str): Column name of the property to plot.
+#    - fig (matplotlib.figure.Figure): Figure object for the plot.
+#    - ax (matplotlib.axes.Axes): Axis object for the plot.
+#    """
+#    # Hard-code the patterns and time point
+#    patterns = ["pattern_0", "pattern_1", "pattern_2"]
+#    time_point = "post_3"
+#
+#    # Filter for specific patterns
+#    data_learners = data_learners[data_learners["frame_id"].isin(patterns)]
+#    data_non_learners = data_non_learners[data_non_learners["frame_id"].isin(patterns)]
+#
+#    # Normalize values after filtering for patterns
+#    data_learners = norm_values_all_trials(data_learners, trace_property)
+#    data_non_learners = norm_values_all_trials(data_non_learners, trace_property)
+#
+#    # Further filter for the specific time point
+#    data_learners = data_learners[data_learners["pre_post_status"] == time_point]
+#    data_non_learners = data_non_learners[data_non_learners["pre_post_status"] == time_point]
+#
+#    # Add a new column for the x-axis position
+#    data_learners["pattern_order"] = data_learners["frame_id"].map({p: i for i, p in enumerate(patterns)})
+#    data_non_learners["pattern_order"] = data_non_learners["frame_id"].map({p: i for i, p in enumerate(patterns)})
+#
+#    # Combine datasets for statistical testing
+#    combined_data = pd.concat([data_learners, data_non_learners])
+#    
+#    # Plot learners
+#    #sns.stripplot(data=data_learners, x="pattern_order", y=trace_property, 
+#    #              color=bpf.CB_color_cycle[6], alpha=0.8, ax=ax)
+#    sns.pointplot(data=data_learners, x="pattern_order", y=trace_property, 
+#                  color=bpf.CB_color_cycle[0], errorbar="sd", capsize=0.1, ax=ax)
+#
+#    # Plot non-learners
+#    #sns.stripplot(data=data_non_learners, x="pattern_order", y=trace_property, 
+#    #              color=bpf.CB_color_cycle[6], alpha=0.8, ax=ax)
+#    sns.pointplot(data=data_non_learners, x="pattern_order", y=trace_property, 
+#                  color=bpf.CB_color_cycle[1], errorbar="sd", capsize=0.1, ax=ax)
+#
+#    ## Perform Mann-Whitney U test for each pattern
+#    #p_values_mann = []
+#    #pairs_mann = []
+#    #for pattern in patterns:
+#    #    pattern_order = patterns.index(pattern)
+#    #    learners_values = data_learners[data_learners["frame_id"] == pattern][trace_property]
+#    #    non_learners_values = data_non_learners[data_non_learners["frame_id"] == pattern][trace_property]
+#    #    if not learners_values.empty and not non_learners_values.empty:
+#    #        stat_test = spst.mannwhitneyu(learners_values, non_learners_values, alternative='two-sided')
+#    #        p_values_mann.append(stat_test.pvalue)
+#    #        pairs_mann.append((pattern_order, pattern_order))  # x-axis locations for annotation
+#
+#    ## Annotate Mann-Whitney U significance
+#    #annotator_mann = Annotator(ax, pairs_mann, data=combined_data, x="pattern_order", y=trace_property)
+#    #annotator_mann.set_custom_annotations([f"U-test {bpf.convert_pvalue_to_asterisks(p)}" for p in p_values_mann])
+#    #annotator_mann.annotate()
+#
+#    # Define Wilcoxon test pairs
+#    wilcoxon_pairs = [("pattern_0", "pattern_1"), ("pattern_1", "pattern_2"), ("pattern_0", "pattern_2")]
+#    p_values_wilcoxon = []
+#    pairs_wilcoxon = []
+#    labels_wilcoxon = []  # Track group labels (learners or non-learners)
+#
+#    for pattern1, pattern2 in wilcoxon_pairs:
+#        pattern_order1 = patterns.index(pattern1)
+#        pattern_order2 = patterns.index(pattern2)
+#
+#        # Learners
+#        learners_values1 = data_learners[data_learners["frame_id"] == pattern1][trace_property]
+#        learners_values2 = data_learners[data_learners["frame_id"] == pattern2][trace_property]
+#        if not learners_values1.empty and not learners_values2.empty:
+#            stat_test_learners = spst.wilcoxon(learners_values1, learners_values2, alternative='two-sided')
+#            p_values_wilcoxon.append(stat_test_learners.pvalue)
+#            pairs_wilcoxon.append((pattern_order1, pattern_order2))
+#            labels_wilcoxon.append("Learners")
+#
+#        # Non-learners
+#        non_learners_values1 = data_non_learners[data_non_learners["frame_id"] == pattern1][trace_property]
+#        non_learners_values2 = data_non_learners[data_non_learners["frame_id"] == pattern2][trace_property]
+#        if not non_learners_values1.empty and not non_learners_values2.empty:
+#            stat_test_non_learners = spst.wilcoxon(non_learners_values1, non_learners_values2, alternative='two-sided')
+#            p_values_wilcoxon.append(stat_test_non_learners.pvalue)
+#            pairs_wilcoxon.append((pattern_order1, pattern_order2))
+#            labels_wilcoxon.append("Non-Learners")
+#
+#    # Annotate Wilcoxon significance with group labels
+#    custom_annotations = [
+#        f"{label}: {bpf.convert_pvalue_to_asterisks(p)}" for p, label in zip(p_values_wilcoxon, labels_wilcoxon)
+#    ]
+#    annotator_wilcoxon = Annotator(ax, pairs_wilcoxon, data=combined_data, x="pattern_order", y=trace_property)
+#    annotator_wilcoxon.set_custom_annotations(custom_annotations)
+#    annotator_wilcoxon.annotate()
+#
+#    # Customize axis
+#    ax.set_xticks(range(len(patterns)))
+#    ax.set_xticklabels(["Pattern 0", "Pattern 1", "Pattern 2"])
+#    ax.set_ylabel("% change in LFP")
+#    ax.set_ylim(50, 250)
+#    ax.axhline(100, color="k", linestyle=":", alpha=0.5)
+#    sns.despine(fig=fig, ax=ax, top=True, right=True)
+#
+#    # Add title
+#    ax.set_title("Post_3 Response by Pattern")
+
+
+##everything works but no annotation yet
+#def plot_last_point_post_3(data_learners, data_non_learners, trace_property, fig, ax):
+#    """
+#    Plot the last time point (post_3) for all patterns (pattern_0, pattern_1, pattern_2)
+#    on a single axis as a combination of stripplot and pointplot for learners and non-learners.
+#
+#    Parameters:
+#    - data_learners (pd.DataFrame): DataFrame containing data for learners.
+#    - data_non_learners (pd.DataFrame): DataFrame containing data for non-learners.
+#    - trace_property (str): Column name of the property to plot.
+#    - fig (matplotlib.figure.Figure): Figure object for the plot.
+#    - ax (matplotlib.axes.Axes): Axis object for the plot.
+#    """
+#    # Hard-code the patterns and time point
+#    patterns = ["pattern_0", "pattern_1", "pattern_2"]
+#    time_point = "post_3"
+#
+#    # Filter for specific patterns
+#    data_learners = data_learners[data_learners["frame_id"].isin(patterns)]
+#    data_non_learners = data_non_learners[data_non_learners["frame_id"].isin(patterns)]
+#
+#    # Normalize values after filtering for patterns
+#    data_learners = norm_values_all_trials(data_learners, trace_property)
+#    data_non_learners = norm_values_all_trials(data_non_learners, trace_property)
+#
+#    # Further filter for the specific time point
+#    data_learners = data_learners[data_learners["pre_post_status"] == time_point]
+#    data_non_learners = data_non_learners[data_non_learners["pre_post_status"] == time_point]
+#
+#    # Add a new column for the x-axis position
+#    data_learners["pattern_order"] = data_learners["frame_id"].map({p: i for i, p in enumerate(patterns)})
+#    data_non_learners["pattern_order"] = data_non_learners["frame_id"].map({p: i for i, p in enumerate(patterns)})
+#
+#    # Plot learners
+#    #sns.stripplot(data=data_learners, x="pattern_order", y=trace_property, 
+#    #              color=bpf.CB_color_cycle[6], alpha=0.8, ax=ax)
+#    sns.pointplot(data=data_learners, x="pattern_order", y=trace_property, 
+#                  color=bpf.CB_color_cycle[0], errorbar="sd", capsize=0.1, ax=ax)
+#
+#    # Plot non-learners
+#    #sns.stripplot(data=data_non_learners, x="pattern_order", y=trace_property, 
+#    #              color=bpf.CB_color_cycle[6], alpha=0.8, ax=ax)
+#    sns.pointplot(data=data_non_learners, x="pattern_order", y=trace_property, 
+#                  color=bpf.CB_color_cycle[1], errorbar="sd", capsize=0.1, ax=ax)
+#
+#    # Customize axis
+#    ax.set_xticks(range(len(patterns)))
+#    ax.set_xticklabels(["Pattern 0", "Pattern 1", "Pattern 2"])
+#    ax.set_ylabel("% change in field")
+#    ax.set_ylim(50, 200)
+#    ax.axhline(100, color="k", linestyle=":", alpha=0.5)
+#    sns.despine(fig=fig, ax=ax, top=True, right=True)
+#
+#    # Add title
+#    ax.set_title("Post_3 Response by Pattern")
 
 
 def plot_figure_6(extracted_feature_pickle_file_path,
@@ -525,6 +1037,13 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     #axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
     #label_axis(axs_ex_fl_list,"C")    
     #axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
+    #axs_in_fl2 = fig.add_subplot(gs[7:9,2:4])
+    #axs_in_fl3 = fig.add_subplot(gs[7:9,4:6])
+    #plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
+    #                                  "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
+    #axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
+    #label_axis(axs_in_fl_list,"D")
+    #axs_all_field = fig.add_subplot(gs[9:11,0:2])
     ##plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     ##                         axs_all_field)
     ##axs_all_field1= fig.add_subplot(gs[9:11,0:2])
@@ -647,136 +1166,51 @@ def plot_figure_6(extracted_feature_pickle_file_path,
 
 
 def main():
-    """Main function using shared utilities system"""
+    # Argument parser.
     description = '''Generates figure 6'''
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--data-dir', type=str, default='.', 
-                       help='Base data directory')
-    parser.add_argument('--analysis-type', type=str, default='standard',
-                       choices=['standard', 'field_normalized'],
-                       help='Analysis type')
+    parser.add_argument('--pikl-path', '-f'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with extracted features'
+                       )
+    parser.add_argument('--sortedcell-path', '-s'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data'
+                       )
+    parser.add_argument('--cellstat-path', '-c'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data'
+                       )
+    parser.add_argument('--illustration-path', '-i'
+                        , required = False,default ='./', type=str
+                        , help = 'path to the image file in png format'
+                       )
+
+    parser.add_argument('--outdir-path','-o'
+                        ,required = False, default ='./', type=str
+                        ,help = 'where to save the generated figure image'
+                       )
+    #    parser.parse_args(namespace=args_)
     args = parser.parse_args()
-
-    # Initialize utilities
-    utils = PatternLearningUtils(config_path=os.path.join(args.data_dir, 'config.yaml'))
-    
-    try:
-        # Load figure data using the utilities system
-        figure_data = utils.load_figure_data('figure_6', args.analysis_type)
-        
-        # Extract data components
-        pd_all_cells_mean = figure_data['pd_all_cells_mean']
-        all_cells_classified_dict = figure_data['all_cells_classified_dict']
-        figure_3_1 = figure_data['figure_3_1']
-        cell_stats = figure_data['cell_stats']
-        
-        # Generate figure using the loaded data
-        fig = plot_figure_6_new(pd_all_cells_mean, all_cells_classified_dict,
-                               cell_stats, args.analysis_type)
-        
-        # Save figure using standardized output manager
-        saved_files = utils.output_manager.save_figure(
-            fig, 'figure_6', 'main_figures', args.analysis_type
-        )
-        
-        utils.logger.info(f"Figure 6 generated successfully: {saved_files}")
-        
-        plt.close(fig)
-        
-    except Exception as e:
-        utils.logger.error(f"Error generating Figure 6: {e}")
-        raise
+    pklpath = Path(args.pikl_path)
+    scpath = Path(args.sortedcell_path)
+    illustration_path = Path(args.illustration_path)
+    cell_stat_path = Path(args.cellstat_path)
+    globoutdir = Path(args.outdir_path)
+    globoutdir= globoutdir/'Figure_6'
+    globoutdir.mkdir(exist_ok=True, parents=True)
+    print(f"pkl path : {pklpath}")
+    plot_figure_6(pklpath,scpath,cell_stat_path,globoutdir)
+    print(f"illustration path: {illustration_path}")
 
 
-def plot_figure_6_new(pd_all_cells_mean, all_cells_classified_dict, cell_stats, analysis_type):
-    """Generate Figure 6 using the loaded data"""
-    # Use existing plot_figure_6 function logic but adapted for new data loading
-    
-    # Convert new data format to the format expected by existing functions
-    pklpath = None  # Not needed with new approach
-    cell_categorised_pickle_file = all_cells_classified_dict  # Dict instead of path
-    cell_stats_pickle_file = cell_stats  # Data instead of path
-    
-    # Create temporary output directory (will be managed by utilities)
-    outdir = Path('temp_output')
-    outdir.mkdir(exist_ok=True, parents=True)
-    
-    # Call the adapted plot function with data objects instead of file paths
-    return plot_figure_6_adapted(pd_all_cells_mean, cell_categorised_pickle_file,
-                                cell_stats_pickle_file, outdir)
 
 
-def plot_figure_6_adapted(pd_all_cells_mean, all_cells_classified_dict, 
-                         cell_stats, outdir):
-    """Adapted version of plot_figure_6 that works with data objects instead of file paths"""
-    
-    set_plot_properties()
-    deselect_list = ["no_frame", "inR", "point"]
-    
-    # Use the data objects directly instead of loading from files
-    feature_extracted_data = pd_all_cells_mean
-    cell_stats_df = cell_stats
-    single_cell_df = feature_extracted_data.copy()
-    sc_data_dict = all_cells_classified_dict
-    sc_data_df = pd.concat([sc_data_dict["ap_cells"],
-                           sc_data_dict["an_cells"]]).reset_index(drop=True)
-    
-    # Define the width and height ratios
-    height_ratios = [0.2, 1, 1, 1, 1, 1, 1, 1]
-    width_ratios = [1, 1, 1, 1, 1, 1]
-
-    fig = plt.figure(figsize=(9, 14))
-    gs = GridSpec(8, 6, width_ratios=width_ratios,
-                  height_ratios=height_ratios, figure=fig)
-    gs.update(wspace=0.4, hspace=0.4)
-
-    # Plot patterns
-    axs_pat_fl1 = fig.add_subplot(gs[0:1, 0:1])
-    axs_pat_fl2 = fig.add_subplot(gs[0:1, 2:3])
-    axs_pat_fl3 = fig.add_subplot(gs[0:1, 4:5])
-    plot_patterns(axs_pat_fl1, axs_pat_fl2, axs_pat_fl3, 0.07, 0, 1)
-    axs_pat_list = [axs_pat_fl1, axs_pat_fl2, axs_pat_fl3]
-    move_axis(axs_pat_list, -0.02, 0, 1)
-
-    # Plot field amplitudes for learners
-    axs_ex_fl1 = fig.add_subplot(gs[1:3, 0:2])
-    axs_ex_fl2 = fig.add_subplot(gs[1:3, 2:4])
-    axs_ex_fl3 = fig.add_subplot(gs[1:3, 4:6])
-    plot_field_amplitudes_time_series(sc_data_dict["ap_cells"], "min_field",
-                                      "learners", axs_ex_fl1, axs_ex_fl2, axs_ex_fl3)
-    axs_ex_fl_list = [axs_ex_fl1, axs_ex_fl2, axs_ex_fl3]
-    label_axis(axs_ex_fl_list, "A")
-
-    # Plot field amplitudes for non-learners
-    axs_in_fl1 = fig.add_subplot(gs[3:5, 0:2])
-    axs_in_fl2 = fig.add_subplot(gs[3:5, 2:4])
-    axs_in_fl3 = fig.add_subplot(gs[3:5, 4:6])
-    plot_field_amplitudes_time_series(sc_data_dict["an_cells"], "min_field",
-                                      "non-learners", axs_in_fl1, axs_in_fl2, axs_in_fl3)
-    axs_in_fl_list = [axs_in_fl1, axs_in_fl2, axs_in_fl3]
-    label_axis(axs_in_fl_list, "B")
-
-    # Plot comparison
-    axs_all_field = fig.add_subplot(gs[5:7, 0:2])
-    plot_last_point_post_3(data_learners=sc_data_dict["ap_cells"],
-                          data_non_learners=sc_data_dict["an_cells"],
-                          trace_property="min_field",
-                          fig=fig,
-                          ax=axs_all_field)
-
-    move_axis([axs_all_field], 0, -0.02, 1)
-    axs_all_field.text(0.05, 1, 'C', transform=axs_all_field.transAxes,
-                       fontsize=16, fontweight='bold',
-                       ha='center', va='center')
-
-    plt.tight_layout()
-    
-    return fig
-
-
-if __name__ == '__main__':
-    import time
-    ts = time.time()
-    main()
-    tf = time.time()
-    print(f'Total time = {np.around(((tf-ts)/60), 1)} (mins)')
+if __name__  == '__main__':
+    #timing the run with time.time
+    ts =time.time()
+    main(**vars(args_)) 
+    tf =time.time()
+    print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

@@ -27,21 +27,10 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import sys
-import os
-
-# Add the src directory to the path to import our shared utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
-                            subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
-
-
-# Initialize utilities
-utils = PatternLearningUtils()
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 
 # plot features are defines in bpf
-set_plot_properties()
+bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
@@ -65,15 +54,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,2)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -148,18 +137,8 @@ def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
         ylim=(0,1.3)
     elif field_to_plot=="freq_mepsp":
         ylim=(0,10)
-    elif field_to_plot=="num_mepsp":
-        ylim=(0,50)
-    elif field_to_plot=="mepsp_time":
-        ylim=(0,100)
     else:
         ylim=(None,None)
-    
-    # Check if the required column exists
-    if field_to_plot not in cells_df.columns:
-        raise ValueError(f"Required column '{field_to_plot}' not found in data. "
-                        f"Available columns: {list(cells_df.columns)}")
-    
     order = np.array(["pre","post_3"])
     cells_df=cells_df.copy()
     data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
@@ -169,17 +148,17 @@ def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
     post_dat = learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot]
 
     sns.pointplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
-                 order=order,color=CB_color_cycle[0],
+                 order=order,color=bpf.CB_color_cycle[0],
                  errorbar='sd')
     sns.pointplot(data=non_learners_df,x="pre_post_status",
                   y=field_to_plot,ax=axs,order=order,
-                  color=CB_color_cycle[1],errorbar='sd')
+                  color=bpf.CB_color_cycle[1],errorbar='sd')
     stat_analysis= spst.wilcoxon(pre_dat,post_dat, zero_method="wilcox", correction=True)
     pvalList = stat_analysis.pvalue
     anotp_list=["pre","post_3"]
     annotator =Annotator(axs,[anotp_list], data=learners_df, 
                          x="pre_post_status",y=field_to_plot,order=order)
-    annotator.set_custom_annotations([convert_pvalue_to_asterisks(pvalList)])
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     #annotator.annotate()
     axs.set_title(field_to_plot)
     axs.set_ylabel(None)
@@ -191,18 +170,8 @@ def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non
         ylim=(0,1.3)
     elif field_to_plot=="freq_mepsp":
         ylim=(0,10)
-    elif field_to_plot=="num_mepsp":
-        ylim=(0,50)
-    elif field_to_plot=="mepsp_time":
-        ylim=(0,100)
     else:
         ylim=(None,None)
-    
-    # Check if the required column exists
-    if field_to_plot not in cells_df.columns:
-        raise ValueError(f"Required column '{field_to_plot}' not found in data. "
-                        f"Available columns: {list(cells_df.columns)}")
-    
     order = np.array(["learners","non_learners"])
     cells_df=cells_df.copy()
     data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
@@ -222,15 +191,22 @@ def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non
                               constant_values=np.nan)
     lrn_df = pd.DataFrame({"learners":learners_dat,"non_learners":non_learners_dat})
     long_df = lrn_df.melt(var_name='Category', value_name='Values')
+    #long_df['Values'] = pd.to_numeric(long_df['Values'], errors='coerce')
+
 
     sns.pointplot(data=long_df, x='Category', y='Values',ax=axs,
-                 color=CB_color_cycle[2],errorbar='sd')
+                 color=bpf.CB_color_cycle[2],errorbar='sd')
+    #lrn_df = pd.DataFrame("learners":learners_dat,"non-learners":non_learners_dat})
+    #
+    #sns.pointplot(data=lrn_df,x="learners",y="non-learners",ax=axs,
+    #              order=order,color=bpf.CB_color_cycle[0],
+    #              errorbar='sd')
     stat_analysis= spst.f_oneway(learners_dat,non_learners_dat)
     pvalList = stat_analysis.pvalue
     anotp_list=["learners","non_learners"]
     annotator =Annotator(axs,[anotp_list], data=long_df,
                          x="Category",y="Values",order=order)
-    annotator.set_custom_annotations([convert_pvalue_to_asterisks(pvalList)])
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
     axs.set_title(field_to_plot)
     axs.set_ylabel(None)
@@ -247,31 +223,19 @@ def plot_mini_distribution(df_cells,dict_cell_classified,
     learners = dict_cell_classified["ap_cells"]["cell_ID"].unique()
     non_learners = dict_cell_classified["an_cells"]["cell_ID"].unique()
     
-    # Use original mepsp columns - will fail if data is missing
-    try:
-        plot_mini_feature(df_cells,"mepsp_amp",learners,non_learners,fig,axs1)
-        plot_mini_feature(df_cells,"freq_mepsp",learners,non_learners,fig,axs2)
-        plot_learner_vs_non_learner_mini_feature(df_cells,"mepsp_amp",
-                                                learners,non_learners,fig,axs3)
-        plot_learner_vs_non_learner_mini_feature(df_cells,"freq_mepsp",
-                                                 learners,non_learners,fig,axs4)
-    except ValueError as e:
-        print(f"\n{'='*80}")
-        print("FIGURE 8 DATA ERROR")
-        print(f"{'='*80}")
-        print(f"Error: {e}")
-        print("\nFigure 8 requires mepsp (miniature EPSP) data columns:")
-        print("  - mepsp_amp: miniature EPSP amplitude")
-        print("  - freq_mepsp: frequency of miniature EPSPs")
-        print("  - num_mepsp: number of miniature EPSPs")
-        print("  - mepsp_time: timing of miniature EPSPs")
-        print("\nTo fix this, regenerate the pickle files with mepsp data:")
-        print("python analysis_scripts/extract_features_and_save_pickle.py \\")
-        print("    -f /path/to/all_data_with_training_df.pickle \\")
-        print("    -s /path/to/cell_stats.h5 \\")
-        print("    -o analysis_scripts/pickle_files_from_analysis/")
-        print(f"{'='*80}")
-        raise
+    norm_df_amp=df_cells.copy()
+#    norm_df_amp = normalise_df_to_pre(norm_df_amp,"mepsp_amp")
+    plot_mini_feature(norm_df_amp,"mepsp_amp",learners,non_learners,fig,axs1)
+    norm_df_num = df_cells.copy()
+#    norm_df_num = normalise_df_to_pre(norm_df_num,"num_mepsp")
+#    plot_mini_feature(norm_df_num,"num_mepsp",learners,non_learners,fig,axs2)
+    norm_df_freq = df_cells.copy()
+#    norm_df_freq = normalise_df_to_pre(norm_df_freq,"freq_mepsp")
+    plot_mini_feature(norm_df_freq,"freq_mepsp",learners,non_learners,fig,axs2)
+    plot_learner_vs_non_learner_mini_feature(df_cells,"mepsp_amp",
+                                            learners,non_learners,fig,axs3)
+    plot_learner_vs_non_learner_mini_feature(df_cells,"freq_mepsp",
+                                             learners,non_learners,fig,axs4)
 
 def plot_figure_8(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
@@ -321,85 +285,52 @@ def plot_figure_8(extracted_feature_pickle_file_path,
 
 
 def main():
-    """Main function using shared utilities system"""
+    # Argument parser.
     description = '''Generates figure 8'''
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--data-dir', type=str, default='.', 
-                       help='Base data directory')
-    parser.add_argument('--analysis-type', type=str, default='standard',
-                       choices=['standard', 'field_normalized'],
-                       help='Analysis type')
+    parser.add_argument('--pikl-path', '-f'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with extracted features'
+                        'all trials all cells'
+                       )
+    parser.add_argument('--sortedcell-path', '-s'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data in dictionary form'
+                       )
+    parser.add_argument('--cellstat-path', '-c'
+                        , required = False,default ='./', type=str
+                        , help = 'path to pickle file with cell sorted'
+                        'exrracted data in h5 from'
+                       )
+    parser.add_argument('--illustration-path', '-i'
+                        , required = False,default ='./', type=str
+                        , help = 'path to the image file in png format'
+                       )
+
+    parser.add_argument('--outdir-path','-o'
+                        ,required = False, default ='./', type=str
+                        ,help = 'where to save the generated figure image'
+                       )
+    #    parser.parse_args(namespace=args_)
     args = parser.parse_args()
-
-    # Initialize utilities
-    utils = PatternLearningUtils(config_path=os.path.join(args.data_dir, 'config.yaml'))
-    
-    try:
-        # Load figure data using the utilities system
-        figure_data = utils.load_figure_data('figure_8', args.analysis_type)
-        
-        # Extract data components
-        pd_all_cells_mean = figure_data['pd_all_cells_mean']
-        all_cells_classified_dict = figure_data['all_cells_classified_dict']
-        
-        # Generate figure using the loaded data
-        fig = plot_figure_8_adapted(pd_all_cells_mean, all_cells_classified_dict, args.analysis_type)
-        
-        # Save the figure
-        output_files = utils.output_manager.save_figure(
-            fig, 'figure_8', 'main_figures', args.analysis_type
-        )
-        utils.logger.info(f"Figure 8 generated successfully: {output_files}")
-        
-    except Exception as e:
-        utils.logger.error(f"Error generating Figure 8: {e}")
-        raise
-    finally:
-        plt.close('all')
+    pklpath = Path(args.pikl_path)
+    scpath = Path(args.sortedcell_path)
+    illustration_path = Path(args.illustration_path)
+    cell_stat_path = Path(args.cellstat_path)
+    globoutdir = Path(args.outdir_path)
+    globoutdir= globoutdir/'Figure_8'
+    globoutdir.mkdir(exist_ok=True, parents=True)
+    print(f"pkl path : {pklpath}")
+    plot_figure_8(pklpath,scpath,cell_stat_path,globoutdir)
+    print(f"illustration path: {illustration_path}")
 
 
-def plot_figure_8_adapted(pd_all_cells_mean, all_cells_classified_dict, analysis_type):
-    """Adapted version of plot_figure_8 that works with data objects instead of file paths"""
-    
-    # Use the data objects directly instead of loading from files
-    all_cell_all_trial_df = pd_all_cells_mean  # DataFrame instead of path
-    sc_data_dict = all_cells_classified_dict  # Dict instead of path
-    
-    # Define the width and height ratios
-    height_ratios = [1, 1, 1, 1, 1, 
-                     1, 1, 1, 1, 1,
-                    ]
-                     # Adjust these values as needed
-    
-    width_ratios = [1, 1, 1, 1, 1, 
-                    1, 1, 1
-                   ]# Adjust these values as needed
-
-    fig = plt.figure(figsize=(12,9))
-    gs = GridSpec(10, 8,width_ratios=width_ratios,
-                  height_ratios=height_ratios,figure=fig)
-    #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.5, hspace=0.5)
-
-    #plot distribution of minis
-    axs_mini_amp = fig.add_subplot(gs[1:3,0:1])
-    axs_mini_freq = fig.add_subplot(gs[1:3,1:2])
-    axs_mini_comp_amp = fig.add_subplot(gs[1:3,2:3])
-    axs_mini_comp_freq = fig.add_subplot(gs[1:3,3:4])
-    plot_mini_distribution(all_cell_all_trial_df,sc_data_dict, fig, 
-                           axs_mini_amp,axs_mini_freq,
-                           axs_mini_comp_amp,axs_mini_comp_freq)
-    axs_mini_list = [axs_mini_amp,axs_mini_freq,
-                     axs_mini_comp_amp,axs_mini_comp_freq]
-    #label_axis(axs_mini_list,"A")
-
-    plt.tight_layout()
-    return fig
 
 
-if __name__ == '__main__':
-    # Timing the run with time.time
-    ts = time.time()
-    main()
-    tf = time.time()
-    print(f'Total time = {np.around(((tf-ts)/60),1)} (mins)')
+if __name__  == '__main__':
+    #timing the run with time.time
+    ts =time.time()
+    main(**vars(args_)) 
+    tf =time.time()
+    print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')

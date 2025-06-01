@@ -1,0 +1,97 @@
+# Analysis and Conversion Scripts Configuration
+# Author: Anzal KS (anzal.ks@gmail.com)
+# Repository: https://github.com/anzalks/
+
+# Data paths
+data_paths:
+  raw_cells_path: "./data/cells_min_30mins_long"
+  pickle_files_path: "./data/pickle_files"
+  hdf5_files_path: "./data/hdf5_files"
+  analysis_output_path: "./data/pickle_files/analysis"
+
+# Conversion Scripts Configuration
+conversion_scripts:
+  abf_to_hdf5:
+    script: "conversion_scripts/convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py"
+    description: "Convert ABF files to HDF5 format with training data included"
+    arguments:
+      cells_path:
+        flag: "--cells-path"
+        default: "./data/cells_min_30mins_long"
+        description: "Path to folder containing cell data folders"
+        
+  compile_cells_to_pickle:
+    script: "conversion_scripts/compile_cell_dfs_to_pickle.py"
+    description: "Compile individual cell HDF5 files into a single pickle file"
+    arguments:
+      cells_path:
+        flag: "--cells-path"
+        default: "./data/hdf5_files"
+        description: "Path to folder containing HDF5 cell data"
+      cell_stat:
+        flag: "--cell-stat"
+        default: "./data/hdf5_files/cell_stats.h5"
+        description: "Path to cell statistics HDF5 file"
+        
+  compile_firing_data:
+    script: "conversion_scripts/compile_firing_data_protocols_to_pickle_and_extract_features.py"
+    description: "Compile firing data protocols and extract features"
+    arguments:
+      # Add arguments when script is examined
+
+# Analysis Scripts Configuration  
+analysis_scripts:
+  extract_features:
+    script: "analysis_scripts/extract_features_and_save_pickle.py"
+    description: "Extract features from cell data and save to pickle files"
+    arguments:
+      pikl_path:
+        flag: "--pikl-path"
+        default: "./data/pickle_files/all_data_with_training_df.pickle"
+        description: "Path to the main pickle file with all cell data"
+      cellstat_path:
+        flag: "--cellstat-path"
+        default: "./data/hdf5_files/cell_stats.h5"
+        description: "Path to cell statistics data"
+      outdir_path:
+        flag: "--outdir-path"
+        default: "./data/pickle_files/analysis"
+        description: "Output directory for generated pickle files"
+      use_full_ram:
+        flag: "--use-full-ram"
+        default: false
+        description: "Use full system RAM (32GB) for processing"
+        type: "flag"
+        
+  calculate_scale_bar:
+    script: "analysis_scripts/calculate_scale_bar_40x_automated_image_save.py"
+    description: "Calculate scale bar for 40x microscopy images"
+    arguments:
+      # Add arguments when script is examined
+
+# Processing workflows
+workflows:
+  full_conversion:
+    description: "Complete conversion pipeline from ABF to pickle"
+    steps:
+      - "abf_to_hdf5"
+      - "compile_cells_to_pickle"
+      
+  full_analysis:
+    description: "Complete analysis pipeline"
+    steps:
+      - "extract_features"
+      
+  complete_pipeline:
+    description: "Full pipeline from raw data to analysis"
+    steps:
+      - "abf_to_hdf5"
+      - "compile_cells_to_pickle"
+      - "extract_features"
+
+# System configuration
+system:
+  default_processes: 6
+  max_processes: 12
+  memory_limit_gb: 32
+  temp_dir: "./temp" 

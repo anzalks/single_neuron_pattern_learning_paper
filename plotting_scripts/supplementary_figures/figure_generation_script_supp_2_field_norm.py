@@ -27,25 +27,14 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import sys
-import os
-
-# Add the src directory to the path to import our shared utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
-                            subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 import re
-
-# Initialize utilities
-utils = PatternLearningUtils()
-
 from scipy.stats import ttest_1samp
 from scipy.stats import spearmanr
 from matplotlib.lines import Line2D
 
 # plot features are defines in bpf
-set_plot_properties()
+bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
@@ -79,15 +68,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(0,1.5)
+            pat_fr = bpf.create_grid_image(0,1.5)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(4,1.5)
+            pat_fr = bpf.create_grid_image(4,1.5)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(17,1.5)
+            pat_fr = bpf.create_grid_image(17,1.5)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -322,7 +311,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
                 axs.plot([x1_pos, x2_pos], [base_y + idx * step_y] * 2, color='black', linewidth=1)
                 
                 # Add the p-value text above the line
-                annotation_text = convert_pvalue_to_asterisks(pval)
+                annotation_text = bpf.convert_pvalue_to_asterisks(pval)
                 axs.text(
                     (x1_pos + x2_pos) / 2, base_y + idx * step_y + 2, 
                     annotation_text, ha='center', va='bottom', fontsize=10
@@ -367,26 +356,26 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
     cell_df= field_norm_values(esp_feat_cells_df,val_to_plot)
     if val_to_plot=="max_trace":
         if cell_type=="pot_cells":
-            strp_color = CB_color_cycle[0]
-            line_color = CB_color_cycle[5]
+            strp_color = bpf.CB_color_cycle[0]
+            line_color = bpf.CB_color_cycle[5]
             y_lim = (0,700)
             x_label = None
         elif cell_type=="dep_cells":
-            strp_color = CB_color_cycle[1]
-            line_color = CB_color_cycle[5]
+            strp_color = bpf.CB_color_cycle[1]
+            line_color = bpf.CB_color_cycle[5]
             y_lim = (-5,300)
             x_label = "time points (mins)"
         else:
             print("uncagerised cell")
     else:
         if cell_type=="pot_cells":
-            strp_color = CB_color_cycle[0]
-            line_color = CB_color_cycle[5]
+            strp_color = bpf.CB_color_cycle[0]
+            line_color = bpf.CB_color_cycle[5]
             y_lim = (0,700)
             x_label = None
         elif cell_type=="dep_cells":
-            strp_color = CB_color_cycle[1]
-            line_color = CB_color_cycle[5]
+            strp_color = bpf.CB_color_cycle[1]
+            line_color = bpf.CB_color_cycle[5]
             y_lim = (-5,600)
             x_label = "time points (mins)"
         else:
@@ -423,7 +412,7 @@ def plot_response_summary_bar(sc_data_dict, fig, axs):
     non_learners_df = preprocess_data(sc_data_dict["an_cells"], 'non_learners')
     combined_df = pd.concat([learners_df, non_learners_df])
 
-    palette = {"learners": CB_color_cycle[0], "non_learners": CB_color_cycle[1]}
+    palette = {"learners": bpf.CB_color_cycle[0], "non_learners": bpf.CB_color_cycle[1]}
 
     sns.barplot(data=combined_df, x='frame_id', y='max_trace', hue='group', palette=palette, ax=axs, ci=None)
 
@@ -437,7 +426,7 @@ def plot_response_summary_bar(sc_data_dict, fig, axs):
     ]
 
     # Add error bars and p-values
-    annotation_texts = [convert_pvalue_to_asterisks(p) for p in pval_list]
+    annotation_texts = [bpf.convert_pvalue_to_asterisks(p) for p in pval_list]
     for patch, row, annotation in zip(axs.patches, grouped.itertuples(), annotation_texts):
         bar_x = patch.get_x() + patch.get_width() / 2
         axs.errorbar(bar_x, row.mean, yerr=row.sem, fmt='none', c='black', capsize=5)

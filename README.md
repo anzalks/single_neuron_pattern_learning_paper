@@ -3,10 +3,23 @@ All scripts that's associated with the pattern learning paper
 
 ## Project Organization
 
+### Data Structure
+```
+data/
+├── cells_min_30mins_long/          # Raw ABF files organized by cell
+├── images/                         # All microscopy images, screenshots, etc.
+├── illustations/                   # Figure illustrations and Affinity Designer files
+├── pickle_files/                   # Processed data files
+│   ├── analysis/                   # Analysis output pickle files
+│   ├── all_data_with_training_df.pickle  # Main dataset
+│   └── all_cell_firing_traces.pickle     # Firing traces
+└── hdf5_files/                     # HDF5 format cell data
+    └── cell_stats.h5               # Cell statistics
+```
+
 ### Data Processing Workflow
 1. **Raw ABF Files → HDF5 Conversion**: 
    - `conversion_scripts/convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py`
-   - `conversion_scripts/compile_firing_data_protocols_to_pickle_and_extract_features.py`
 
 2. **HDF5 → Pickle Aggregation**: 
    - `conversion_scripts/compile_cell_dfs_to_pickle.py`
@@ -15,162 +28,109 @@ All scripts that's associated with the pattern learning paper
    - `analysis_scripts/extract_features_and_save_pickle.py`
 
 4. **Figure Generation**: 
-   - `plotting_scripts/main_figures/` - Main manuscript figures (Figures 1-8)
-   - `plotting_scripts/supplementary_figures/` - Supplementary figures (Supp 1-2)
+   - **NEW**: Use `run_plotting_scripts.py` for automated figure generation
+   - `plotting_scripts/main_figures/` - Main manuscript figures (Figures 1-6 only)
+   - `plotting_scripts/supplementary_figures/` - All other figures (f_norm, supplementary, etc.)
+   - `plotting_scripts/shared_utils/` - Shared plotting utilities
 
-### Script Organization
+## Quick Start
 
-#### Plotting Scripts Structure:
-- **`plotting_scripts/main_figures/`** - Contains scripts for main manuscript figures
-- **`plotting_scripts/supplementary_figures/`** - Contains scripts for supplementary figures  
-- **`plotting_scripts/not_used/`** - Deprecated or utility scripts not directly used for figures
+### Running Analysis and Conversion Scripts
 
-#### Analysis Scripts:
-- **`analysis_scripts/extract_features_and_save_pickle.py`** - Main feature extraction pipeline
-- **`analysis_scripts/calculate_scale_bar_40x_automated_image_save.py`** - Functional scale bar script
-- **`analysis_scripts/not_used/`** - Older scale bar scripts
+Use the new wrapper script for all data processing:
 
-## Usage Examples
-
-### Analysis Script Path
 ```bash
-python analysis_scripts/extract_features_and_save_pickle.py -f /path/to/data/all_data_with_training_df.pickle -s /path/to/cell_stats.h5 -o ./
+# List all available scripts and workflows
+python run_analysis_conversion.py --list
+
+# Run complete conversion pipeline (ABF → HDF5 → Pickle)
+python run_analysis_conversion.py --workflow full_conversion
+
+# Run analysis pipeline
+python run_analysis_conversion.py --workflow full_analysis
+
+# Run complete pipeline from raw data to analysis
+python run_analysis_conversion.py --workflow complete_pipeline
+
+# Run individual scripts
+python run_analysis_conversion.py --script abf_to_hdf5
+python run_analysis_conversion.py --script extract_features
 ```
 
-### Main Figures (Standard Analysis)
+### Running Plotting Scripts
 
-**Figure 1**
+Use the plotting script runner for figure generation:
+
 ```bash
-python plotting_scripts/main_figures/figure_generation_script_1.py -f /path/to/baseline_traces_all_cells.pickle -i /path/to/with\ fluorescence\ and\ pipette.bmp -p /path/to/Screenshot\ 2023-06-28\ at\ 22.21.46.jpeg -t /path/to/pd_all_cells_all_trials.pickle
+# List all available figures
+python run_plotting_scripts.py --list
+
+# Run all main figures (standard analysis)
+python run_plotting_scripts.py --figures all_main
+
+# Run all supplementary figures
+python run_plotting_scripts.py --figures all_supplementary
+
+# Run specific figures
+python run_plotting_scripts.py --figures figure_1 figure_2
+
+# Run with field normalization
+python run_plotting_scripts.py --figures figure_1_fnorm figure_2_fnorm
 ```
 
-**Figure 2**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_2_fnorm.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -r /path/to/all_cells_inR.pickle -i /path/to/figure_2_1.jpg -p /path/to/figure_2_2.jpg -m /path/to/figure_2_3.png
-```
+## Detailed Usage
 
-**Figure 3**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_3.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_3_1.png -c /path/to/cell_stats.h5 -a /path/to/pd_all_cells_all_trials.pickle -t /path/to/pd_training_data_all_cells_all_trials.pickle -q /path/to/all_cell_all_trial_firing_properties.pickle -r /path/to/all_cells_inR.pickle -p /path/to/figure_2_2.jpg
-```
+### Data Organization
+- **Images**: All `.png`, `.jpg`, `.jpeg`, `.bmp`, `.tiff` files are in `data/images/`
+- **Illustrations**: All `.afdesign` files and figure illustrations are in `data/illustations/`
+- **Pickle Files**: All analysis outputs are organized in `data/pickle_files/analysis/`
+- **HDF5 Files**: Cell statistics and converted data in `data/hdf5_files/`
 
-**Figure 4**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_4.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_3_1.jpg -c /path/to/cell_stats.h5 -t /path/to/pd_all_cells_all_trials.pickle
-```
+### Script Configuration
+- **Plotting**: Configure in `config.yaml`
+- **Analysis/Conversion**: Configure in `analysis_config.yaml`
 
-**Figure 5**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_5.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_5_1.png -c /path/to/cell_stats.h5 -t /path/to/pd_all_cells_all_trials.pickle
-```
+### Workflows Available
+1. **full_conversion**: ABF → HDF5 → Pickle conversion
+2. **full_analysis**: Feature extraction and cell classification
+3. **complete_pipeline**: Full pipeline from raw data to analysis
 
-**Figure 6**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_6_v2.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_3_1.png -c /path/to/cell_stats.h5
-```
+## File Structure
 
-**Figure 7**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_7_learner_non_learner_comparison_v3.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_6_1.png -c /path/to/cell_stats.h5 -t /path/to/pd_all_cells_all_trials.pickle
-```
+### Core Scripts
+- `run_analysis_conversion.py` - Wrapper for analysis and conversion scripts
+- `run_plotting_scripts.py` - Wrapper for plotting scripts
+- `config.yaml` - Plotting configuration
+- `analysis_config.yaml` - Analysis and conversion configuration
 
-**Figure 8**
-```bash
-python plotting_scripts/main_figures/figure_generation_script_8.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle
-```
+### Analysis Scripts
+- `analysis_scripts/extract_features_and_save_pickle.py` - Main analysis pipeline
+- `analysis_scripts/calculate_scale_bar_40x_automated_image_save.py` - Scale bar calculation
 
-### Supplementary Figures
+### Conversion Scripts
+- `conversion_scripts/convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py` - ABF to HDF5
+- `conversion_scripts/compile_cell_dfs_to_pickle.py` - HDF5 to pickle compilation
+- `conversion_scripts/compile_firing_data_protocols_to_pickle_and_extract_features.py` - Firing data compilation
 
-**Supplementary 1**
-```bash
-python plotting_scripts/supplementary_figures/figure_generation_script_supp_1.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_3_1.jpg -c /path/to/cell_stats.h5 -t /path/to/pd_all_cells_all_trials.pickle
-```
+### Plotting Scripts
+- `plotting_scripts/main_figures/` - Main manuscript figures (1-6)
+- `plotting_scripts/supplementary_figures/` - Supplementary and f_norm figures
+- `plotting_scripts/shared_utils/` - Shared plotting utilities
+- `plotting_scripts/not_used/` - Deprecated scripts
 
-**Supplementary 2**
-```bash
-python plotting_scripts/supplementary_figures/figure_generation_script_supp_2.py -f /path/to/pd_all_cells_mean.pickle -s /path/to/all_cells_classified_dict.pickle -i /path/to/Figure_3_1.jpg -c /path/to/cell_stats.h5 -t /path/to/pd_all_cells_all_trials.pickle
-```
+## Requirements
+- Python 3.8+
+- See `requirements.txt` for package dependencies
+- Recommended: 32GB RAM for full analysis pipeline
 
-### Field Normalized Analysis
-For field normalized versions, use the corresponding `_fnorm.py` scripts and substitute the classification pickle with `all_cells_fnorm_classifeied_dict.pickle`
+## Author
+- **Anzal KS** (anzal.ks@gmail.com)
+- Repository: https://github.com/anzalks/
 
-## Data Dependencies
-All scripts require processed pickle files generated by the analysis pipeline:
-- `pd_all_cells_mean.pickle` - Trial-averaged EPSP features
-- `all_cells_classified_dict.pickle` - Cell learner/non-learner classifications
-- `pd_all_cells_all_trials.pickle` - Single trial data
-- `all_cells_inR.pickle` - Input resistance and intrinsic properties
-- `cell_stats.h5` - Cell health statistics
-
-"analysis script path"
-:! python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/all_data_with_training_df.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -o ./
-
-
-"plotting scripts parsers from bash/zsh on vim"
-
-
-
-"figure 1"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/baseline_traces_all_cells.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/with\ fluorescence\ and\ pipette.bmp -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/Screenshot\ 2023-06-28\ at\ 22.21.46.jpeg -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"figure 2"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -r /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_inR.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_1.jpg -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg -m /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_3.png
-
-
-"figure 3"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -a /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle -q /Users/anzalks/Documents/Expt_data/CA1_recordings/x_spread_recording_02Hz_30mins/cells_cumulated/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle -r /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_inR.pickle -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg
-
-"figure 4"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-
-"figure 5"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_5_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"figure 6"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5
-
-"Figure 7"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_6_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"suplimentary 1"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"sumplimentary 2"
-
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_classified_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-
-
-Plot with feild normalised data:
-
-"figure 1"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/baseline_traces_all_cells.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/with\ fluorescence\ and\ pipette.bmp -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/Screenshot\ 2023-06-28\ at\ 22.21.46.png -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"figure 2"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -r /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_inR.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_1.jpg -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg -m /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_3.png
-
-
-"figure 3"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -a /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle -q /Users/anzalks/Documents/Expt_data/CA1_recordings/x_spread_recording_02Hz_30mins/cells_cumulated/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle -r /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_inR.pickle -p /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/figure_2_2.jpg
-
-"figure 4"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-
-"figure 5"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_5_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"figure 6"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5
-
-"Figure 7"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_6_1.png -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"suplimentary 1"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
-
-"sumplimentary 2"
-!python % -f /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_mean.pickle -s /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle -i /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/illustations/Figure_3_1.jpg -c /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/data/pickle_files/cell_stats.h5 -t /Users/anzalks/Documents/pattern_learning_paper/plotting_scripts/python_scripts_paper_ready/analysis_scripts/pickle_files_from_analysis/pd_all_cells_all_trials.pickle
+## Notes
+- All scripts maintain exact plot appearance from main branch
+- Shared utilities ensure consistent plotting across all figures
+- Wrapper scripts provide unified interface for all operations
+- Data is organized by type for easy access and management
 
 

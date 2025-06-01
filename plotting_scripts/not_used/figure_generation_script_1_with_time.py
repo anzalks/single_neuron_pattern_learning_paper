@@ -26,7 +26,7 @@ import time
 from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
-import baisic_plot_fuctnions_and_features as bpf
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 from PIL import ImageDraw, ImageFont 
 from scipy.stats import gaussian_kde
 

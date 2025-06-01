@@ -27,21 +27,10 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import sys
-import os
-
-# Add the src directory to the path to import our shared utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
-                            subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
-
-
-# Initialize utilities
-utils = PatternLearningUtils()
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 
 # plot features are defines in bpf
-set_plot_properties()
+bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
@@ -67,15 +56,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,2)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -160,9 +149,9 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
     patterns = pd_cell_data_mean["frame_id"].unique()
     cb_cyclno = [5,1,0]
     if cell_type=="learners":
-        pltcolor = CB_color_cycle[0]
+        pltcolor = bpf.CB_color_cycle[0]
     else:
-        pltcolor= CB_color_cycle[1]
+        pltcolor= bpf.CB_color_cycle[1]
 
     axslist = [axs1,axs2,axs3]
     learnt_pat_post_3_mean = pd_cell_data_mean[(pd_cell_data_mean["frame_id"]=="pattern_0")&(pd_cell_data_mean["pre_post_status"]=="post_3")][trace_property].mean()
@@ -170,7 +159,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
         if "pattern" in pat_num:
             ax_no = int(pat_num.split("_")[-1])
             g= sns.stripplot(data=pd_cell_data_mean[pd_cell_data_mean["frame_id"]==pat_num],x="pre_post_status",
-                          y= trace_property, alpha=0.8, color=CB_color_cycle[6], order=order, ax=axslist[ax_no],label=pat_num)
+                          y= trace_property, alpha=0.8, color=bpf.CB_color_cycle[6], order=order, ax=axslist[ax_no],label=pat_num)
             sns.pointplot(data=pd_cell_data_mean[pd_cell_data_mean["frame_id"]==pat_num],x="pre_post_status",
                           y= trace_property,
                           color=pltcolor,errorbar="sd",capsize=0.1,
@@ -189,7 +178,7 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_typ
                 anotp_list.append(("pre",i))
             annotator = Annotator(axslist[ax_no],anotp_list,data=pat, x="pre_post_status",y=trace_property,order=order)
             #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
-            annotator.set_custom_annotations([convert_pvalue_to_asterisks(a) for a in pvalList])
+            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
             #annotator.annotate()
             #"""
             axslist[ax_no].axhline(100,color='k', linestyle=':', alpha=0.4,linewidth=2)
@@ -247,19 +236,19 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot,
     x_pre=np.array(df_cells[(df_cells["pre_post_status"]=="pre")&(df_cells["frame_id"]==pattern_num)]["pre_post_status"])
     x_post=np.array(df_cells[(df_cells["pre_post_status"]==timepoint_to_plot)&(df_cells["frame_id"]==pattern_num)]["pre_post_status"])
     if cell_type=="learners":
-        pltcolor = CB_color_cycle[0]
+        pltcolor = bpf.CB_color_cycle[0]
     else:
-        pltcolor= CB_color_cycle[1]
+        pltcolor= bpf.CB_color_cycle[1]
 
-    axs.scatter(x_pre,pre_pat0,color=CB_color_cycle[6],alpha=0.8)
-    axs.scatter(x_post,post4_pat0,color=CB_color_cycle[6],alpha=0.8)
+    axs.scatter(x_pre,pre_pat0,color=bpf.CB_color_cycle[6],alpha=0.8)
+    axs.scatter(x_post,post4_pat0,color=bpf.CB_color_cycle[6],alpha=0.8)
     for i in range(len(x_pre)):
-        axs.plot([x_pre[i], x_post[i]], [pre_pat0[i], post4_pat0[i]], color=CB_color_cycle[6],alpha=0.8, linestyle='--')
+        axs.plot([x_pre[i], x_post[i]], [pre_pat0[i], post4_pat0[i]], color=bpf.CB_color_cycle[6],alpha=0.8, linestyle='--')
     
     sns.pointplot(data=df_cells[(df_cells["pre_post_status"]==timepoint_to_plot)&(df_cells["frame_id"]==pattern_num)],
                   x="pre_post_status",y=field_to_plot,color=pltcolor,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response post training")
     sns.pointplot(data=df_cells[(df_cells["pre_post_status"]=="pre")&(df_cells["frame_id"]==pattern_num)],
-                  x="pre_post_status",y=field_to_plot,color=pre_color,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response pre training")
+                  x="pre_post_status",y=field_to_plot,color=bpf.pre_color,order=order,errorbar='sd',capsize=0.05,ax=axs,label="mean field response pre training")
     #axs.scatter(pre_pat0,post4_pat0)
     #axs.plot(pre_pat0,post4_pat0)
 
@@ -270,7 +259,7 @@ def plot_raw_points(df_cells,pattern_num,field_to_plot,timepoint_to_plot,
     anotp_list=("pre",timepoint_to_plot)
     annotator = Annotator(axs,[anotp_list],data=df_cells[(df_cells["frame_id"]==pattern_num)], x="pre_post_status",y=field_to_plot,order=order)
 
-    annotator.set_custom_annotations([convert_pvalue_to_asterisks(pvalList)])
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
     annotator.annotate()
     sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
     
@@ -333,10 +322,10 @@ def plot_field_response_pairs(df_cells,feature,timepoint,cell_grp_type,nomr_stat
 #    print(learners_all_pat)
 #    non_learners_all_pat = all_cell_df[(all_cell_df["cell_ID"].isin(non_learners))&(all_cell_df["pre_post_status"]=="post_3")]
 #    sns.pointplot(data=learners_all_pat,x="frame_id",y="min_field",
-#                  color=CB_color_cycle[0], ax=axs,errorbar='sd',
+#                  color=bpf.CB_color_cycle[0], ax=axs,errorbar='sd',
 #                  capsize=0.15)
 #    sns.pointplot(data=non_learners_all_pat,x="frame_id",y="min_field",
-#                  color=CB_color_cycle[1], ax=axs,errorbar='sd',
+#                  color=bpf.CB_color_cycle[1], ax=axs,errorbar='sd',
 #                  capsize=0.15)
 #    axs.spines[['right', 'top']].set_visible(False)
 #    axs.set_xticklabels(["trained\npattern","overlapping\npattern",
@@ -382,14 +371,14 @@ def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
 
     # Plot learners and non-learners
     sns.stripplot(data=learners_all_pat, x="frame_id", y="min_f_norm",
-                  color=CB_color_cycle[0], alpha=0.2, ax=axs,zorder=1)    
+                  color=bpf.CB_color_cycle[0], alpha=0.2, ax=axs,zorder=1)    
     sns.stripplot(data=non_learners_all_pat, x="frame_id", y="min_f_norm",
-                  color=CB_color_cycle[1],alpha=0.2, ax=axs, zorder=1)
+                  color=bpf.CB_color_cycle[1],alpha=0.2, ax=axs, zorder=1)
     sns.pointplot(data=learners_all_pat, x="frame_id", y="min_f_norm",
-                  color=CB_color_cycle[0], ax=axs, errorbar='sd', 
+                  color=bpf.CB_color_cycle[0], ax=axs, errorbar='sd', 
                   capsize=0.15, zorder=2)
     sns.pointplot(data=non_learners_all_pat, x="frame_id", y="min_f_norm",
-                  color=CB_color_cycle[1], ax=axs, errorbar='sd', 
+                  color=bpf.CB_color_cycle[1], ax=axs, errorbar='sd', 
                   capsize=0.15, zorder=2)
     # Set x and y labels and customize the plot
     axs.spines[['right', 'top']].set_visible(False)
@@ -418,7 +407,7 @@ def plot_minf_compare_all_pat(df_cells, sc_data_dict, fig, axs):
                           data=all_cell_df, x="frame_id", y="min_field")
     
     # Set custom annotations using p-value converted to asterisks and annotate
-    annotator.set_custom_annotations([convert_pvalue_to_asterisks(p) for p in p_values])
+    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(p) for p in p_values])
     annotator.annotate()
     axs.set_ylim(10,250)
 

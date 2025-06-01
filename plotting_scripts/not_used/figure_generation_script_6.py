@@ -27,7 +27,7 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import baisic_plot_fuctnions_and_features as bpf
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 
 # plot features are defines in bpf
 bpf.set_plot_properties()

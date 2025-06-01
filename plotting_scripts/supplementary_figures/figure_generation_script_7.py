@@ -27,22 +27,11 @@ from pathlib import Path
 import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
-import sys
-import os
-
-# Add the src directory to the path to import our shared utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-from shared_utilities import (PatternLearningUtils, set_plot_properties, create_grid_image, 
-                            subtract_baseline, convert_pvalue_to_asterisks, pre_color, 
-                            post_color, post_late, CB_color_cycle, color_fader)
+from shared_utils import baisic_plot_fuctnions_and_features as bpf
 from matplotlib.lines import Line2D
 
-# Initialize utilities
-utils = PatternLearningUtils()
-
-
 # plot features are defines in bpf
-set_plot_properties()
+bpf.set_plot_properties()
 
 vlinec = "#C35817"
 
@@ -68,15 +57,15 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     for pr_no, pattern in enumerate(pattern_list):
         if pr_no==0:
             axs_pat = axs_pat1  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(0,2)
+            pat_fr = bpf.create_grid_image(0,2)
             axs_pat.imshow(pat_fr)
         elif pr_no==1:
             axs_pat = axs_pat2  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(4,2)
+            pat_fr = bpf.create_grid_image(4,2)
             axs_pat.imshow(pat_fr)
         elif pr_no ==2:
             axs_pat = axs_pat3  #plt.subplot2grid((3,4),(0,p_no))
-            pat_fr = create_grid_image(17,2)
+            pat_fr = bpf.create_grid_image(17,2)
             axs_pat.imshow(pat_fr)
         else:
             print("exception in pattern number")
@@ -184,7 +173,7 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
     y = gama_fit(x, param[0])
 
     # Choose color based on cell type
-    color = CB_color_cycle[0] if cell_type == "learners" else CB_color_cycle[1]
+    color = bpf.CB_color_cycle[0] if cell_type == "learners" else bpf.CB_color_cycle[1]
 
     # Plot the fitted curves
     axs.plot(pre_x, pre_y, color='k', linestyle='-', alpha=0.8, label="pre_training", linewidth=3)
@@ -227,7 +216,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
             if pp not in ['pre', 'post_3']:
                 continue
 
-            color = pre_color if pp == "pre" else CB_color_cycle[0] if cell_type == "learners" else CB_color_cycle[1]
+            color = bpf.pre_color if pp == "pre" else bpf.CB_color_cycle[0] if cell_type == "learners" else bpf.CB_color_cycle[1]
 
             pats = pp_data[pp_data["frame_status"] == "pattern"]["frame_id"].unique()
             trial_grp = pp_data.groupby(by="trial_no")
@@ -248,7 +237,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
                     response_list.append([point_sum_val, pat_val])
 
                     # Plot scatter points
-                    axs[pat_num].axline([0, 0], [1, 1], linestyle=':', color=CB_color_cycle[6], linewidth=2)
+                    axs[pat_num].axline([0, 0], [1, 1], linestyle=':', color=bpf.CB_color_cycle[6], linewidth=2)
                     axs[pat_num].scatter(point_sum_val, pat_val, color=color, alpha=0.8, linewidth=1, marker=".")
                     axs[pat_num].spines[['right', 'top']].set_visible(False)
                     axs[pat_num].set_xlim(-0.5, 12)
@@ -276,13 +265,13 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
     if cell_type == "non-learners":
         legend_elements = [
             Line2D([0], [0], marker='o', color='w',
-                   markerfacecolor=pre_color, 
+                   markerfacecolor=bpf.pre_color, 
                    markersize=10, label='Pre training'),
             Line2D([0], [0], marker='o', color='w', 
-                   markerfacecolor=CB_color_cycle[0],
+                   markerfacecolor=bpf.CB_color_cycle[0],
                    markersize=10, label='Learner\npost training'),
             Line2D([0], [0], marker='o', color='w',
-                   markerfacecolor=CB_color_cycle[1],
+                   markerfacecolor=bpf.CB_color_cycle[1],
                    markersize=10, label='Non-learner\npost training')
         ]
         axs[1].legend(handles=legend_elements, 
@@ -318,7 +307,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #            if pp not in ['pre', 'post_3']:
 #                continue
 #
-#            color = pre_color if pp == "pre" else CB_color_cycle[0] if cell_type == "learners" else CB_color_cycle[1]
+#            color = bpf.pre_color if pp == "pre" else bpf.CB_color_cycle[0] if cell_type == "learners" else bpf.CB_color_cycle[1]
 #
 #            pats = pp_data[pp_data["frame_status"] == "pattern"]["frame_id"].unique()
 #            trial_grp = pp_data.groupby(by="trial_no")
@@ -339,7 +328,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #                    response_list.append([point_sum_val, pat_val])
 #
 #                    # Plot scatter points
-#                    axs[pat_num].axline([0, 0], [1, 1], linestyle=':', color=CB_color_cycle[6], linewidth=2)
+#                    axs[pat_num].axline([0, 0], [1, 1], linestyle=':', color=bpf.CB_color_cycle[6], linewidth=2)
 #                    axs[pat_num].scatter(point_sum_val, pat_val, color=color, alpha=0.8, linewidth=1, marker=".")
 #                    axs[pat_num].spines[['right', 'top']].set_visible(False)
 #                    axs[pat_num].set_xlim(-0.5, 12)
@@ -394,9 +383,9 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #    pre_y = gama_fit(pre_x,param_pre[0],param_pre[1],param_pre[2])
 #    y = gama_fit(x,param[0],param[1],param[2])
 #    if cell_type=="learners":
-#        color=CB_color_cycle[0]
+#        color=bpf.CB_color_cycle[0]
 #    else:
-#        color= CB_color_cycle[1]
+#        color= bpf.CB_color_cycle[1]
 #    axs.plot(pre_x, pre_y, color='k', linestyle='-', alpha=0.8, label="pre_training",linewidth=3)
 #    axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training",linewidth=3)
 #    #axs[pat_num].text(1,10, f"r ={round(r_value*r_value,2)}", fontsize = 10)
@@ -439,12 +428,12 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #                pp =pp
 #                #print(f"found pp stat")
 #            if pp=="pre":
-#                color=pre_color
+#                color=bpf.pre_color
 #            else:
 #                if cell_type=="learners":
-#                    color = CB_color_cycle[0]
+#                    color = bpf.CB_color_cycle[0]
 #                else:
-#                    color = CB_color_cycle[1]
+#                    color = bpf.CB_color_cycle[1]
 #            pats= pp_data[pp_data["frame_status"]=="pattern"]["frame_id"].unique()
 #            trial_grp  = pp_data.groupby(by="trial_no")
 #            for trial, trial_data in trial_grp:
@@ -478,7 +467,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #                        else:
 #                            continue
 #                    axs[pat_num].axline([0,0], [1,1], linestyle=':',
-#                                        color=CB_color_cycle[6], label="linear sum",linewidth=2)
+#                                        color=bpf.CB_color_cycle[6], label="linear sum",linewidth=2)
 #                    axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,
 #                                         color=color, label=pp, alpha=0.8,
 #                                         linewidth=1,marker=".")
@@ -547,18 +536,18 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #                #print(f"found pp stat")
 #                
 #            if pp=="pre":
-#                color=pre_color
+#                color=bpf.pre_color
 #            #elif pp=="post_4":
 #            #    cmx= int(pp.split("_")[-1])/cl
 #            #    color=colorFader(post_color,post_late,mix=cmx)
 #            else:
 #                #continue
 #                cmx= int(pp.split("_")[-1])/cl
-#                color=color_fader(post_color,post_late,mix=cmx)
+#                color=bpf.colorFader(bpf.post_color,bpf.post_late,mix=cmx)
 #                if cell_type=="learners":
-#                    color = CB_color_cycle[0]
+#                    color = bpf.CB_color_cycle[0]
 #                else:
-#                    color = CB_color_cycle[1]
+#                    color = bpf.CB_color_cycle[1]
 #            pats= ppresp[ppresp["frame_status"]=="pattern"]["frame_id"].unique()
 #            for pat in pats:
 #                pat_num = int(pat.split("_")[-1])
@@ -569,7 +558,7 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #                point_sum_val_nrm = point_sum_val#-pat_val
 #                #print(f"pat, point: {pat_val_nrm},{point_sum_val}")
 #                axs[pat_num].axline([0,0], [1,1], linestyle=':',
-#                                    color=CB_color_cycle[6], label="linear sum",linewidth=2)
+#                                    color=bpf.CB_color_cycle[6], label="linear sum",linewidth=2)
 #                axs[pat_num].scatter(point_sum_val_nrm,pat_val_nrm,color=color, label=pp, alpha=0.8,linewidth=2)
 #                axs[pat_num].spines[['right', 'top']].set_visible(False)
 #                axs[pat_num].set_xlim(-1,12)
@@ -628,9 +617,9 @@ def plot_expected_vs_observed_all_trials(alltrial_Df, mean_all_cell_df, sc_data_
 #    cell_grp = feature_extracted_data.groupby(by="cell_ID")
 #    for cell, cell_data in cell_grp:
 #        if cell in learners:
-#            color=CB_color_cycle[0]
+#            color=bpf.CB_color_cycle[0]
 #        elif cell in non_learners:
-#            color=CB_color_cycle[1]
+#            color=bpf.CB_color_cycle[1]
 #        else:
 #            continue
 #        frame_grp = cell_data.groupby(by="frame_status")
