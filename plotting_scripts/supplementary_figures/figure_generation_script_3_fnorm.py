@@ -211,13 +211,13 @@ def plot_threshold_timing(training_data, sc_data_dict, fig, axs):
     non_lrns["l_stat"] = "non\nlearners"
     all_df = pd.concat([lrns, non_lrns])
 
-    # Set palette for learners and non-learners
+    # Set palette for learners and non-learners with solid colors
     palette = {"learners": bpf.CB_color_cycle[0], "non\nlearners": bpf.CB_color_cycle[1]}
     
-    # Violin plot for learners and non-learners
+    # Violin plot for learners and non-learners with solid colors
     sns.violinplot(
         data=all_df, x="l_stat", y="cell_thresh_time", hue="l_stat",
-        palette=palette, alpha=0.6, inner="quartile", linewidth=1, ax=axs
+        palette=palette, inner="quartile", linewidth=1, ax=axs, legend=False
     )
 
     # Customize labels, limits, and hide spines
@@ -246,16 +246,18 @@ def plot_threshold_timing(training_data, sc_data_dict, fig, axs):
     annot.set_custom_annotations([pval_asterisks])
     annot.annotate()
 
+    # Remove the figure legend that creates empty box under plot Eii
     # Get legend handles and labels
-    handles, labels = axs.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
+    # handles, labels = axs.get_legend_handles_labels()
+    # by_label = dict(zip(labels, handles))
 
     # Set a custom legend
-    fig.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, 0.32),
-               ncol=6, loc='upper center')
+    # fig.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, 0.32),
+    #            ncol=6, loc='upper center')
 
-    # Remove the axis legend
-    if axs.legend_ is not None: axs.legend_.remove()
+    # Ensure no axis legend
+    if axs.get_legend() is not None:
+        axs.get_legend().remove()
 
 
 
@@ -304,7 +306,6 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     if axs.get_legend() is not None:
         axs.get_legend().remove()
 
-
     # Annotate comparison within learners (pre vs. post_3)
     stat_analysis = spst.mannwhitneyu(
         learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot],
@@ -323,11 +324,11 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     learners_post_3 = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot]
     non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot]
 
-    # Draw vertical lines and p-value annotations
+    # Draw vertical lines and p-value annotations using BLACK color for significance lines
     xloc_pre = -0.45
     stat_test_pre = spst.mannwhitneyu(learners_pre, non_learners_pre, alternative='two-sided')
     pval_pre = stat_test_pre.pvalue
-    axs.plot([xloc_pre, xloc_pre], [learners_pre.mean(), non_learners_pre.mean()], color='black', linestyle='-')
+    axs.plot([xloc_pre, xloc_pre], [learners_pre.mean(), non_learners_pre.mean()], color='k', linestyle='-')
     axs.text(xloc_pre, (learners_pre.mean() + (non_learners_pre.mean()) /
              2), 
              bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
@@ -335,7 +336,7 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     xloc_post_3 = 1.45
     stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
     pval_post_3 = stat_test_post_3.pvalue
-    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3.mean(), non_learners_post_3.mean()], color='black', linestyle='-')
+    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3.mean(), non_learners_post_3.mean()], color='k', linestyle='-')
     axs.text(xloc_post_3, ((learners_post_3.mean() +
                             non_learners_post_3.mean()) / 2)+0.5, 
              bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
@@ -349,64 +350,8 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     axs.spines[['right', 'top']].set_visible(False)
     
     # Ensure no legends are displayed
-    axs.legend().set_visible(False)
-
-
-
-def inR_sag_plot(inR_all_Cells_df, fig, axs):
-    deselect_list = ['post_4', 'post_5']
-    inR_all_Cells_df = inR_all_Cells_df[~inR_all_Cells_df["pre_post_status"].isin(deselect_list)]
-    order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
-
-    # Plot input resistance and sag values using pointplot
-    g1 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="inR",
-                       capsize=0.2, ci='sd', order=order, color="k")
-    g2 = sns.pointplot(data=inR_all_Cells_df, x="pre_post_status", y="sag",
-                       capsize=0.2, ci='sd', order=order, color=bpf.CB_color_cycle[4])
-    
-    # Plot individual points using stripplot
-    sns.stripplot(data=inR_all_Cells_df, color=bpf.CB_color_cycle[4],
-                  x="pre_post_status", y="sag",
-                  order=order, alpha=0.2)
-
-    # Perform Wilcoxon test between "pre" and "post_3"
-    pre_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"] == "pre"]["sag"]
-    post_trace = inR_all_Cells_df[inR_all_Cells_df["pre_post_status"] == "post_3"]["sag"]
-    pre = spst.wilcoxon(pre_trace, post_trace, zero_method="wilcox", correction=True)
-    pvalList = pre.pvalue
-    print(f"p-value: {pvalList}")
-    anotp_list = ("pre", "post_3")
-    annotator = Annotator(axs, [anotp_list], data=inR_all_Cells_df, x="pre_post_status", y="sag", order=order)
-    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-    annotator.annotate()
-
-    # Manually create legend entries
-    legend_elements = [
-        Line2D([0], [0], marker='o', color='k', label='input resistance', markersize=8, linestyle='None'),
-        Line2D([0], [0], marker='o', color=bpf.CB_color_cycle[4], label='sag value', markersize=8, linestyle='None')
-    ]
-
-    #legend_elements = [
-    #    Line2D([0], [0], color='k', label='input resistance', linewidth=2),
-    #    Line2D([0], [0], color=bpf.CB_color_cycle[4], label='sag value', linewidth=2)
-    #]
-    axs.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.05), loc='center', frameon=False)
-
-    # Set axis labels, ticks, and limits
-    axs.set_ylabel("MOhms")
-    axs.set_xlabel("time points (mins)")
-
-    # Set x-tick labels using the original time_points variable
-    time_points = ['pre', '0', '10', '20', '30']
-    axs.set_xticklabels(time_points)
-
-    axs.set_ylim(-10, 250)
-    sns.despine(fig=None, ax=axs, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
-
-    # Adjust the position of the axis
-    inr_pos = axs.get_position()
-    new_inr_pos = [inr_pos.x0, inr_pos.y0 - 0.04, inr_pos.width, inr_pos.height]
-    axs.set_position(new_inr_pos)
+    if axs.get_legend() is not None:
+        axs.get_legend().remove()
 
 
 
@@ -1030,13 +975,13 @@ def compare_cell_properties(cell_stats, fig, axs_rmp, axs_inr,
     cell_stat_with_category = cell_stat_with_category[cell_stat_with_category["cell_type"] != "feeble response"]
     print(f"Cell stats with category: {cell_stat_with_category}")
     
-    # Plot Resting Membrane Potential (RMP) with Violin Plot
+    # Plot Resting Membrane Potential (RMP) with Violin Plot using solid bpf colors
     g1 = sns.violinplot(
         data=cell_stat_with_category,
         x="cell_type", y="rmp",
-        ax=axs_inr, hue=None,
+        ax=axs_rmp, hue=None,
         palette={"learners": bpf.CB_color_cycle[0], "non-learners": bpf.CB_color_cycle[1]},
-        inner="quartile", alpha=0.6
+        inner="quartile", legend=False
     )
     
     # Statistical test for RMP
@@ -1052,13 +997,13 @@ def compare_cell_properties(cell_stats, fig, axs_rmp, axs_inr,
 
     # Check if the filtered DataFrame is not empty before plotting inpR
     if not cell_stat_with_category_inpR_filtered.empty:
-        # Plot Input Resistance (InputR) with Violin Plot
+        # Plot Input Resistance (InputR) with Violin Plot using solid bpf colors
         g2 = sns.violinplot(
             data=cell_stat_with_category_inpR_filtered,
             x="cell_type", y="inpR",
-            ax=axs_rmp, hue=None,
+            ax=axs_inr, hue=None,
             palette={"learners": bpf.CB_color_cycle[0], "non-learners": bpf.CB_color_cycle[1]},
-            inner="quartile", alpha=0.6
+            inner="quartile", legend=False
         )
         
         # Statistical test for InputR (after filtering)
@@ -1070,32 +1015,30 @@ def compare_cell_properties(cell_stats, fig, axs_rmp, axs_inr,
         pvalLg2 = stat_testg2.pvalue
 
         # Annotate InputR plot
-        annotator2 = Annotator(axs_rmp, [("learners", "non-learners")],
+        annotator2 = Annotator(axs_inr, [("learners", "non-learners")],
                                data=cell_stat_with_category_inpR_filtered, x="cell_type", y="inpR")
         annotator2.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg2)])
         annotator2.annotate()
+        
+        # Clean up legend for g2
+        g2.set_xlabel(None)
+        g2.set_xticklabels(g2.get_xticklabels(), rotation=30)
+        g2.set_ylabel("Input Resistance\n(MOhms)")
+        g2.set(xlim=(-0.5, 1.5), ylim=(0, 250))
     else:
         print("No data available for Input Resistance plot (inpR > 60)")
 
     # Annotate RMP plot
-    annotator1 = Annotator(axs_inr, [("learners", "non-learners")],
+    annotator1 = Annotator(axs_rmp, [("learners", "non-learners")],
                            data=cell_stat_with_category, x="cell_type", y="rmp")
     annotator1.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg1)])
     annotator1.annotate()
 
-    # Set limits and labels for the plots
+    # Set limits and labels for RMP plot
     g1.set(xlim=(-0.5, 1.5), ylim=(-75, -60))
-    if 'g2' in locals():
-        g2.set(xlim=(-0.5, 1.5), ylim=(0, 250))
-        g2.set_xticklabels(g2.get_xticklabels(), rotation=30)
-        g2.set_ylabel("Input Resistance\n(MOhms)")
-        g2.set_xlabel(None)
-        g2.legend_ = None
-    
     g1.set_xticklabels(g1.get_xticklabels(), rotation=30)
     g1.set_ylabel("Resting membrane\npotential (mV)")
     g1.set_xlabel(None)
-    g1.legend_ = None
     
     # Remove spines for a cleaner look
     sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False)
@@ -1167,7 +1110,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
     axs_rmp = fig.add_subplot(gs[4:6,6:8])
-    compare_cell_properties(cell_stats_df,fig,axs_inr,axs_rmp,
+    compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,0,1)
     axs_inr.text(-0.1,1.1,'C',transform=axs_inr.transAxes,    
