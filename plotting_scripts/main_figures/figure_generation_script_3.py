@@ -4,11 +4,27 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 3 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 3: Learner, non-learner Analysis
+
+This script generates Figure 3 of the pattern learning paper, which shows:
+- Over training showing EPSP amplitude changes
+- Cell distribution pie chart (learners vs non-learners vs not considered)
+- Training threshold analysis and timing to learning
+- Mini EPSP analysis and frequency changes
+- Input resistance correlation with learning
+- F-I curves comparing learners and non-learners
+- Statistical analysis of cellular properties during learning
+
+Input files:
+- pd_all_cells_mean.pickle: Mean responses for all cells
+- all_cells_classified_dict.pickle: Cell classification data
+- pd_all_cells_all_trials.pickle: Trial-by-trial data
+- pd_training_data_all_cells_all_trials.pickle: Training protocol data
+- all_cell_all_trial_firing_properties.pickle: Firing properties
+- all_cells_inR.pickle: Input resistance measurements
+- cell_stats.h5: Cell statistics
+
+Output: Figure_3/figure_3.png showing complete learning curve analysis
 """
 
 import pandas as pd

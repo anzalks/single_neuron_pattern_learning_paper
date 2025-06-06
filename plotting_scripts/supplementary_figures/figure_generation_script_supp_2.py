@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the supplimentary figure 1 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Supplementary Figure 2: Extended Analysis
+
+This script generates Supplementary Figure 2 of the pattern learning paper, which shows:
+- Extended analysis and additional data supporting the main conclusions
+- Detailed statistical comparisons and supplementary measurements
+- Additional cellular and synaptic property analysis
+- Extended pattern-specific response characterization
+- Supporting data for plasticity mechanism analysis
+- Comprehensive additional analysis beyond main figures
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_classified_dict.pickle: Cell classification data
+- pd_all_cells_all_trials.pickle: Trial-by-trial data
+- cell_stats.h5: Cell statistics
+- Figure_3_1.jpg: Illustration image
+
+Output: supplimentary_figure_2/supplimentary_figure_2.png showing extended analysis
 """
 
 import pandas as pd

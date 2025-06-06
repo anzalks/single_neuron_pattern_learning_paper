@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 4 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 4: Plasticity Mechanisms
+
+This script generates Figure 4 of the pattern learning paper, which shows:
+- Detailed analysis of plasticity mechanisms underlying pattern learning
+- Point-by-point plasticity distribution across stimulation grid
+- EPSP feature analysis (rise time, half-width, decay time) for different patterns
+- Response summary and classification analysis
+- Pattern-specific plasticity changes in learners vs non-learners
+- Peak percentage comparisons across different cell types and patterns
+- Statistical analysis of plasticity distribution and mechanisms
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_classified_dict.pickle: Cell classification data
+- pd_all_cells_all_trials.pickle: Trial-by-trial analysis data
+- cell_stats.h5: Cell statistics and properties
+
+Output: Figure_4/figure_4.png showing comprehensive plasticity mechanism analysis
 """
 
 import pandas as pd

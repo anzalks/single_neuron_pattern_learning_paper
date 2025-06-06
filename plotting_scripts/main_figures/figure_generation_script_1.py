@@ -4,11 +4,20 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 1 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 1: Experimental Setup and Basic Properties
+
+This script generates Figure 1 of the pattern learning paper, which shows:
+- Experimental setup with recording location and CA3 fluorescence
+- Pattern stimulation grids (trained, overlapping, and non-overlapping patterns)
+- Basic electrophysiological properties and traces
+- Statistical analysis of baseline properties
+
+Input files:
+- baseline_traces_all_cells.pickle: Experimental data with baseline traces
+- microscopy images: Setup and fluorescence images
+- pd_all_cells_all_trials.pickle: All trial data for statistical analysis
+
+Output: Figure_1/figure_1.png showing complete experimental setup and basic analysis
 """
 
 import pandas as pd

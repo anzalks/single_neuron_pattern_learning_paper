@@ -4,11 +4,23 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 2 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 2 (Supplementary, Field Normalized): EPSP Amplitude Analysis
+
+This script generates the field-normalized version of Figure 2 for supplementary analysis, which shows:
+- Field-normalized EPSP amplitude changes across time points (pre, post-0, post-1, post-2, post-3)
+- Pattern-specific responses corrected for field potential variations
+- Cell type classification with field normalization applied
+- Input resistance analysis with field correction
+- Statistical comparisons between learners and non-learners using field-normalized data
+- Comprehensive field-corrected analysis of EPSP amplitude changes
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- all_cells_inR.pickle: Input resistance data
+- Illustration images: Pattern and recording setup diagrams
+
+Output: Figure_2_fnorm/figure_2_fnorm.png showing field-normalized EPSP amplitude analysis
 """
 
 import pandas as pd

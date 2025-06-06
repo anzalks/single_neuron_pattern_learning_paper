@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the supplimentary figure 1 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Supplementary Figure 1 (Field Normalized): Additional Analysis
+
+This script generates the field-normalized version of Supplementary Figure 1, which shows:
+- Field-normalized additional detailed analysis supporting the main figures
+- Extended statistical analysis with field potential correction
+- Supplementary cellular property measurements corrected for field variations
+- Additional pattern-specific response analysis with field normalization
+- Extended comparison between experimental conditions using field-corrected data
+- Supporting field-normalized data for main figure conclusions
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field correction
+- cell_stats.h5: Cell statistics
+- Figure_3_1.jpg: Illustration image
+
+Output: supplimentary_figure_1_fnorm/supplimentary_figure_1_fnorm.png showing field-normalized additional analysis
 """
 
 import pandas as pd

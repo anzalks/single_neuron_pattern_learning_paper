@@ -4,11 +4,23 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 7 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 7 (Supplementary): Synaptic Properties
+
+This script generates Supplementary Figure 7 of the pattern learning paper, which shows:
+- Detailed synaptic property analysis comparing learners and non-learners
+- Field amplitude time series analysis across different patterns
+- Synaptic response characteristics and their correlation with learning
+- Pattern-specific synaptic plasticity profiles
+- Statistical analysis of synaptic mechanisms underlying learning
+- Comprehensive comparison of synaptic properties between cell types
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses for synaptic analysis
+- all_cells_classified_dict.pickle: Cell classification for comparison
+- cell_stats.h5: Detailed synaptic statistics
+- Figure_3_1.png: Illustration of synaptic analysis methodology
+
+Output: Figure_7/figure_7.png showing comprehensive synaptic properties analysis
 """
 
 import pandas as pd
@@ -1036,13 +1048,6 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
     #label_axis(axs_ex_fl_list,"C")    
     #axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
-    #axs_in_fl2 = fig.add_subplot(gs[7:9,2:4])
-    #axs_in_fl3 = fig.add_subplot(gs[7:9,4:6])
-    #plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
-    #                                  "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
-    #axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
-    #label_axis(axs_in_fl_list,"D")
-    #axs_all_field = fig.add_subplot(gs[9:11,0:2])
     ##plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     ##                         axs_all_field)
     ##axs_all_field1= fig.add_subplot(gs[9:11,0:2])

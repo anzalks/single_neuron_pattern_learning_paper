@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 6 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 6 (Supplementary, Field Normalized): Learner vs Non-Learner Comparison
+
+This script generates the field-normalized version of Figure 6 for supplementary analysis, which shows:
+- Field-normalized comparison between learner and non-learner cellular responses
+- Gamma fitting analysis with field normalization applied
+- Expected vs observed responses normalized to field potential
+- Statistical analysis of learning differences with field normalization
+- Pattern-specific response profiles corrected for field variations
+- Comprehensive field-normalized analysis of learning mechanisms
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field normalization
+- cell_stats.h5: Cell statistics
+- Figure_6_1.png: Illustration of methodology
+
+Output: Figure_6_fnorm/figure_6_fnorm.png showing field-normalized learner vs non-learner comparison
 """
 
 import pandas as pd
@@ -737,9 +750,9 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_6.png"
-    #outpath = f"{outdir}/figure_6.svg"
-    #outpath = f"{outdir}/figure_6.pdf"
+    outpath = f"{outdir}/figure_6_fnorm.png"
+    #outpath = f"{outdir}/figure_6_fnorm.svg"
+    #outpath = f"{outdir}/figure_6_fnorm.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)

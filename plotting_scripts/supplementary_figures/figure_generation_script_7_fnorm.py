@@ -4,11 +4,23 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 7 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 7 (Supplementary, Field Normalized): Synaptic Properties
+
+This script generates the field-normalized version of Figure 7 for supplementary analysis, which shows:
+- Field-normalized synaptic property analysis comparing learners and non-learners
+- Field amplitude time series with field potential correction
+- Synaptic response characteristics corrected for field variations
+- Pattern-specific synaptic plasticity profiles with field normalization
+- Statistical analysis of synaptic mechanisms using field-corrected data
+- Comprehensive comparison of field-normalized synaptic properties
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- cell_stats.h5: Synaptic statistics with field correction
+- Figure_3_1.png: Illustration of synaptic analysis methodology
+
+Output: Figure_7_fnorm/figure_7_fnorm.png showing field-normalized synaptic properties analysis
 """
 
 import pandas as pd

@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 4 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Supplementary Figure 2 (Field Norm + Field Normalized): Extended Analysis
+
+This script generates the combined field norm + field normalized version of Supplementary Figure 2, which shows:
+- Combined field norm and field normalized extended analysis supporting main conclusions
+- Detailed statistical comparisons with dual field correction methodology
+- Additional cellular and synaptic property analysis with combined field corrections
+- Extended pattern-specific response characterization using dual field approach
+- Supporting data with comprehensive field correction for plasticity mechanism analysis
+- Comprehensive dual field correction additional analysis beyond main figures
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Combined field correction cell classification
+- pd_all_cells_all_trials.pickle: Trial data for dual field correction
+- cell_stats.h5: Cell statistics
+- Figure_3_1.jpg: Illustration image
+
+Output: supplimentary_figure_2_field_norm_fnorm/supplimentary_figure_2_field_norm_fnorm.png showing dual field correction extended analysis
 """
 
 import pandas as pd

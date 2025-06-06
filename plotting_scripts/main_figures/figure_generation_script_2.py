@@ -4,11 +4,22 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 2 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 2: EPSP Amplitude Analysis
+
+This script generates Figure 2 of the pattern learning paper, which shows:
+- EPSP amplitude changes across different time points (pre, post-0, post-1, post-2, post-3)
+- Pattern-specific responses for trained, overlapping, and non-overlapping patterns
+- Cell type classification and feature analysis
+- Input resistance measurements and their correlation with learning
+- Statistical comparisons between learners and non-learners
+
+Input files:
+- pd_all_cells_mean.pickle: Mean responses for all cells
+- all_cells_classified_dict.pickle: Cell classification (learners/non-learners)
+- all_cells_inR.pickle: Input resistance data
+- Illustration images: Pattern and recording setup diagrams
+
+Output: Figure_2/figure_2.png showing EPSP amplitude analysis and cell classification
 """
 
 import pandas as pd

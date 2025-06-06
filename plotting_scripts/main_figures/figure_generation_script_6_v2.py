@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 6 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 6: Learner vs Non-Learner Comparison
+
+This script generates Figure 6 of the pattern learning paper, which shows:
+- Direct comparison between learner and non-learner cellular responses
+- Field response analysis with gamma fitting and statistical comparisons
+- Expected vs observed responses for different pattern types
+- Bootstrap statistical analysis of learning differences
+- Pattern-specific response profiles between cell types
+- Comprehensive analysis of learning vs non-learning mechanisms
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_classified_dict.pickle: Cell classification (learners/non-learners)
+- pd_all_cells_all_trials.pickle: Trial-by-trial comparison data
+- cell_stats.h5: Cell statistics for comparison
+- Figure_6_1.png: Illustration of comparison methodology
+
+Output: Figure_6/figure_6.png showing comprehensive learner vs non-learner comparison
 """
 
 import pandas as pd

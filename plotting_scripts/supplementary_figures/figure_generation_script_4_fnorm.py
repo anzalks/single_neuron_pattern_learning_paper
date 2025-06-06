@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 4 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 4 (Supplementary, Field Normalized): Plasticity Mechanisms
+
+This script generates the field-normalized version of Figure 4 for supplementary analysis, which shows:
+- Field-normalized analysis of plasticity mechanisms underlying pattern learning
+- Point-by-point plasticity distribution with field potential correction
+- EPSP feature analysis corrected for field variations
+- Response summary and classification with field normalization
+- Pattern-specific plasticity changes using field-corrected data
+- Peak percentage comparisons with field normalization applied
+- Statistical analysis of plasticity mechanisms with field correction
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field correction
+- cell_stats.h5: Cell statistics
+
+Output: Figure_4_fnorm/figure_4_fnorm.png showing field-normalized plasticity mechanism analysis
 """
 
 import pandas as pd

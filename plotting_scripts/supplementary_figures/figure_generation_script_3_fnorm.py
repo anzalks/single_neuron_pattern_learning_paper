@@ -4,11 +4,27 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 3 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 3 (Supplementary, Field Normalized): Learner, non-learner Analysis
+
+This script generates the field-normalized version of Figure 3 for supplementary analysis, which shows:
+- Field-normalized EPSP shapes over training
+- Cell distribution analysis with field correction applied
+- Training threshold analysis using field-normalized data
+- Mini EPSP analysis corrected for field variations
+- Input resistance correlation with learning using field normalization
+- F-I curves comparing learners and non-learners with field correction
+- Statistical analysis of cellular properties during learning with field normalization
+
+Input files:
+- pd_all_cells_mean.pickle: Mean responses for field normalization
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field correction
+- pd_training_data_all_cells_all_trials.pickle: Training data with field normalization
+- all_cell_all_trial_firing_properties.pickle: Firing properties
+- all_cells_inR.pickle: Input resistance measurements
+- cell_stats.h5: Cell statistics
+
+Output: Figure_3_fnorm/figure_3_fnorm.png showing field-normalized learning curve analysis
 """
 
 import pandas as pd

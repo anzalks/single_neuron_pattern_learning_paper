@@ -4,11 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Generates the figure 4 of pattern learning paper.
-Takes in the pickle file that stores all the experimental data.
-Takes in the image files with slice and pipettes showing recordin location and
-the fluroscence on CA3.
-Generates the plot showing the size of the grids/points in patterns.
+Figure 5: Temporal Dynamics
+
+This script generates Figure 5 of the pattern learning paper, which shows:
+- Temporal dynamics of synaptic plasticity during pattern learning
+- Time-course analysis of EPSP amplitude changes
+- Pattern-specific temporal evolution of responses
+- Detailed analysis of learning time constants and dynamics
+- Comparison of temporal properties between learners and non-learners
+- Statistical analysis of temporal plasticity mechanisms
+
+Input files:
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_classified_dict.pickle: Cell classification data
+- pd_all_cells_all_trials.pickle: Trial-by-trial temporal data
+- cell_stats.h5: Cell statistics and temporal properties
+- Figure_5_1.png: Illustration of temporal analysis setup
+
+Output: Figure_5/figure_5.png showing comprehensive temporal dynamics analysis
 """
 
 import pandas as pd
@@ -291,7 +304,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
             # Adjust axis labels and ticks
             if pat_num == 0:
                 sns.despine(ax=axs, top=True, right=True)
-                axs.set_ylabel("% change in\nEPSP amplitude")
+                axs.set_ylabel("% change in\nPSH amplitude")
                 axs.set_xlabel(None)
             elif pat_num == 1:
                 sns.despine(ax=axs, top=True, right=True)
@@ -703,12 +716,12 @@ def plot_peak_perc_comp(
 
         # Set axis labels
         if pat == "pattern_0":
-            ax.set_ylabel("change in\nEPSP amplitude(mV)")
+            ax.set_ylabel("change in\PSH amplitude(mV)")
         else:
             ax.set_ylabel("")
 
         if pat == "pattern_1":
-            ax.set_xlabel("EPSP amplitude\npre (mV)")
+            ax.set_xlabel("PSH amplitude\npre (mV)")
         else:
             ax.set_xlabel("")
 
@@ -804,7 +817,7 @@ def plot_peak_perc_comp(
             ax.set_ylabel("")
 
         if pat == "pattern_1":
-            ax.set_xlabel("EPSP amplitude\npre (mV)")
+            ax.set_xlabel("PSH amplitude\npre (mV)")
         else:
             ax.set_xlabel("")
 

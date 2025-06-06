@@ -6,13 +6,21 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzal.ks@gmail.com"
 
 """
-CHR2 Sensitisation Supplementary Figure 6
-Pattern Learning Paper - Supplementary Figures
-Repository: https://github.com/anzalks/
+Supplementary Figure 6: CHR2 Sensitisation Analysis
 
-This script generates violin plots for CHR2 sensitisation analysis showing
-spike amplitudes, TTL rising edges, and LFP minimas over time periods.
-Following project plotting standards from bpf module.
+This script generates Supplementary Figure 6 of the pattern learning paper, which shows:
+- CHR2 sensitisation analysis with violin plots over time periods (0s, 0.5s, 1s)
+- Spike amplitude changes during CHR2 stimulation
+- TTL rising edge analysis during sensitisation protocol
+- LFP minima measurements across time points
+- Statistical analysis (Mann-Whitney U tests) between time periods
+- Comprehensive analysis of CHR2 response characteristics and sensitisation effects
+
+Input files:
+- sensitisation_plot_data.pickle: CHR2 sensitisation experimental data
+
+Output: Supplementary_figure_6_chr2_sensitisation/supplementary_figure_6_chr2_sensitisation.png
+showing CHR2 sensitisation analysis with statistical comparisons
 """
 
 import pickle
