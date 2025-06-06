@@ -269,12 +269,6 @@ def plot_chr2_sensitisation(filename, output_dir="outputs/supplementary_figures"
                 facecolor='white', edgecolor='none')
     print(f"Supplementary Figure 6 (CHR2 Sensitisation) saved to: {output_path}")
     
-    # Also save as SVG for publication quality
-    svg_path = os.path.join(output_dir, "Supplementary_figure_6_chr2_sensitisation.svg")
-    plt.savefig(svg_path, format='svg', bbox_inches='tight', 
-                facecolor='white', edgecolor='none')
-    print(f"SVG version saved to: {svg_path}")
-    
     plt.show()
 
 def main():

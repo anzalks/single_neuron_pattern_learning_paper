@@ -25,21 +25,22 @@ def build_command_args(script_path, args_dict):
     """Build command line arguments from args dictionary."""
     cmd_args = []
     
-    # Simple argument mapping - let the config file handle the file mappings
+    # Standardized argument mapping - consistent across all scripts
     arg_mapping = {
-        'file': '-f', 
-        'stats': '-s', 
-        'resistance': '-r', 
-        'image': '-i', 
-        'projimg': '-p',
-        'alltrial_path': '-a',  # Figure 3 specific argument
-        'cell_stats': '-c', 
-        'training': '-t', 
-        'firing': '-q',
-        'image_i': '-i', 
-        'image_p': '-p', 
-        'image_m': '-m',
-        'sensitisation_data': '-s'  # CHR2 sensitisation data
+        'file': '-f',                # --pikl-path (main pickle file)
+        'stats': '-s',               # --sortedcell-path (stats/classification data)
+        'resistance': '-r',          # --inR-path (resistance data)
+        'image': '-i',               # --illustration-path (main illustration)
+        'projimg': '-p',             # --projection-image / --inRillustration-path
+        'alltrial_path': '-t',       # --alltrial-path (Figure 3 format)
+        'all_trials': '-t',          # --alltrials-path (all other figures) - same as alltrial_path
+        'cell_stats': '-c',          # --cellstat-path (cell statistics)
+        'training': '-n',            # --training-path (training data, now uses -n)
+        'firing': '-q',              # --firingproperties-path (firing properties)
+        'image_i': '-i',             # Figure 2 multi-image support (main image)
+        'image_p': '-p',             # Figure 2 projection image
+        'image_m': '-m',             # Figure 2 additional image
+        'sensitisation_data': '-s'   # CHR2 sensitisation data (reuses stats flag)
     }
     
     for key, value in args_dict.items():
@@ -192,8 +193,22 @@ def main():
             print(f"No arguments found for {fig_name} with {args.analysis_type} analysis")
             continue
         
+        # Determine correct output directory based on figure type
+        if args.output_dir:
+            # User specified output directory, use that
+            figure_output_dir = output_dir
+        else:
+            # Use appropriate directory based on figure type
+            base_output = config.get('output', {}).get('base_output_dir', 'outputs')
+            if fig_type == 'supplementary':
+                figure_output_dir = os.path.join(base_output, 'supplementary_figures')
+            else:
+                figure_output_dir = os.path.join(base_output, 'main_figures')
+        
+        os.makedirs(figure_output_dir, exist_ok=True)
+        
         # Run the script
-        if run_script(script_path, script_args, output_dir):
+        if run_script(script_path, script_args, figure_output_dir):
             success_count += 1
     
     print(f"\n=== Summary ===")

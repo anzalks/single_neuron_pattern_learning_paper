@@ -111,7 +111,7 @@ figures:
           cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
           alltrial_path: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           training: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle"
-          firing: "data/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle"
+          firing: "data/pickle_files/compile_firing_data/all_cell_all_trial_firing_properties.pickle"
           resistance: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
           projimg: "data/illustations/figure_2_2.jpg"
           
@@ -172,7 +172,7 @@ figures:
           cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
           alltrial_path: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
           training: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_training_data_all_cells_all_trials.pickle"
-          firing: "data/cells_min_30mins_long/pickle_format_files_firing_rate_data/all_cell_all_trial_firing_properties.pickle"
+          firing: "data/pickle_files/compile_firing_data/all_cell_all_trial_firing_properties.pickle"
           resistance: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_inR.pickle"
           projimg: "data/illustations/figure_2_2.jpg"
           

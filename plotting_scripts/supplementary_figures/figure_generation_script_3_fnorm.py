@@ -285,6 +285,8 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
 
     # Combine learners and non-learners into a single DataFrame for plotting
     combined_df = pd.concat([learners_df, non_learners_df])
+    # Reset index to avoid duplicate labels that cause reindex errors in violin plots
+    combined_df = combined_df.reset_index(drop=True)
     combined_df['group'] = combined_df['cell_ID'].apply(lambda x: 'learner' if x in learners else 'non-learner')
 
     # Create split violin plot without any legend
@@ -1048,7 +1050,7 @@ def compare_cell_properties(cell_stats, fig, axs_rmp, axs_inr,
 def plot_figure_3(extracted_feature_pickle_file_path,
                   all_trails_all_Cells_path,
                   cell_categorised_pickle_file,
-                  inR_all_Cells_df,
+                  inR_all_Cells_df_path,
                   inRillustration_path,
                   training_data_pickle_file,
                   firing_properties_path,
@@ -1062,7 +1064,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     cell_stats_df = pd.read_hdf(cell_stats_pickle_file)
     training_data = pd.read_pickle(training_data_pickle_file)
     firing_properties= pd.read_pickle(firing_properties_path)
-    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df)
+    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df_path)
     inRillustration = pillow.Image.open(inRillustration_path)
     print(f"cell stat df : {cell_stats_df}")
     single_cell_df = feature_extracted_data.copy()
@@ -1159,7 +1161,7 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
-    parser.add_argument('--alltrial-path', '-a'
+    parser.add_argument('--alltrial-path', '-t'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
@@ -1167,7 +1169,7 @@ def main():
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with inR data'
                        )
-    parser.add_argument('--training-path', '-t'
+    parser.add_argument('--training-path', '-n'
                         , required = False,default ='./', type=str
                         , help = 'path to pickle file with extracted features'
                        )
