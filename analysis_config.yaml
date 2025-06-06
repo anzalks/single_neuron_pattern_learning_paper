@@ -82,6 +82,19 @@ analysis_scripts:
     description: "Calculate scale bar for 40x microscopy images"
     arguments:
       # Add arguments when script is examined
+      
+  chr2_sensitisation:
+    script: "analysis_scripts/sensitisation_data_pickle_generation_from_training_data.py"
+    description: "Generate CHR2 sensitisation data for supplementary figure 6"
+    arguments:
+      input:
+        flag: "--input"
+        default: "./data/pickle_files/compile_cells_to_pickle/all_data_df.pickle"
+        description: "Path to input training data pickle file"
+      output:
+        flag: "--output"
+        default: "./data/pickle_files/extract_features/pickle_files_from_analysis/sensitisation_plot_data.pickle"
+        description: "Path to output sensitisation data pickle file"
 
 # Processing workflows
 workflows:
@@ -95,6 +108,7 @@ workflows:
     description: "Complete analysis pipeline"
     steps:
       - "extract_features"
+      - "chr2_sensitisation"
       
   complete_pipeline:
     description: "Full pipeline from raw data to analysis"
@@ -102,6 +116,7 @@ workflows:
       - "abf_to_hdf5"
       - "compile_cells_to_pickle"
       - "extract_features"
+      - "chr2_sensitisation"
 
 # System configuration
 system:

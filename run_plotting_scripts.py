@@ -38,7 +38,8 @@ def build_command_args(script_path, args_dict):
         'firing': '-q',
         'image_i': '-i', 
         'image_p': '-p', 
-        'image_m': '-m'
+        'image_m': '-m',
+        'sensitisation_data': '-s'  # CHR2 sensitisation data
     }
     
     for key, value in args_dict.items():

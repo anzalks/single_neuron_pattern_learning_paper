@@ -306,6 +306,14 @@ figures:
           image: "data/illustations/Figure_3_1.jpg"
           cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
           all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
+          
+    # CHR2 Sensitisation Analysis (New)
+    supp_chr2_sensitisation:
+      script: "plotting_scripts/supplementary_figures/Supplementary_figure_6_chr2_sensitiation.py"
+      name: "CHR2 Sensitisation Analysis"
+      args:
+        standard:
+          sensitisation_data: "data/pickle_files/extract_features/pickle_files_from_analysis/sensitisation_plot_data.pickle"
 
 # =============================================================================
 # SYSTEM CONFIGURATION
