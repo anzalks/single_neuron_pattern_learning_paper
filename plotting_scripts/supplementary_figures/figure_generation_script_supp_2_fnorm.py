@@ -594,7 +594,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'supplimentary_figure_1'
+    globoutdir= globoutdir/'supplimentary_figure_2_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_supp_fig_1(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)

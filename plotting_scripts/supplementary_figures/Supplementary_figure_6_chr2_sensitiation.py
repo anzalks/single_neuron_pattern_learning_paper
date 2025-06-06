@@ -260,9 +260,10 @@ def plot_chr2_sensitisation(filename, output_dir="outputs/supplementary_figures"
     
     plt.tight_layout(pad=3.0)  # Add more padding for panel labels
     
-    # Save the figure following project standards
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, "Supplementary_figure_6_chr2_sensitisation.png")
+    # Create figure subdirectory following project standards
+    figure_dir = os.path.join(output_dir, "Supplementary_figure_6_chr2_sensitisation")
+    os.makedirs(figure_dir, exist_ok=True)
+    output_path = os.path.join(figure_dir, "Supplementary_figure_6_chr2_sensitisation.png")
     
     # Save with high quality settings
     plt.savefig(output_path, dpi=300, bbox_inches='tight', 

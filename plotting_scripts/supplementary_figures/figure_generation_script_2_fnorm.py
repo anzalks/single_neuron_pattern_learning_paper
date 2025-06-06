@@ -1202,7 +1202,7 @@ def main():
     patillustration_path =Path(args.patillustration_path) 
     inRillustration_path = Path(args.inRillustration_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_2'
+    globoutdir= globoutdir/'Figure_2_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_2(pklpath,scpath,inR_path,illustration_path,

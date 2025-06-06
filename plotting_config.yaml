@@ -139,13 +139,14 @@ figures:
           
     figure_6:
       script: "plotting_scripts/main_figures/figure_generation_script_6_v2.py"
-      name: "Synaptic Properties (Latest Version)"
+      name: "Learner vs Non-Learner Comparison (Latest Version)"
       args:
         standard:
           file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
           stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
-          image: "data/illustations/Figure_3_1.png"
+          image: "data/illustations/Figure_6_1.png"
           cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
 
   supplementary_figures:
     # Field normalized versions of main figures (LATEST VERSIONS ONLY)
@@ -200,45 +201,35 @@ figures:
           
     figure_6_v2_fnorm:
       script: "plotting_scripts/supplementary_figures/figure_generation_script_6_v2_fnorm.py"
-      name: "Synaptic Properties (Latest Version, Field Normalized)"
+      name: "Learner vs Non-Learner Comparison (Latest Version, Field Normalized)"
+      args:
+        field_normalized:
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
+          image: "data/illustations/Figure_6_1.png"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
+          
+    # Figure 7 - Latest version (v3) and its field normalized variant
+    figure_7_v3:
+      script: "plotting_scripts/supplementary_figures/figure_generation_script_7_learner_non_learner_comparison_v3.py"
+      name: "Synaptic Properties (Latest Version)"
+      args:
+        standard:
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
+          image: "data/illustations/Figure_3_1.png"
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          
+    figure_7_fnorm:
+      script: "plotting_scripts/supplementary_figures/figure_generation_script_7_fnorm.py"
+      name: "Synaptic Properties (Field Normalized)"
       args:
         field_normalized:
           file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
           stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
           image: "data/illustations/Figure_3_1.png"
           cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
-          
-    # Figure 7 - Latest version (v3) and its field normalized variant
-    figure_7_v3:
-      script: "plotting_scripts/supplementary_figures/figure_generation_script_7_learner_non_learner_comparison_v3.py"
-      name: "Learner vs Non-Learner Comparison (Latest Version)"
-      args:
-        standard:
-          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
-          image: "data/illustations/Figure_6_1.png"
-          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
-          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
-          
-    figure_7_fnorm:
-      script: "plotting_scripts/supplementary_figures/figure_generation_script_7_fnorm.py"
-      name: "Learner vs Non-Learner Analysis (Field Normalized)"
-      args:
-        field_normalized:
-          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle"
-          image: "data/illustations/Figure_6_1.png"
-          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
-          all_trials: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_all_trials.pickle"
-          
-    # Figure 8
-    figure_8:
-      script: "plotting_scripts/supplementary_figures/figure_generation_script_8.py"
-      name: "Summary Analysis"
-      args:
-        standard:
-          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
-          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
           
     # Dedicated supplementary figures
     supp_1:

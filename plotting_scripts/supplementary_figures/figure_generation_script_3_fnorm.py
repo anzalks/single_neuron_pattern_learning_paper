@@ -1212,7 +1212,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     firing_properties_path = Path(args.firingproperties_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_3'
+    globoutdir= globoutdir/'Figure_3_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_3(pklpath,alltrialspath,scpath,inR_path,

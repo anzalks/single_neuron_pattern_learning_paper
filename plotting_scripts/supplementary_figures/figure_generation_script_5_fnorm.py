@@ -1106,7 +1106,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_5'
+    globoutdir= globoutdir/'Figure_5_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_5(pklpath,PSH_illustration_path,

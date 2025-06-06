@@ -99,6 +99,9 @@ def main():
     parser.add_argument('--output_dir', help='Output directory for figures')
     parser.add_argument('--config', default='plotting_config.yaml', help='Path to config file')
     parser.add_argument('--list', action='store_true', help='List available figures')
+    parser.add_argument('--all_fig', action='store_true', help='Generate all figures (main + supplementary)')
+    parser.add_argument('--main_fig', action='store_true', help='Generate only main figures')
+    parser.add_argument('--supplementary_fig', action='store_true', help='Generate only supplementary figures')
     
     args = parser.parse_args()
     
@@ -149,8 +152,27 @@ def main():
                 figures_to_run.append((fig_name, fig_config, 'supplementary'))
             else:
                 print(f"Figure {fig_name} not found in config")
+    elif args.all_fig:
+        # Run all figures (main + supplementary)
+        print("Running all figures (main + supplementary)...")
+        # Add main figures
+        for fig_name, fig_config in figures_config.get('main_figures', {}).items():
+            figures_to_run.append((fig_name, fig_config, 'main'))
+        # Add all supplementary figures
+        for fig_name, fig_config in figures_config.get('supplementary_figures', {}).items():
+            figures_to_run.append((fig_name, fig_config, 'supplementary'))
+    elif args.main_fig:
+        # Run only main figures
+        print("Running main figures only...")
+        for fig_name, fig_config in figures_config.get('main_figures', {}).items():
+            figures_to_run.append((fig_name, fig_config, 'main'))
+    elif args.supplementary_fig:
+        # Run only supplementary figures
+        print("Running supplementary figures only...")
+        for fig_name, fig_config in figures_config.get('supplementary_figures', {}).items():
+            figures_to_run.append((fig_name, fig_config, 'supplementary'))
     else:
-        # Run all figures based on analysis type
+        # Run all figures based on analysis type (legacy behavior)
         if args.analysis_type == 'standard':
             # Run main figures
             for fig_name, fig_config in figures_config.get('main_figures', {}).items():
@@ -169,7 +191,11 @@ def main():
         print("No figures to run")
         return 1
     
-    print(f"Running {len(figures_to_run)} figures with {args.analysis_type} analysis...")
+    # Update the analysis message to reflect auto-detection for new options
+    if args.all_fig or args.main_fig or args.supplementary_fig:
+        print(f"Running {len(figures_to_run)} figures with auto-detected analysis types...")
+    else:
+        print(f"Running {len(figures_to_run)} figures with {args.analysis_type} analysis...")
     
     success_count = 0
     total_count = len(figures_to_run)
@@ -184,13 +210,31 @@ def main():
             
         # Get arguments for the analysis type
         args_config = fig_config.get('args', {})
-        if args.analysis_type == 'field_normalized':
-            script_args = args_config.get('field_normalized', args_config.get('standard', {}))
+        
+        # Auto-detect analysis type based on what's available in the config
+        # For the new options (all_fig, main_fig, supplementary_fig), run whatever is available
+        if args.all_fig or args.main_fig or args.supplementary_fig:
+            # Try field_normalized first (for fnorm figures), then standard
+            if 'field_normalized' in args_config:
+                script_args = args_config['field_normalized']
+                current_analysis_type = 'field_normalized'
+            elif 'standard' in args_config:
+                script_args = args_config['standard']
+                current_analysis_type = 'standard'
+            else:
+                script_args = {}
+                current_analysis_type = 'unknown'
         else:
-            script_args = args_config.get('standard', {})
+            # Use the user-specified analysis type (legacy behavior)
+            if args.analysis_type == 'field_normalized':
+                script_args = args_config.get('field_normalized', args_config.get('standard', {}))
+                current_analysis_type = 'field_normalized'
+            else:
+                script_args = args_config.get('standard', {})
+                current_analysis_type = 'standard'
             
         if not script_args:
-            print(f"No arguments found for {fig_name} with {args.analysis_type} analysis")
+            print(f"No arguments found for {fig_name} with {current_analysis_type} analysis")
             continue
         
         # Determine correct output directory based on figure type

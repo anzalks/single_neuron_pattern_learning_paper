@@ -388,11 +388,17 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel("% change in\nEPSP amplitude")
                 axs_slp.set_xlabel(None)
+                # Remove legend for panel Di
+                if axs_slp.get_legend() is not None:
+                    axs_slp.get_legend().remove()
             elif pat_num == 1:
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel(None)
                 axs_slp.set_yticklabels([])
                 axs_slp.set_xlabel("time points (mins)")
+                # Remove legend for panel Dii
+                if axs_slp.get_legend() is not None:
+                    axs_slp.get_legend().remove()
             elif pat_num == 2:
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_xlabel(None)
