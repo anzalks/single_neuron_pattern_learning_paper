@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
+
+__author__           = "Anzal KS"
+__copyright__        = "Copyright 2024-, Anzal KS"
+__maintainer__       = "Anzal KS"
+__email__            = "anzal.ks@gmail.com"
+
 """
 CHR2 Sensitisation Supplementary Figure 6
 Pattern Learning Paper - Supplementary Figures
-Author: Anzal (anzal.ks@gmail.com)  
 Repository: https://github.com/anzalks/
 
 This script generates violin plots for CHR2 sensitisation analysis showing
 spike amplitudes, TTL rising edges, and LFP minimas over time periods.
+Following project plotting standards from bpf module.
 """
 
 import pickle
@@ -22,6 +28,27 @@ import sys
 # Add the shared_utils directory to sys.path to import custom modules
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared_utils'))
 import baisic_plot_fuctnions_and_features as bpf
+
+# Set project plotting standards
+bpf.set_plot_properties()
+
+def label_panels(axs_list, fontsize=16, fontweight='bold', xpos=-0.15, ypos=1.05):
+    """
+    Add panel labels A, B, C to axes following project standards.
+    
+    Parameters:
+    axs_list (list): List of matplotlib axes
+    fontsize (int): Font size for labels
+    fontweight (str): Font weight for labels
+    xpos (float): X position relative to axes
+    ypos (float): Y position relative to axes
+    """
+    panel_labels = ['A', 'B', 'C']
+    for i, ax in enumerate(axs_list[:3]):  # Only label first 3 panels
+        if i < len(panel_labels):
+            ax.text(xpos, ypos, panel_labels[i], 
+                   transform=ax.transAxes, fontsize=fontsize, 
+                   fontweight=fontweight, ha='center', va='center')
 
 def load_sensitisation_data(filename):
     """
@@ -198,34 +225,55 @@ def plot_chr2_sensitisation(filename, output_dir="outputs/supplementary_figures"
     ttl_df = create_dataframe(categorize_by_time(ttl_rising_edge_points))
     minima_df = create_dataframe(categorize_by_time(minima_points))
 
-    # Create subplots and define colors (matching notebook exactly)
-    fig, axs = plt.subplots(3, 1, figsize=(5, 8))
+    # Create subplots with project standard figure size
+    fig, axs = plt.subplots(3, 1, figsize=(8, 10))  # Following project standards
     plot_colors = ['grey', 'grey', 'grey']  # Grey color as in notebook
     y_labels = ["Membrane Potential (mV)", "Trigger Voltage (V)", "LFP (mV)"]
+    titles = ["Spike amplitudes", "TTL Rising Edges", "LFP minimas"]
 
     # Generate violin plots with annotations
-    for ax, df, title, color, ylabel in zip(
+    for i, (ax, df, title, color, ylabel) in enumerate(zip(
         axs, [spike_df, ttl_df, minima_df], 
-        ["Spike amplitudes", "TTL Rising Edges", "LFP minimas"], 
-        plot_colors, y_labels
-    ):
+        titles, plot_colors, y_labels
+    )):
         plot_from_dataframe(ax, df, time_points, color)
         p_values = run_stat_tests(df)
         add_annotations(ax, p_values)
-        ax.set_title(title)
-        ax.set_ylabel(ylabel)
+        
+        # Set titles and labels
+        ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+        ax.set_ylabel(ylabel, fontsize=12)
         ax.set_xticks(range(3))
-        ax.set_xticklabels(time_points)
+        ax.set_xticklabels(time_points, fontsize=11)
+        
+        # Remove spines following project standards
         ax.spines[['right', 'top']].set_visible(False)
+        
+        # Only show x-axis label on bottom panel
+        if i == len(axs) - 1:
+            ax.set_xlabel("Time (s)", fontsize=12)
+        else:
+            ax.set_xlabel("")
 
-    plt.tight_layout()
+    # Add panel labels A, B, C
+    label_panels(axs)
     
-    # Save the figure
+    plt.tight_layout(pad=3.0)  # Add more padding for panel labels
+    
+    # Save the figure following project standards
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, "Supplementary_figure_6_chr2_sensitisation.png")
     
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    print(f"Supplementary Figure 6 saved to: {output_path}")
+    # Save with high quality settings
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', 
+                facecolor='white', edgecolor='none')
+    print(f"Supplementary Figure 6 (CHR2 Sensitisation) saved to: {output_path}")
+    
+    # Also save as SVG for publication quality
+    svg_path = os.path.join(output_dir, "Supplementary_figure_6_chr2_sensitisation.svg")
+    plt.savefig(svg_path, format='svg', bbox_inches='tight', 
+                facecolor='white', edgecolor='none')
+    print(f"SVG version saved to: {svg_path}")
     
     plt.show()
 
