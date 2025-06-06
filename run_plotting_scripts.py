@@ -25,26 +25,26 @@ def build_command_args(script_path, args_dict):
     """Build command line arguments from args dictionary."""
     cmd_args = []
     
-    # Map config argument names to script argument flags
+    # Simple argument mapping - let the config file handle the file mappings
     arg_mapping = {
-        'file': '-f',
+        'file': '-f', 
         'stats': '-s', 
-        'resistance': '-r',
-        'image': '-i',
+        'resistance': '-r', 
+        'image': '-i', 
         'projimg': '-p',
-        'all_trials': '-t',
-        'cell_stats': '-c',
-        'training': '-t',  # Note: some scripts use -t for training, others for all_trials
+        'alltrial_path': '-a',  # Figure 3 specific argument
+        'cell_stats': '-c', 
+        'training': '-t', 
         'firing': '-q',
-        'image_i': '-i',
+        'image_i': '-i', 
         'image_p': '-p', 
         'image_m': '-m'
     }
     
-    for arg_name, arg_value in args_dict.items():
-        if arg_name in arg_mapping:
-            cmd_args.extend([arg_mapping[arg_name], str(arg_value)])
-    
+    for key, value in args_dict.items():
+        if key in arg_mapping:
+            cmd_args.extend([arg_mapping[key], value])
+            
     return cmd_args
 
 def run_script(script_path, args_dict, output_dir=None):

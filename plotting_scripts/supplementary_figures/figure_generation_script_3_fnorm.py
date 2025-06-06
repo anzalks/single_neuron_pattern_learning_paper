@@ -136,7 +136,7 @@ def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
 
 
 def plot_pie_cell_dis(fig, axs, cell_dist, cell_dist_key):
-    palette_color = sns.color_palette('colorblind')
+    palette_color = bpf.CB_color_cycle  # Use bpf colors instead of seaborn colorblind
     
     # Create the pie chart and get references to text objects
     wedges, texts, autotexts = axs.pie(cell_dist, 
@@ -184,59 +184,6 @@ def normalise_df_to_pre(all_trial_cell_df,field_to_plot):
                     #print(f"pps:{pps}, pre: {pre_data}" )
                     c_df[field_to_plot].iloc[(c_df["cell_ID"]==cell)&(c_df["pre_post_status"]==pps)&(c_df["trial_no"]==trial_no)&(c_df["frame_id"]==frame)]=norm_data
     return c_df
-
-#def plot_threshold_timing(training_data,sc_data_dict,fig,axs):
-#    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-#    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-#    cell_grp = training_data.groupby(by="cell_ID")
-#    lrns=[]
-#    non_lrns=[]
-#    for cell, cell_data in cell_grp:
-#        if cell in learners:
-#            lrns.append(cell_data)
-#        elif cell in non_learners:
-#            non_lrns.append(cell_data)
-#        else:
-#            print(cell,"no selection")
-#            continue
-#    #print(lrns)
-#    #print(non_lrns)
-#    lrns = pd.concat(lrns)
-#    lrns["l_stat"]="learners"
-#    non_lrns = pd.concat(non_lrns)
-#    non_lrns["l_stat"]="non\nlearners"
-#    all_df = pd.concat([lrns,non_lrns])
-#    print(non_lrns["trigger_time"].unique())
-#    palette = {"learners": bpf.CB_color_cycle[0], "non\nlearners": bpf.CB_color_cycle[1]}
-#    sns.pointplot(data=all_df,x="l_stat",
-#                  y="cell_thresh_time",
-#                  hue="l_stat",
-#                  palette=palette,ci="sd",
-#                  capsize=0.15, dodge=True,ax=axs)
-##    
-##    sns.pointplot(data=all_df[all_df["l_stat"]=="non_learner"],x="l_stat",
-##                  y="cell_thresh_time",
-##                  color=bpf.CB_color_cycle[1],ci="sd" ,
-##                  capsize=0.15,dodge=True,ax=axs)
-##
-#    sns.stripplot(data=all_df,
-#                  x="l_stat", y="cell_thresh_time",
-#                  hue="l_stat",
-#                  palette=palette,alpha=0.5)
-##    sns.stripplot(data=all_df[all_df["l_stat"]=="non_learner"] ,
-##                  x="l_stat", y="cell_thresh_time",
-##                  color=bpf.CB_color_cycle[1],alpha=0.5)
-#    axs.set_ylabel("rise time from \nprojection (ms)")
-#    axs.set_xlabel(None)
-#    axs.set_ylim(0,20)
-#    axs.spines[['right', 'top']].set_visible(False)
-#    handles, labels = axs.get_legend_handles_labels()
-#    by_label = dict(zip(["learners","non-learners"], handles))
-#    fig.legend(by_label.values(), by_label.keys(), 
-#               bbox_to_anchor =(0.5, 0.32),
-#               ncol = 6,
-#               loc='upper center')#,frameon=False)#,loc='lower center'
-#    axs.legend_.remove()
 
 #violin plot
 
@@ -308,286 +255,8 @@ def plot_threshold_timing(training_data, sc_data_dict, fig, axs):
                ncol=6, loc='upper center')
 
     # Remove the axis legend
-    axs.legend_.remove()
+    if axs.legend_ is not None: axs.legend_.remove()
 
-
-
-#stripplot alone
-#def plot_threshold_timing(training_data, sc_data_dict, fig, axs):
-#    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-#    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-#    cell_grp = training_data.groupby(by="cell_ID")
-#    lrns = []
-#    non_lrns = []
-#    
-#    # Separate learners and non-learners
-#    for cell, cell_data in cell_grp:
-#        if cell in learners:
-#            lrns.append(cell_data)
-#        elif cell in non_learners:
-#            non_lrns.append(cell_data)
-#        else:
-#            print(cell, "no selection")
-#            continue
-#
-#    # Concatenate learners and non-learners dataframes
-#    lrns = pd.concat(lrns)
-#    lrns["l_stat"] = "learners"
-#    non_lrns = pd.concat(non_lrns)
-#    non_lrns["l_stat"] = "non\nlearners"
-#    all_df = pd.concat([lrns, non_lrns])
-#
-#    # Set palette for learners and non-learners
-#    palette = {"learners": bpf.CB_color_cycle[0], "non\nlearners": bpf.CB_color_cycle[1]}
-#    
-#    # Pointplot for mean +/- SD
-#    sns.pointplot(data=all_df, x="l_stat", y="cell_thresh_time", hue="l_stat",
-#                  palette=palette, ci="sd", capsize=0.15, dodge=True, ax=axs)
-#
-#    # Stripplot for individual points
-#    sns.stripplot(data=all_df, x="l_stat", y="cell_thresh_time",
-#                  palette=palette, alpha=0.5, ax=axs, dodge=True)
-#
-#    # Customize labels, limits, and hide spines
-#    axs.set_ylabel("rise time from \nprojection (ms)")
-#    axs.set_xlabel(None)
-#    axs.set_ylim(0, 20)
-#    axs.set_xlim(-0.5,1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
-#
-#    # Perform Mann-Whitney U test to compare the distributions
-#    learners_data = all_df[all_df["l_stat"] == "learners"]["cell_thresh_time"]
-#    non_learners_data = all_df[all_df["l_stat"] == "non\nlearners"]["cell_thresh_time"]
-#    
-#    # Mann-Whitney U test
-#    stat_test = spst.mannwhitneyu(learners_data, non_learners_data, alternative='two-sided')
-#    pval = stat_test.pvalue
-#
-#    # Convert p-value to asterisks
-#    pval_asterisks = bpf.convert_pvalue_to_asterisks(pval)
-#
-#    # Annotate the p-value on the plot
-#    annot = Annotator(axs, [("learners", "non\nlearners")], data=all_df,
-#                      x="l_stat", y="cell_thresh_time", palette=palette)
-#    
-#    # Set custom annotations using the asterisks conversion and then annotate
-#    annot.set_custom_annotations([pval_asterisks])
-#    annot.annotate()
-#
-#    # Get legend handles and labels
-#    handles, labels = axs.get_legend_handles_labels()
-#    by_label = dict(zip(labels, handles))
-#
-#    # Set a custom legend
-#    fig.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, 0.32),
-#               ncol=6, loc='upper center')
-#
-#    # Remove the axis legend
-#    axs.legend_.remove()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#def plot_mini_feature(cells_df,field_to_plot, learners,non_learners,fig,axs):
-#    if field_to_plot=="mepsp_amp":
-#        ylim=(-1,2)
-#        ylabel=("mEPSP amplitude (mV)")
-#    elif field_to_plot=="freq_mepsp":
-#        ylim=(-1,10)
-#        ylabel=("mEPSP frequency (Hz)")
-#    else:
-#        ylim=(None,None)
-#        ylabel=None
-#    order = np.array(["pre","post_3"])
-#    cells_df=cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
-#    learners_df =  data_to_plot[data_to_plot["cell_ID"].isin(learners)].reset_index(drop=True)
-#    non_learners_df =  data_to_plot[data_to_plot["cell_ID"].isin(non_learners)].reset_index(drop=True)
-#    pre_dat =  learners_df[learners_df["pre_post_status"]=="pre"][field_to_plot].reset_index(drop=True)
-#    post_dat =  learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot].reset_index(drop=True)
-#
-#    pointplot1=sns.pointplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
-#                 order=order,color=bpf.CB_color_cycle[0],
-#                 capsize=0.15,ci='sd')
-#    pointplot2=sns.pointplot(data=non_learners_df,x="pre_post_status",
-#                  y=field_to_plot,ax=axs,order=order,
-#                  color=bpf.CB_color_cycle[1],capsize=0.15,
-#                  ci='sd')
-#    #sns.stripplot(data=learners_df,x="pre_post_status",y=field_to_plot,ax=axs,
-#    #             order=order,color=bpf.CB_color_cycle[0],
-#    #             alpha=0.1,zorder=1)
-#    #sns.stripplot(data=non_learners_df,x="pre_ost_status",
-#    #              y=field_to_plot,ax=axs,order=order,
-#    #              color=bpf.CB_color_cycle[1],alpha=0.1,zorder=1)
-#
-#
-#    stat_analysis= spst.wilcoxon(pre_dat,post_dat, zero_method="wilcox", correction=True)
-#    pvalList = stat_analysis.pvalue
-#    anotp_list=["pre","post_3"]
-#    annotator =Annotator(axs,[anotp_list], data=learners_df, 
-#                         x="pre_post_status",y=field_to_plot,order=order)
-#    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-#    annotator.annotate()
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre","30 mins"])
-#    axs.set_ylim(ylim)
-#    axs.set_xlim(-0.5, 1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
-#    return None
-
-
-
-#from matplotlib.lines import Line2D
-#import scipy.stats as spst
-#import seaborn as sns
-#import numpy as np
-
-#plot without outliers
-
-#def remove_outliers(df, field):
-#    """Remove outliers using the IQR rule and return only the cleaned DataFrame."""
-#    q1 = df[field].quantile(0.25)
-#    q3 = df[field].quantile(0.75)
-#    iqr = q3 - q1
-#    lower_bound = q1 - 1.5 * iqr
-#    upper_bound = q3 + 1.5 * iqr
-#    cleaned_df = df[(df[field] >= lower_bound) & (df[field] <= upper_bound)]
-#    return cleaned_df
-#
-#def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs):
-#    # Set y-axis limits and labels based on the field to plot
-#    if field_to_plot == "mepsp_amp":
-#        ylim = (-1, 2)
-#        ylabel = "mEPSP amplitude (mV)"
-#    elif field_to_plot == "freq_mepsp":
-#        ylim = (-1, 10)
-#        ylabel = "mEPSP frequency (Hz)"
-#    else:
-#        ylim = (None, None)
-#        ylabel = None
-#
-#    # Define the order of the time points
-#    order = np.array(["pre", "post_3"])
-#    cells_df = cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(order)]
-#
-#    # Remove outliers for learners and non-learners
-#    learners_cleaned = remove_outliers(
-#        data_to_plot[data_to_plot["cell_ID"].isin(learners)], field_to_plot
-#    )
-#    non_learners_cleaned = remove_outliers(
-#        data_to_plot[data_to_plot["cell_ID"].isin(non_learners)], field_to_plot
-#    )
-#
-#    # Combine learners and non-learners into a single DataFrame for plotting
-#    combined_df = pd.concat([learners_cleaned, non_learners_cleaned])
-#    combined_df['group'] = combined_df['cell_ID'].apply(lambda x: 'learner' if x in learners else 'non-learner')
-#
-#    # Create split violin plot without any legend
-#    sns.violinplot(
-#        data=combined_df, 
-#        x="pre_post_status", 
-#        y=field_to_plot, 
-#        hue="group", 
-#        ax=axs,
-#        order=order, 
-#        split=True, 
-#        inner="quartile",
-#        palette={'learner': bpf.CB_color_cycle[0], 'non-learner': bpf.CB_color_cycle[1]}, 
-#        linewidth=1,
-#        legend=False
-#    )
-#
-#    # Explicitly remove any existing legend
-#    if axs.get_legend():
-#        axs.get_legend().remove()
-#
-#    # Annotate comparison within learners (pre vs. post_3)
-#    stat_analysis = spst.mannwhitneyu(
-#        learners_cleaned[learners_cleaned["pre_post_status"] == "pre"][field_to_plot],
-#        learners_cleaned[learners_cleaned["pre_post_status"] == "post_3"][field_to_plot],
-#        alternative='two-sided'
-#    )
-#    pval_within_learners = stat_analysis.pvalue
-#    annotator_within = Annotator(axs, [("pre", "post_3")], data=learners_cleaned,
-#                                 x="pre_post_status", y=field_to_plot, order=order)
-#    annotator_within.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pval_within_learners)])
-#    annotator_within.annotate()
-#
-#    # Perform Mann-Whitney U tests for both time points between learners and non-learners
-#    learners_pre = learners_cleaned[learners_cleaned["pre_post_status"] == "pre"][field_to_plot]
-#    non_learners_pre = non_learners_cleaned[non_learners_cleaned["pre_post_status"] == "pre"][field_to_plot]
-#    learners_post_3 = learners_cleaned[learners_cleaned["pre_post_status"] == "post_3"][field_to_plot]
-#    non_learners_post_3 = non_learners_cleaned[non_learners_cleaned["pre_post_status"] == "post_3"][field_to_plot]
-#
-#    # Draw vertical lines and p-value annotations
-#    xloc_pre = -0.4
-#    stat_test_pre = spst.mannwhitneyu(learners_pre, non_learners_pre, alternative='two-sided')
-#    pval_pre = stat_test_pre.pvalue
-#    axs.plot([xloc_pre, xloc_pre], [learners_pre.mean(), non_learners_pre.mean()], color='black', linestyle='-')
-#    axs.text(xloc_pre - 0.3, (learners_pre.mean() + non_learners_pre.mean()) / 2, 
-#             bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
-#
-#    xloc_post_3 = 1.4
-#    stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
-#    pval_post_3 = stat_test_post_3.pvalue
-#    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3.mean(), non_learners_post_3.mean()], color='black', linestyle='-')
-#    axs.text(xloc_post_3 + 0.3, (learners_post_3.mean() + non_learners_post_3.mean()) / 2, 
-#             bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
-#
-#    # Set labels, limits, and remove legends
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre", "30 mins"])
-#    axs.set_ylim(ylim)
-#    axs.set_xlim(-0.75, 1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
 
 
 #plot with outliers
@@ -683,440 +352,6 @@ def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs)
     axs.legend().set_visible(False)
 
 
-#def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs):
-#    # Set y-axis limits and labels based on the field to plot
-#    if field_to_plot == "mepsp_amp":
-#        ylim = (-1, 2)
-#        ylabel = "mEPSP amplitude (mV)"
-#    elif field_to_plot == "freq_mepsp":
-#        ylim = (-1, 10)
-#        ylabel = "mEPSP frequency (Hz)"
-#    else:
-#        ylim = (None, None)
-#        ylabel = None
-#
-#    # Define the order of the time points
-#    order = np.array(["pre", "post_3"])
-#    cells_df = cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(order)]
-#
-#    # Function to filter outliers using the IQR rule
-#    def remove_outliers(df, field):
-#        q1 = df[field].quantile(0.25)
-#        q3 = df[field].quantile(0.75)
-#        iqr = q3 - q1
-#        lower_bound = q1 - 1.5 * iqr
-#        upper_bound = q3 + 1.5 * iqr
-#        return df[(df[field] >= lower_bound) & (df[field] <= upper_bound)]
-#
-#    # Separate learners and non-learners and remove outliers
-#    learners_df = remove_outliers(data_to_plot[data_to_plot["cell_ID"].isin(learners)], field_to_plot).reset_index(drop=True)
-#    non_learners_df = remove_outliers(data_to_plot[data_to_plot["cell_ID"].isin(non_learners)], field_to_plot).reset_index(drop=True)
-#
-#    # Combine learners and non-learners into a single DataFrame for split violin plot
-#    combined_df = pd.concat([learners_df, non_learners_df])
-#    combined_df['group'] = combined_df['cell_ID'].apply(lambda x: 'learner' if x in learners else 'non-learner')
-#
-#    # Create split violin plot without Seaborn's automatic legend
-#    sns.violinplot(
-#        data=combined_df, 
-#        x="pre_post_status", 
-#        y=field_to_plot, 
-#        hue="group", 
-#        ax=axs,
-#        order=order, 
-#        split=True, 
-#        inner="quartile",
-#        palette={'learner': bpf.CB_color_cycle[0], 'non-learner': bpf.CB_color_cycle[1]}, 
-#        linewidth=1,
-#        legend=False  # Disable automatic legend
-#    )
-#
-#    # Remove any existing legend
-#    if axs.legend_:
-#        axs.legend_.remove()
-#
-#    # Annotate comparison within learners (pre vs. post_3)
-#    stat_analysis = spst.mannwhitneyu(
-#        learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot],
-#        learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot],
-#        alternative='two-sided'
-#    )
-#    pval_within_learners = stat_analysis.pvalue
-#    annotator_within = Annotator(axs, [("pre", "post_3")], data=learners_df,
-#                                 x="pre_post_status", y=field_to_plot, order=order)
-#    annotator_within.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pval_within_learners)])
-#    annotator_within.annotate()
-#
-#    # Perform comparisons between learners and non-learners at each time point
-#    learners_pre = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot]
-#    non_learners_pre = non_learners_df[non_learners_df["pre_post_status"] == "pre"][field_to_plot]
-#    learners_post_3 = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot]
-#    non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot]
-#
-#    # Perform Mann-Whitney U tests for both time points
-#    stat_test_pre = spst.mannwhitneyu(learners_pre, non_learners_pre, alternative='two-sided')
-#    pval_pre = stat_test_pre.pvalue
-#    stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
-#    pval_post_3 = stat_test_post_3.pvalue
-#
-#    # Draw vertical annotation lines for both time points
-#    xloc_pre = -0.4
-#    learners_pre_mean = learners_pre.mean()
-#    non_learners_pre_mean = non_learners_pre.mean()
-#    axs.plot([xloc_pre, xloc_pre], [learners_pre_mean, non_learners_pre_mean], color='black', linestyle='-')
-#    axs.text(xloc_pre - 0.3, ((learners_pre_mean + non_learners_pre_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
-#
-#    xloc_post_3 = 1.4
-#    learners_post_3_mean = learners_post_3.mean()
-#    non_learners_post_3_mean = non_learners_post_3.mean()
-#    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3_mean, non_learners_post_3_mean], color='black', linestyle='-')
-#    axs.text(xloc_post_3 + 0.3, ((learners_post_3_mean + non_learners_post_3_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
-#
-#    # Set labels and adjust limits
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre", "30 mins"])
-#    axs.set_ylim(ylim)
-#    axs.set_xlim(-0.75, 1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
-#
-#    return None
-
-
-##plots with violin
-#
-#
-#def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs):
-#    # Set y-axis limits and labels based on the field to plot
-#    if field_to_plot == "mepsp_amp":
-#        ylim = (-1, 2)
-#        ylabel = "mEPSP amplitude (mV)"
-#    elif field_to_plot == "freq_mepsp":
-#        ylim = (-1, 10)
-#        ylabel = "mEPSP frequency (Hz)"
-#    else:
-#        ylim = (None, None)
-#        ylabel = None
-#
-#    # Define the order of the time points
-#    order = np.array(["pre", "post_3"])
-#    cells_df = cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(order)]
-#
-#    # Function to filter outliers using the IQR rule
-#    def remove_outliers(df, field):
-#        q1 = df[field].quantile(0.25)
-#        q3 = df[field].quantile(0.75)
-#        iqr = q3 - q1
-#        lower_bound = q1 - 1.5 * iqr
-#        upper_bound = q3 + 1.5 * iqr
-#        return df[(df[field] >= lower_bound) & (df[field] <= upper_bound)]
-#
-#    # Separate learners and non-learners and remove outliers
-#    learners_df = remove_outliers(data_to_plot[data_to_plot["cell_ID"].isin(learners)], field_to_plot).reset_index(drop=True)
-#    non_learners_df = remove_outliers(data_to_plot[data_to_plot["cell_ID"].isin(non_learners)], field_to_plot).reset_index(drop=True)
-#
-#    # Plot Violin Plots for learners and non-learners
-#    sns.violinplot(data=learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                   order=order, color=bpf.CB_color_cycle[0], inner="quartile", linewidth=1)
-#    sns.violinplot(data=non_learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                   order=order, color=bpf.CB_color_cycle[1], inner="quartile", linewidth=1)
-#
-#    # Make violins transparent
-#    for violin in axs.collections:
-#        violin.set_alpha(0.6)
-#
-#    # Annotate comparison within learners (pre vs. post_3)
-#    stat_analysis = spst.mannwhitneyu(
-#        learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot],
-#        learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot],
-#        alternative='two-sided'
-#    )
-#    pval_within_learners = stat_analysis.pvalue
-#    annotator_within = Annotator(axs, [("pre", "post_3")], data=learners_df,
-#                                 x="pre_post_status", y=field_to_plot, order=order)
-#    annotator_within.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pval_within_learners)])
-#    annotator_within.annotate()
-#
-#    # Perform comparisons between learners and non-learners at each time point
-#    learners_pre = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot]
-#    non_learners_pre = non_learners_df[non_learners_df["pre_post_status"] == "pre"][field_to_plot]
-#    learners_post_3 = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot]
-#    non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot]
-#
-#    # Perform Mann-Whitney U tests for both time points
-#    stat_test_pre = spst.mannwhitneyu(learners_pre, non_learners_pre, alternative='two-sided')
-#    pval_pre = stat_test_pre.pvalue
-#    stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
-#    pval_post_3 = stat_test_post_3.pvalue
-#
-#    # Draw vertical annotation lines for both time points
-#    xloc_pre = -0.4
-#    learners_pre_mean = learners_pre.mean()
-#    non_learners_pre_mean = non_learners_pre.mean()
-#    axs.plot([xloc_pre, xloc_pre], [learners_pre_mean, non_learners_pre_mean], color='black', linestyle='-')
-#    axs.text(xloc_pre - 0.1, ((learners_pre_mean + non_learners_pre_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
-#
-#    xloc_post_3 = 1.4
-#    learners_post_3_mean = learners_post_3.mean()
-#    non_learners_post_3_mean = non_learners_post_3.mean()
-#    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3_mean, non_learners_post_3_mean], color='black', linestyle='-')
-#    axs.text(xloc_post_3 + 0.1, ((learners_post_3_mean + non_learners_post_3_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
-#
-#    # Set labels and adjust limits
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre", "30 mins"])
-#    axs.set_ylim(ylim)
-#    axs.set_xlim(-0.75, 1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
-#
-#    return None
-
-#def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs):
-#    # Set y-axis limits and labels based on the field to plot
-#    if field_to_plot == "mepsp_amp":
-#        ylim = (-1, 2)
-#        ylabel = "mEPSP amplitude (mV)"
-#    elif field_to_plot == "freq_mepsp":
-#        ylim = (-1, 10)
-#        ylabel = "mEPSP frequency (Hz)"
-#    else:
-#        ylim = (None, None)
-#        ylabel = None
-#
-#    # Define the order of the time points
-#    order = np.array(["pre", "post_3"])
-#    cells_df = cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(order)]
-#    
-#    # Function to filter outliers using the IQR rule
-#    def remove_outliers(df, field):
-#        q1 = df[field].quantile(0.25)
-#        q3 = df[field].quantile(0.75)
-#        iqr = q3 - q1
-#        lower_bound = q1 - 1.5 * iqr
-#        upper_bound = q3 + 1.5 * iqr
-#        return df[(df[field] >= lower_bound) & (df[field] <= upper_bound)]
-#
-#    # Separate learners and non-learners and remove outliers
-#    learners_df = remove_outliers(data_to_plot[data_to_plot["cell_ID"].isin(learners)], field_to_plot).reset_index(drop=True)
-#    non_learners_df = remove_outliers(data_to_plot[data_to_plot["cell_ID"].isin(non_learners)], field_to_plot).reset_index(drop=True)
-#    
-#    # Extract data for learners at each time point
-#    pre_dat = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    post_dat = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#
-#    # Use Mann-Whitney U test instead of Wilcoxon for non-paired data
-#    stat_analysis = spst.mannwhitneyu(pre_dat, post_dat, alternative='two-sided')
-#    pval_within_learners = stat_analysis.pvalue
-#
-#    # Plot Violin Plots for learners and non-learners without outliers
-#    sns.violinplot(data=learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                   order=order, color=bpf.CB_color_cycle[0], alpha=0.6, inner="quartile", linewidth=1)
-#    sns.violinplot(data=non_learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                   order=order, color=bpf.CB_color_cycle[1], alpha=0.6, inner="quartile", linewidth=1)
-#
-#    # Annotate comparison within learners (pre vs. post_3)
-#    annotator_within = Annotator(axs, [("pre", "post_3")], data=learners_df,
-#                                 x="pre_post_status", y=field_to_plot, order=order)
-#    annotator_within.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pval_within_learners)])
-#    annotator_within.annotate()
-#
-#    # Perform comparisons between learners and non-learners at each time point
-#    learners_pre = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    non_learners_pre = non_learners_df[non_learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    learners_post_3 = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#    non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#
-#    # Perform Mann-Whitney U tests for both time points
-#    stat_test_pre = spst.mannwhitneyu(learners_pre, non_learners_pre, alternative='two-sided')
-#    pval_pre = stat_test_pre.pvalue
-#    
-#    stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
-#    pval_post_3 = stat_test_post_3.pvalue
-#
-#    # Draw vertical annotation lines for both time points
-#    xloc_pre = -0.4
-#    learners_pre_mean = learners_pre.mean()
-#    non_learners_pre_mean = non_learners_pre.mean()
-#    axs.plot([xloc_pre, xloc_pre], [learners_pre_mean, non_learners_pre_mean], color='black', linestyle='-')
-#    axs.text(xloc_pre - 0.1, ((learners_pre_mean + non_learners_pre_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
-#    
-#    xloc_post_3 = 1.4
-#    learners_post_3_mean = learners_post_3.mean()
-#    non_learners_post_3_mean = non_learners_post_3.mean()
-#    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3_mean, non_learners_post_3_mean], color='black', linestyle='-')
-#    axs.text(xloc_post_3 + 0.1, ((learners_post_3_mean + non_learners_post_3_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
-#
-#    # Set labels and adjust limits
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre", "30 mins"])
-#    axs.set_ylim(ylim)
-#    axs.set_xlim(-0.75, 1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
-#
-#    return None
-
-
-#plots with only point plots
-#def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs):
-#    # Set y-axis limits and labels based on the field to plot
-#    if field_to_plot == "mepsp_amp":
-#        ylim = (-1, 2)
-#        ylabel = "mEPSP amplitude (mV)"
-#    elif field_to_plot == "freq_mepsp":
-#        ylim = (-1, 10)
-#        ylabel = "mEPSP frequency (Hz)"
-#    else:
-#        ylim = (None, None)
-#        ylabel = None
-#
-#    # Define the order of the time points
-#    order = np.array(["pre", "post_3"])
-#    cells_df = cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(order)]
-#    
-#    # Separate learners and non-learners
-#    learners_df = data_to_plot[data_to_plot["cell_ID"].isin(learners)].reset_index(drop=True)
-#    non_learners_df = data_to_plot[data_to_plot["cell_ID"].isin(non_learners)].reset_index(drop=True)
-#    
-#    # Extract data for learners at each time point
-#    pre_dat = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    post_dat = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#    
-#    # Plot point plots for learners and non-learners
-#    sns.pointplot(data=learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                  order=order, color=bpf.CB_color_cycle[0], capsize=0.15, ci='sd')
-#    sns.pointplot(data=non_learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                  order=order, color=bpf.CB_color_cycle[1], capsize=0.15, ci='sd')
-#
-#    # Statistical comparison within learners (pre vs. post_3)
-#    stat_analysis = spst.wilcoxon(pre_dat, post_dat, zero_method="wilcox", correction=True)
-#    pvalList = stat_analysis.pvalue
-#    anotp_list = ["pre", "post_3"]
-#    annotator = Annotator(axs, [anotp_list], data=learners_df,
-#                          x="pre_post_status", y=field_to_plot, order=order)
-#    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-#    annotator.annotate()
-#
-#    # New sections: Compare learners and non-learners at both "pre" and "post_3" time points
-#    learners_pre = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    non_learners_pre = non_learners_df[non_learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    learners_post_3 = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#    non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#    
-#    # Perform Mann-Whitney U tests for both time points
-#    stat_test_pre = spst.ttest_ind(learners_pre, non_learners_pre,
-#                                   equal_var=False)
-#    pval_pre = stat_test_pre.pvalue
-#    
-#    stat_test_post_3 = spst.ttest_ind(learners_post_3, non_learners_post_3,
-#                                      equal_var=False)
-#    pval_post_3 = stat_test_post_3.pvalue
-#    
-#    # Draw vertical annotation lines for both time points
-#    # For "pre" time point (left side)
-#    xloc_pre = -0.25  # Position the line slightly to the left of the "pre" mark
-#    learners_pre_mean = learners_pre.mean()
-#    non_learners_pre_mean = non_learners_pre.mean()
-#    axs.plot([xloc_pre, xloc_pre], [learners_pre_mean, non_learners_pre_mean], color='black', linestyle='-')
-#    axs.text(xloc_pre - 0.1, ((learners_pre_mean + non_learners_pre_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_pre), ha='center', va='center', fontsize=12)
-#    
-#    # For "post_3" (30 mins) time point (right side)
-#    xloc_post_3 = 1.25  # Position the line slightly to the right of the "30 mins" mark
-#    learners_post_3_mean = learners_post_3.mean()
-#    non_learners_post_3_mean = non_learners_post_3.mean()
-#    axs.plot([xloc_post_3, xloc_post_3], [learners_post_3_mean, non_learners_post_3_mean], color='black', linestyle='-')
-#    axs.text(xloc_post_3 + 0.1, ((learners_post_3_mean + non_learners_post_3_mean) / 2),
-#             bpf.convert_pvalue_to_asterisks(pval_post_3), ha='center', va='center', fontsize=12)
-#
-#    # Set labels and adjust limits
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre", "30 mins"])
-#    axs.set_ylim(ylim)
-#    axs.set_xlim(-0.5, 1.75)
-#    axs.spines[['right', 'top']].set_visible(False)
-#
-#    return None
-
-#def plot_mini_feature(cells_df, field_to_plot, learners, non_learners, fig, axs):
-#    if field_to_plot == "mepsp_amp":
-#        ylim = (-1, 2)
-#        ylabel = ("mEPSP amplitude (mV)")
-#    elif field_to_plot == "freq_mepsp":
-#        ylim = (-1, 10)
-#        ylabel = ("mEPSP frequency (Hz)")
-#    else:
-#        ylim = (None, None)
-#        ylabel = None
-#    order = np.array(["pre", "post_3"])
-#    cells_df = cells_df.copy()
-#    data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre", "post_3"])]
-#    learners_df = data_to_plot[data_to_plot["cell_ID"].isin(learners)].reset_index(drop=True)
-#    non_learners_df = data_to_plot[data_to_plot["cell_ID"].isin(non_learners)].reset_index(drop=True)
-#    pre_dat = learners_df[learners_df["pre_post_status"] == "pre"][field_to_plot].reset_index(drop=True)
-#    post_dat = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#
-#    # Plot learners and non-learners
-#    pointplot1 = sns.pointplot(data=learners_df, x="pre_post_status", y=field_to_plot, ax=axs,
-#                               order=order, color=bpf.CB_color_cycle[0],
-#                               capsize=0.15, ci='sd')
-#    pointplot2 = sns.pointplot(data=non_learners_df, x="pre_post_status",
-#                               y=field_to_plot, ax=axs, order=order,
-#                               color=bpf.CB_color_cycle[1], capsize=0.15,
-#                               ci='sd')
-#
-#    # Statistical comparison within learners (pre vs. post_3)
-#    stat_analysis = spst.wilcoxon(pre_dat, post_dat, zero_method="wilcox", correction=True)
-#    pvalList = stat_analysis.pvalue
-#    anotp_list = ["pre", "post_3"]
-#    annotator = Annotator(axs, [anotp_list], data=learners_df,
-#                          x="pre_post_status", y=field_to_plot, order=order)
-#    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-#    annotator.annotate()
-#
-#    # New section: Compare learners and non-learners at "post_3" (30 mins)
-#    learners_post_3 = learners_df[learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#    non_learners_post_3 = non_learners_df[non_learners_df["pre_post_status"] == "post_3"][field_to_plot].reset_index(drop=True)
-#    
-#    ## Perform Mann-Whitney U test or t-test between learners and non-learners at 30 mins
-#    #stat_test_post_3 = spst.mannwhitneyu(learners_post_3, non_learners_post_3, alternative='two-sided')
-#    #pval_post_3 = stat_test_post_3.pvalue
-#
-#    ## Manually draw a vertical line between learners and non-learners at "30 mins", shifted to the right
-#    #xloc = 1.25  # Position the line slightly to the right of the "30 mins" mark
-#    #learners_mean = learners_post_3.mean()
-#    #non_learners_mean = non_learners_post_3.mean()
-#    #axs.plot([xloc, xloc], [learners_mean*1.2, non_learners_mean*1.2], color='black', linestyle='-')
-#
-#    ## Add the p-value annotation manually
-#    #axs.text(xloc + 0.1, ((learners_mean + non_learners_mean) / 2)-0.25, 
-#    #         bpf.convert_pvalue_to_asterisks(pval_post_3),
-#    #         ha='center', va='center', fontsize=12)
-#
-#    # Set labels and adjust limits
-#    axs.set_ylabel(ylabel)
-#    axs.set_xlabel("time points\n(mins)")
-#    axs.set_xticklabels(["pre", "30 mins"])
-#    axs.set_ylim(ylim)
-#    
-#    # Adjust the xlim to accommodate the moved annotation line
-#    axs.set_xlim(-0.5, 1.75)  # Increased the upper limit to allow space for the annotation
-#    
-#    axs.spines[['right', 'top']].set_visible(False)
-#    return None
-
 
 def inR_sag_plot(inR_all_Cells_df, fig, axs):
     deselect_list = ['post_4', 'post_5']
@@ -1175,85 +410,54 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def plot_learner_vs_non_learner_mini_feature(cells_df,field_to_plot,learners,non_learners,fig,axs):
-    if field_to_plot=="mepsp_amp":
-        ylim=(-1,2)
-    elif field_to_plot=="freq_mepsp":
-        ylim=(-1,10)
+    # Set y-axis limits and labels based on the field to plot
+    if field_to_plot == "mepsp_amp":
+        ylim = (-1, 2)
+        ylabel = "mEPSP amplitude (mV)"
+    elif field_to_plot == "freq_mepsp":
+        ylim = (-1, 10)
+        ylabel = "mEPSP frequency (Hz)"
     else:
-        ylim=(None,None)
-        ylabel=None
-    order = np.array(["learners","non_learners"])
-    cells_df=cells_df.copy()
-    data_to_plot = cells_df[cells_df["pre_post_status"].isin(["pre","post_3"])]
+        ylim = (None, None)
+        ylabel = None
+
+    # Define the order of the time points
+    order = np.array(["pre", "post_3"])
+    cells_df = cells_df.copy()
+    data_to_plot = cells_df[cells_df["pre_post_status"].isin(order)]
+
+    # Prepare data for plotting
     learners_df = data_to_plot[data_to_plot["cell_ID"].isin(learners)]
     non_learners_df = data_to_plot[data_to_plot["cell_ID"].isin(non_learners)]
-    learners_dat = learners_df[learners_df["pre_post_status"]=="post_3"][field_to_plot].to_numpy()
-    non_learners_dat = non_learners_df[non_learners_df["pre_post_status"]=="post_3"][field_to_plot].to_numpy()
-    len_learners = len(learners_dat)
-    len_non_learners = len(non_learners_dat)
-    if len_learners > len_non_learners:
-        non_learners_dat = np.pad(non_learners_dat, 
-                                  (0, len_learners -len_non_learners),
-                                  constant_values=np.nan)
-    else:
-        learners_dat = np.pad(learners_dat, 
-                              (0, len_non_learners -len_learners),
-                              constant_values=np.nan)
-    lrn_df = pd.DataFrame({"learners":learners_dat,"non_learners":non_learners_dat})
-    long_df = lrn_df.melt(var_name='Category', value_name='Values')
-    #long_df['Values'] = pd.to_numeric(long_df['Values'], errors='coerce')
 
+    # Create a DataFrame for long format plotting
+    long_df = pd.DataFrame()
+    for category, df in [("learners", learners_df), ("non-learners", non_learners_df)]:
+        for time_point in order:
+            subset = df[df["pre_post_status"] == time_point][field_to_plot]
+            temp_df = pd.DataFrame({
+                'Category': f"{category} {time_point}",
+                'Values': subset
+            })
+            long_df = pd.concat([long_df, temp_df], ignore_index=True)
 
+    # Create point plot using bpf colors
     sns.pointplot(data=long_df, x='Category', y='Values',ax=axs,
-                 color=bpf.CB_color_cycle[3],capsize=0.15,ci='sd')
-    #sns.stripplot(data=long_df, x='Category', y='Values',ax=axs,
-    #             color=bpf.CB_color_cycle[3],alpha=0.1)
+                  palette=[bpf.CB_color_cycle[0], bpf.CB_color_cycle[0], 
+                          bpf.CB_color_cycle[1], bpf.CB_color_cycle[1]],
+                  capsize=0.2, ci='sd', linestyles='-', markers=['o', 's', 'o', 's'])
 
-    #lrn_df = pd.DataFrame("learners":learners_dat,"non-learners":non_learners_dat})
-    #
-    #sns.pointplot(data=lrn_df,x="learners",y="non-learners",ax=axs,
-    #              order=order,color=bpf.CB_color_cycle[0],
-    #              errorbar='sd')
-    stat_analysis= spst.f_oneway(learners_dat,non_learners_dat)
-    pvalList = stat_analysis.pvalue
-    anotp_list=["learners","non_learners"]
-    annotator =Annotator(axs,[anotp_list], data=long_df,
-                         x="Category",y="Values",order=order)
-    annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalList)])
-    annotator.annotate()
-    axs.set_ylabel(None)
-    axs.set_xlabel(None)
-    axs.set_xticklabels(["learners","non-learners"])
-    axs.set_yticklabels([])
-    axs.set_xticklabels(axs.get_xticklabels(), rotation=45)
+    # Set labels and formatting
+    axs.set_ylabel(ylabel)
+    axs.set_xlabel("Category")
     axs.set_ylim(ylim)
     axs.spines[['right', 'top']].set_visible(False)
-    return None
+    axs.tick_params(axis='x', rotation=45)
 
-
+    # Remove any legends
+    if axs.get_legend() is not None:
+        axs.get_legend().remove()
 
 
 
@@ -1271,33 +475,7 @@ def plot_mini_distribution(df_cells,dict_cell_classified,
     norm_df_freq = df_cells.copy()
 #    norm_df_freq = normalise_df_to_pre(norm_df_freq,"freq_mepsp")
     plot_mini_feature(norm_df_freq,"freq_mepsp",learners,non_learners,fig,axs2)
-    #plot_learner_vs_non_learner_mini_feature(df_cells,"mepsp_amp",
-    #                                        learners,non_learners,fig,axs3)
-    #plot_learner_vs_non_learner_mini_feature(df_cells,"freq_mepsp",
-    #                                         learners,non_learners,fig,axs4)
-
-#def plot_fi_curve(firing_properties,sc_data_dict,fig,axs):
-#    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-#    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-#    sns.stripplot(data=firing_properties[firing_properties["cell_ID"].isin(learners)],
-#                  x="injected_current",y="spike_frequency",
-#                  alpha=0.2,color=bpf.CB_color_cycle[0])
-#    sns.pointplot(data=firing_properties[firing_properties["cell_ID"].isin(learners)],
-#                  x="injected_current",y="spike_frequency",color=bpf.CB_color_cycle[0], 
-#                  capsize=0.15,label="learners")
-#    sns.stripplot(data=firing_properties[firing_properties["cell_ID"].isin(non_learners)],
-#                  x="injected_current",y="spike_frequency",
-#                  alpha=0.2, color=bpf.CB_color_cycle[1])
-#    sns.pointplot(data=firing_properties[firing_properties["cell_ID"].isin(non_learners)],
-#                  x="injected_current",y="spike_frequency",color=bpf.CB_color_cycle[1],
-#                  capsize=0.15, label="non-learners")
-#    axs.set_ylabel("spike frequency\n(spikes/s)")
-#    axs.set_xlabel("injected current\n(pA)")
-#    axs.spines[['right', 'top']].set_visible(False)
-#    axs.xaxis.set_major_locator(MultipleLocator(6))
-#    if axs.legend_ is not None:
-#            axs.legend_.remove()
-#
+    
 
 
 def plot_glm_curve(firing_properties, sc_data_dict, fig, axs):
@@ -1401,7 +579,7 @@ def plot_fi_curve_with_ks(firing_properties, sc_data_dict, fig, axs):
     axs.spines[['right', 'top']].set_visible(False)
     axs.xaxis.set_major_locator(MultipleLocator(6))
     if axs.legend_ is not None:
-        axs.legend_.remove()
+        if axs.legend_ is not None: axs.legend_.remove()
 
     # ---- Perform KS test for each current level ---- #
     p_values = []
@@ -1486,7 +664,7 @@ def plot_fi_curve_with_mixed_anova(firing_properties, sc_data_dict, fig, axs):
     axs.spines[['right', 'top']].set_visible(False)
     axs.xaxis.set_major_locator(MultipleLocator(6))
     if axs.legend_ is not None:
-        axs.legend_.remove()
+        if axs.legend_ is not None: axs.legend_.remove()
 
     # ---- Show significance from ANOVA results ---- #
     # Annotate significance on the plot
@@ -1584,114 +762,7 @@ def plot_fi_curve(firing_properties, sc_data_dict, fig, axs):
     
     # Adjust legend if needed
     if axs.legend_ is not None:
-        axs.legend_.remove()
-
-    ## Optionally print significance results
-    #print("Mann-Whitney U test results for each current level:")
-    #for current, sig in significance_dict.items():
-    #    print(f"Current {current}: {sig}")
-
-#def plot_fi_curve(firing_properties, sc_data_dict, fig, axs):
-#    """
-#    Plots the F-I curve for learners and non-learners with statistical analysis using LME.
-#    """
-#    # Identify learners and non-learners
-#    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-#    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-#    
-#    # Add a new column to indicate the group (learners or non-learners)
-#    firing_properties["Group"] = firing_properties["cell_ID"].apply(
-#        lambda x: "Learner" if x in learners else "Non-Learner"
-#    )
-#    
-#    # Separate data for learners and non-learners
-#    learners_data = firing_properties[firing_properties["cell_ID"].isin(learners)]
-#    non_learners_data = firing_properties[firing_properties["cell_ID"].isin(non_learners)]
-#    
-#    # Perform Linear Mixed-Effects Model using mixedlm
-#    model = smf.mixedlm("spike_frequency ~ Group + injected_current", 
-#                        data=firing_properties, 
-#                        groups=firing_properties["cell_ID"])
-#    result = model.fit()
-#    print(f"LME: {result};;;;;;;;;;;;;;;;;;;;;;;;;;")
-#    # Extract p-value for the effect of 'Group'
-#    group_p_value = result.pvalues.get("Group[T.Learner]", None)
-#    
-#    # Convert p-value to your custom significance level annotation
-#    if group_p_value is not None:
-#        significance = bpf.convert_pvalue_to_asterisks(group_p_value)
-#        if group_p_value > 0.05:
-#            significance = "ns"  # Not significant
-#    else:
-#        significance = "ns"
-#    
-#    # Plot learners data with your custom color
-#    sns.stripplot(data=learners_data, x="injected_current", y="spike_frequency",
-#                  alpha=0.2, color=bpf.CB_color_cycle[0])
-#    sns.pointplot(data=learners_data, x="injected_current", y="spike_frequency",
-#                  color=bpf.CB_color_cycle[0], capsize=0.15, label="learners")
-#    
-#    # Plot non-learners data with your custom color
-#    sns.stripplot(data=non_learners_data, x="injected_current", y="spike_frequency",
-#                  alpha=0.2, color=bpf.CB_color_cycle[1])
-#    sns.pointplot(data=non_learners_data, x="injected_current", y="spike_frequency",
-#                  color=bpf.CB_color_cycle[1], capsize=0.15, label="non-learners")
-#    
-#    # Add labels and formatting
-#    axs.set_ylabel("spike frequency\n(spikes/s)")
-#    axs.set_xlabel("injected current\n(pA)")
-#    axs.spines[['right', 'top']].set_visible(False)
-#    axs.xaxis.set_major_locator(MultipleLocator(6))
-#    
-#    # Annotate with overall significance from LME model without any styling
-#    if significance:
-#        axs.text(5, 50, f"LME: {significance}", ha='center')
-#    
-#    # Adjust legend if needed
-#    if axs.legend_ is not None:
-#        axs.legend_.remove()
-#    
-#    # Print LME summary for reference (optional)
-#    print(result.summary())
-
-#def plot_fi_curve(firing_properties, sc_data_dict, fig, axs):
-#    #with man whitney test integrated
-#    learners = sc_data_dict["ap_cells"]["cell_ID"].unique()
-#    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique()
-#    
-#    # Separate data for learners and non-learners
-#    learners_data = firing_properties[firing_properties["cell_ID"].isin(learners)]
-#    non_learners_data = firing_properties[firing_properties["cell_ID"].isin(non_learners)]
-#    
-#    # Plotting learners
-#    sns.stripplot(data=learners_data, x="injected_current", y="spike_frequency",
-#                  alpha=0.2, color=bpf.CB_color_cycle[0])
-#    sns.pointplot(data=learners_data, x="injected_current", y="spike_frequency", 
-#                  color=bpf.CB_color_cycle[0], capsize=0.15, label="learners")
-#    
-#    # Plotting non-learners
-#    sns.stripplot(data=non_learners_data, x="injected_current", y="spike_frequency",
-#                  alpha=0.2, color=bpf.CB_color_cycle[1])
-#    sns.pointplot(data=non_learners_data, x="injected_current", y="spike_frequency", 
-#                  color=bpf.CB_color_cycle[1], capsize=0.15, label="non-learners")
-#    
-#    axs.set_ylabel("spike frequency\n(spikes/s)")
-#    axs.set_xlabel("injected current\n(pA)")
-#    axs.spines[['right', 'top']].set_visible(False)
-#    axs.xaxis.set_major_locator(MultipleLocator(6))
-#
-#    # Perform statistical tests on the spike frequency distributions
-#    #ks_stat, ks_p_value = ks_2samp(learners_data["spike_frequency"], non_learners_data["spike_frequency"])
-#    mw_stat, mw_p_value = mannwhitneyu(learners_data["spike_frequency"], non_learners_data["spike_frequency"])
-#    annot_pval = bpf.convert_pvalue_to_asterisks(mw_p_value)
-#    # Add statistical test results as text on the plot
-#    #axs.text(0.05, 0.95, f'KS p-value: {ks_p_value:.3f}', transform=axs.transAxes, verticalalignment='top')
-#    #axs.text(0.05, 0.90, f'{annot_pval}', transform=axs.transAxes, verticalalignment='top')
-#    
-#    # Adjust legend if needed
-#    if axs.legend_ is not None:
-#        axs.legend_.remove()
-#
+        if axs.legend_ is not None: axs.legend_.remove()
 
 
 def plot_cell_distribution_plasticity(pd_cell_data_mean_cell_grp,
@@ -1923,141 +994,6 @@ def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter, leg
     return legend_added
 
 
-#def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter):
-#    sampling_rate = 20000  # for patterns
-#    sc_pat_grp = cell_df.groupby(by="frame_id")
-#    legend_added = False  # Flag to add legend only once
-#
-#    for pat, pat_data in sc_pat_grp:
-#        if "pattern" not in pat:
-#            continue
-#        else:
-#            pat_num = int(pat.split('_')[-1])
-#            pre_trace = pat_data[pat_data["pre_post_status"] == "pre"]["mean_trace"][0]
-#            post_trace = pat_data[pat_data["pre_post_status"] == "post_3"]["mean_trace"][0]
-#            
-#            # Determine the subplot location
-#            if learner_status == "learner":
-#                axs = fig.add_subplot(gs[pat_num, 4:6])
-#            else:
-#                axs = fig.add_subplot(gs[pat_num, 6:8])
-#            
-#            # Subtract baseline and truncate traces
-#            post_trace = bpf.substract_baseline(post_trace)
-#            post_trace = post_trace[:int(sampling_rate * time_to_plot)]
-#            pre_trace = bpf.substract_baseline(pre_trace)
-#            pre_trace = pre_trace[:int(sampling_rate * time_to_plot)]
-#            time = np.linspace(0, time_to_plot, len(post_trace)) * 1000
-#            
-#            # Plot the pre and post training traces
-#            axs.plot(time, pre_trace, color=bpf.pre_color, label="pre training trace")
-#            axs.plot(time, post_trace, color=bpf.post_late, label="post training trace")
-#            
-#            # Add legend only for learners when pat_num == 2
-#            if learner_status == "learner" and pat_num == 2 and not legend_added:
-#                # Create custom legend handles with thicker lines
-#                custom_handles = [
-#                    Line2D([0], [0], color=bpf.pre_color, linewidth=3,
-#                           label="pre training\nEPSP trace"),
-#                    Line2D([0], [0], color=bpf.post_late, linewidth=3,
-#                           label="post 30 mins of\ntraining EPSP trace")
-#                ]
-#                axs.legend(handles=custom_handles, 
-#                           #bbox_to_anchor=(0.95, -0.75),
-#                           bbox_to_anchor=(-0.6, -0.3),
-#                           loc='center', frameon=False,
-#                           ncol=1)
-#                legend_added = True  # Ensure legend is added only once
-#
-#            # Axis labels and titles
-#            if pat_num == 0:
-#                axs.set_xlabel(None)
-#                axs.set_ylabel(None)
-#                axs.set_xticklabels([])
-#            elif pat_num == 1:
-#                axs.set_xlabel(None)
-#                axs.set_xticklabels([])
-#                axs.set_ylabel("cell response (mV)")
-#            elif pat_num == 2:
-#                axs.set_xlabel("time (ms)")
-#                axs.set_ylabel(None)
-#            
-#            if learner_status != 'learner':
-#                if pat_num == 0:
-#                    axs.set_title("non-learners")
-#                else:
-#                    axs.set_title(None)
-#                axs.set_yticklabels([])
-#                axs.set_ylabel(None)
-#            else:
-#                if pat_num == 0:
-#                    axs.set_title("learners")
-#                else:
-#                    axs.set_title(None)
-#            
-#            axs.set_ylim(-5, 6)
-#            axs.spines[['right', 'top']].set_visible(False)
-
-#def plot_cell_category_trace(fig,learner_status,gs,cell_df, label_letter):
-#    sampling_rate = 20000 # for patterns
-#    sc_pat_grp = cell_df.groupby(by="frame_id")
-#    for pat, pat_data in sc_pat_grp:
-#        if "pattern" not in pat:
-#            continue
-#        else:
-#            pat_num = int(pat.split('_')[-1])
-#            pre_trace  =pat_data[pat_data["pre_post_status"]=="pre"]["mean_trace"][0]
-#            post_trace =pat_data[pat_data["pre_post_status"]=="post_3"]["mean_trace"][0]
-#            print(f"pre_trace = {pre_trace}")
-#            pps_grp = pat_data.groupby(by="pre_post_status")
-#            print(f"pat num : {pat_num}, {pat}")
-#            if learner_status=="learner":
-#                axs = fig.add_subplot(gs[pat_num,4:6])
-#            else:
-#                axs = fig.add_subplot(gs[pat_num,6:8])
-#            post_trace = bpf.substract_baseline(post_trace)
-#            post_trace = post_trace[:int(sampling_rate*time_to_plot)]
-#            pre_trace = bpf.substract_baseline(pre_trace)
-#            pre_trace = pre_trace[:int(sampling_rate*time_to_plot)]
-#            time = np.linspace(0,time_to_plot,len(post_trace))*1000
-#            axs.plot(time,pre_trace, color=bpf.pre_color,
-#                           label="pre training trace")
-#            axs.plot(time,post_trace,
-#                           color=bpf.post_late,
-#                           label="post training trace")
-#            #color=bpf.colorFader(bpf.post_color,
-#            #                     bpf.post_late,
-#            #                     (idx/len(pps_grp))))
-#            if pat_num ==0:
-#                axs.set_xlabel(None)
-#                axs.set_ylabel(None)
-#                axs.set_xticklabels([])
-#            elif pat_num==1:
-#                axs.set_xlabel(None)
-#                axs.set_xticklabels([])
-#                axs.set_ylabel("cell response (mV)")
-#            elif pat_num==2:
-#                axs.set_xlabel("time (ms)")
-#                axs.set_ylabel(None)
-#            else:
-#                pass 
-#            if learner_status!='learner':
-#                if pat_num==0:
-#                    axs.set_title("non-learners")
-#                else:
-#                    axs.set_title(None)
-#                axs.set_yticklabels([])
-#                axs.set_ylabel(None)
-#            else:
-#                if pat_num==0:
-#                    axs.set_title("learners")
-#                else:
-#                    axs.set_title(None)
-#            axs.set_ylim(-5,6)
-#            axs.spines[['right', 'top']].set_visible(False)
-#            #axs.text(-0.1,1.05,f'{label_letter}{pat_num+1}',transform=axs.transAxes,
-#            #             fontsize=16, fontweight='bold', ha='center', va='center')
-
 #with violin plots
 
 
@@ -2165,74 +1101,6 @@ def compare_cell_properties(cell_stats, fig, axs_rmp, axs_inr,
     sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False)
 
 
-##strip plot and point plot alone 
-#def compare_cell_properties(cell_stats, fig,axs_rmp,axs_inr,
-#                            pot_cells_df,dep_cells_df):
-#    num_pot_cells =f"no. of learners = {len(pot_cells_df['cell_ID'].unique())}"
-#    num_dep_cells =f"no. of non-learners = {len(dep_cells_df['cell_ID'].unique())}"
-#    cell_stat_with_category=[]
-#    for cell in cell_stats.iterrows():
-#        if cell[0] in list(pot_cells_df["cell_ID"]):
-#            cell_type =f"learners"
-#            #keys in cell stats: ['InputR_cell_mean', 'inR_cut', 'rmp_ratio', 'rmp_cut_off', 'cell_status', 'inR_chancge', 'inR_cell', 'rmp_median']
-#            rmp=cell[1]["cell_stats"]["rmp_median"]
-#            inpR=cell[1]["cell_stats"]["InputR_cell_mean"]
-#        elif cell[0] in list(dep_cells_df["cell_ID"]):
-#            cell_type =f"non-learners"
-#            #keys in cell stats: ['InputR_cell_mean', 'inR_cut', 'rmp_ratio', 'rmp_cut_off', 'cell_status', 'inR_chancge', 'inR_cell', 'rmp_median']
-#            rmp=cell[1]["cell_stats"]["rmp_median"]
-#            inpR=cell[1]["cell_stats"]["InputR_cell_mean"]
-#        else:
-#            cell_type = "feable response"
-#            rmp=cell[1]["cell_stats"]["rmp_median"]
-#            inpR=cell[1]["cell_stats"]["InputR_cell_mean"]
-#        cell_stat_with_category.append([cell[0],cell_type,rmp,inpR])
-#    c_cat_header=["cell_ID","cell_type","rmp","inpR"]
-#    cell_stat_with_category =pd.concat(pd.DataFrame([i],columns=c_cat_header) for i in cell_stat_with_category)
-#    cell_stat_with_category= cell_stat_with_category[cell_stat_with_category["cell_type"]!="feable response"]
-#    print(f"cell stats with category:{cell_stat_with_category}")
-#    g1=sns.stripplot(data=cell_stat_with_category,x="cell_type",y="rmp",ax=axs_inr, hue="cell_type",
-#                       palette="colorblind",alpha=0.6,size=8)
-#    sns.pointplot(data=cell_stat_with_category, x="cell_type",y=f"rmp",errorbar="se",
-#                  capsize=0.15,ax=axs_inr,hue="cell_type", linestyles='')
-#    #non parametric, unpaired, unequal sample size observations hence used kruskal
-#    stat_testg1= spst.mannwhitneyu(cell_stat_with_category[(cell_stat_with_category["cell_type"]=="learners")]["rmp"],
-#                             cell_stat_with_category[cell_stat_with_category["cell_type"]=="non-learners"]["rmp"],
-#                             nan_policy='omit')
-#    pvalLg1= stat_testg1.pvalue
-#
-#    g2=sns.stripplot(data=cell_stat_with_category,x="cell_type",y="inpR",ax=axs_rmp,hue="cell_type",
-#                      palette="colorblind", alpha=0.6,size=8)
-#    sns.pointplot(data=cell_stat_with_category, x="cell_type",y=f"inpR",errorbar="se",
-#                  capsize=0.15,ax=axs_rmp,hue="cell_type", linestyles='')
-#    stat_testg2= spst.mannwhitneyu(cell_stat_with_category[(cell_stat_with_category["cell_type"]=="learners")]["inpR"],
-#                             cell_stat_with_category[cell_stat_with_category["cell_type"]=="non-learners"]["inpR"],
-#                             nan_policy='omit')
-#    pvalLg2= stat_testg2.pvalue
-#    annotator1 = Annotator(axs_inr, [("learners","non-learners")],data=cell_stat_with_category, x="cell_type",y="rmp")
-#    annotator1.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg1)])
-#    annotator1.annotate()
-#    annotator2 = Annotator(axs_rmp, [("learners","non-learners")],data=cell_stat_with_category, x="cell_type",y="inpR")
-#    annotator2.set_custom_annotations([bpf.convert_pvalue_to_asterisks(pvalLg2)])
-#    annotator2.annotate()
-#    
-#    g1.set(xlim=(-1,2))
-#    g1.set(ylim=(-75,-60))
-#    g2.set(xlim=(-1,2))
-#    g2.set(ylim=(50,200))
-#    #g1.set_title("Resting membrane\npotential")
-#    #g2.set_title("Input\nresistance")
-#    g1.set_xticklabels(g1.get_xticklabels(), rotation=30)
-#    g2.set_xticklabels(g2.get_xticklabels(), rotation=30)
-#    g1.set_ylabel("Resting membrane\npotential(mV)")
-#    g2.set_ylabel("Input Resistance\n(MOhms)")
-#    g1.set_xlabel(None)
-#    g2.set_xlabel(None)
-#    handles, labels = axs_rmp.get_legend_handles_labels()
-#    g1.legend_.remove()
-#    g2.legend_.remove()
-#    sns.despine(fig=None, ax=None, top=True, right=True, left=False, bottom=False, offset=None, trim=False)
-
 
 def plot_figure_3(extracted_feature_pickle_file_path,
                   all_trails_all_Cells_path,
@@ -2279,37 +1147,6 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                   height_ratios=height_ratios,figure=fig)
     #gs.update(wspace=0.2, hspace=0.8)
     gs.update(wspace=0.2, hspace=0.2)
-    ##place illustration
-    #axs_img = fig.add_subplot(gs[0:2, 0:2])
-    #plot_image(illustration,axs_img, 0,0,1)
-    #axs_img.text(0,1,'A',transform=axs_img.transAxes,    
-    #        fontsize=16, fontweight='bold', ha='center', va='center')
-    #move_axis([axs_img],-0.08,0.0225,1.3)
-
-    ##plot EPSP classification for learner & non-learner
-    #learner_cell_df = learner_cell_df[~learner_cell_df["frame_status"].isin(deselect_list)]
-
-
-    #plot_cell_category_trace(fig,"learner",gs, learner_cell_df,"B")
-    #plot_cell_category_trace(fig,"non_learner",gs, non_learner_cell_df,"C")   
-    #
-    #axs_pat1 = fig.add_subplot(gs[0,2:3])
-    #axs_pat2 = fig.add_subplot(gs[1,2:3])
-    #axs_pat3 = fig.add_subplot(gs[2,2:3])
-    #plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.035,0,2)
-    #axs_pat1.text(0,1.35,'C',transform=axs_pat1.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')
-
-    ##plot distribution epsp for learners and non-leaners
-    #axs_dist1 = fig.add_subplot(gs[2:3,0:2])
-    #plot_cell_category_classified_EPSP_peaks(sc_data_dict["ap_cells"],
-    #                                         sc_data_dict["an_cells"],
-    #                                         "max_trace",fig,axs_dist1,
-    #                                         )    
-    #axs_dist1.text(-0.1,1.05,'B',transform=axs_dist1.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')
-    #move_axis([axs_dist1],0,0.05,1)
-    #
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,3:5])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
@@ -2360,71 +1197,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_trn],0.05,0.05,1)
     axs_trn.text(-0.1,1.1,'F',transform=axs_trn.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
-    
-    ##plot sag
-    #axs_inr = fig.add_subplot(gs[8:9,3:6])
-    #inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    #move_axis([axs_inr],0.1,0,1)
-    #axs_inr.text(-0.05,1,'K',transform=axs_inr.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')            
-
-    ##plot the sag illustration
-    #axs_inrill = fig.add_subplot(gs[8:9,0:3])
-    #plot_image(inRillustration,axs_inrill,-0.1,-0.05,1)
-    #axs_inrill.text(0.01,1.1,'J',transform=axs_inrill.transAxes,    
-    #                fontsize=16, fontweight='bold', ha='center', va='center')            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ##plot CDF for cells
-    #axs_cdf1 = fig.add_subplot(gs[9:10,0:3])
-    #axs_cdf2 = fig.add_subplot(gs[9:10,3:6])
-    #plot_cell_distribution_plasticity(sc_data_dict["ap_cells"],
-    #                                  fig,axs_cdf1,"learners")
-    #plot_cell_distribution_plasticity(sc_data_dict["an_cells"],
-    #                                  fig,axs_cdf2,"non-learners")
-    #axs_cdf_list = [axs_cdf1,axs_cdf2]
-    #
-    ##label_axis(axs_cdf_list,"J")
-    #move_axis(axs_cdf_list,-0.05,0.075,1)
-    #label_axis(axs_cdf_list,"J")
-
-    ##GLM on firing properties
-    #axs_glm = fig.add_subplot(gs[10:11,0:2])
-    #plot_glm_curve(firing_properties, sc_data_dict, fig, axs_glm)
-    
-    
-    
-    
-    
-    
-
-    #handles, labels = plt.gca().get_legend_handles_labels()
-    #by_label = dict(zip(labels, handles))
-    #fig.legend(by_label.values(), by_label.keys(), 
-    #           bbox_to_anchor =(0.5, 0.175),
-    #           ncol = 6,title="Legend",
-    #           loc='upper center')#,frameon=False)#,loc='lower center'    
-    #
-
+ 
     plt.tight_layout()
     outpath = f"{outdir}/figure_3_fnorm.png"
     #outpath = f"{outdir}/figure_3.svg"
@@ -2509,6 +1282,6 @@ def main():
 if __name__  == '__main__':
     #timing the run with time.time
     ts =time.time()
-    main(**vars(args_)) 
+    main() 
     tf =time.time()
     print(f'total time = {np.around(((tf-ts)/60),1)} (mins)')
