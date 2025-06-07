@@ -305,6 +305,18 @@ figures:
       args:
         standard:
           sensitisation_data: "data/pickle_files/extract_features/pickle_files_from_analysis/sensitisation_plot_data.pickle"
+          
+    # RMP Distribution Analysis (New)
+    supp_rmp_distribution:
+      script: "plotting_scripts/supplementary_figures/figure_generation_script_rmp_distribution.py"
+      name: "Resting Membrane Potential Distribution Analysis"
+      args:
+        standard:
+          cell_stats: "data/hdf5_files/abf_to_hdf5/cell_stats.h5"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          firing: "data/pickle_files/compile_firing_data/all_cell_all_trial_firing_properties.pickle"
+          sensitisation_data: "data/pickle_files/extract_features/pickle_files_from_analysis/sensitisation_plot_data.pickle"
 
 # =============================================================================
 # SYSTEM CONFIGURATION

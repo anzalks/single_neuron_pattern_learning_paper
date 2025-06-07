@@ -40,11 +40,28 @@ def build_command_args(script_path, args_dict):
         'image_i': '-i',             # Figure 2 multi-image support (main image)
         'image_p': '-p',             # Figure 2 projection image
         'image_m': '-m',             # Figure 2 additional image
-        'sensitisation_data': '-s'   # CHR2 sensitisation data (reuses stats flag)
+        'sensitisation_data': '-s',  # CHR2 sensitisation data (reuses stats flag)
+        # RMP distribution script specific mappings
+        'cell_stats': '-c',          # RMP script cell stats path (duplicate mapping for clarity)
+        'classified_cells_path': '-s' # RMP script classified cells path
     }
     
+    # Special handling for RMP distribution script parameters
+    rmp_mapping = {}
+    if 'figure_generation_script_rmp_distribution.py' in str(script_path):
+        rmp_mapping = {
+            'cell_stats': '-c',          # --cell-stats-path
+            'stats': '-s',               # --classified-cells-path  
+            'file': '-f',                # --epsp-data-path
+            'firing': '-p',              # --firing-properties-path
+            'sensitisation_data': '-x'   # --sensitisation-data-path
+        }
+    
     for key, value in args_dict.items():
-        if key in arg_mapping:
+        # Use RMP-specific mapping if available, otherwise use standard mapping
+        if rmp_mapping and key in rmp_mapping:
+            cmd_args.extend([rmp_mapping[key], value])
+        elif key in arg_mapping:
             cmd_args.extend([arg_mapping[key], value])
             
     return cmd_args

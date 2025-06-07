@@ -153,6 +153,7 @@ python run_plotting_scripts.py [--all_fig | --main_fig | --supplementary_fig | -
 | | `supp_2_field_norm` | Supplementary Figure 2 - Field Norm | `python run_plotting_scripts.py --figures supp_2_field_norm` |
 | | `supp_2_field_norm_fnorm` | Supplementary Figure 2 - Field Norm + fnorm | `python run_plotting_scripts.py --figures supp_2_field_norm_fnorm` |
 | | `supp_chr2_sensitisation` | CHR2 Sensitisation Analysis | `python run_plotting_scripts.py --figures supp_chr2_sensitisation` |
+| | `supp_rmp_distribution` | Resting Membrane Potential Distribution & Correlation Analysis (6 panels: A-F) | `python run_plotting_scripts.py --figures supp_rmp_distribution` |
 
 **★ Note:** Figure 2 and Figure 2 fnorm automatically generate multiple statistical test versions (Wilcoxon, ANOVA, Mixed Effect Model)
 
@@ -229,7 +230,8 @@ single_neuron_pattern_learning_paper/
 │   │   ├── supplementary_figure_generation_script_2_fnorm.py
 │   │   ├── supplementary_figure_generation_script_2_field_norm.py
 │   │   ├── supplementary_figure_generation_script_2_field_norm_fnorm.py
-│   │   └── supplementary_figure_chr2_sensitisation.py      # CHR2 Sensitisation
+│   │   ├── supplementary_figure_chr2_sensitisation.py      # CHR2 Sensitisation
+│   │   └── figure_generation_script_rmp_distribution.py    # RMP Distribution & Correlation
 │   └── 📁 shared_utils/              # Shared plotting utilities
 │       └── baisic_plot_fuctnions_and_features.py    # Common plotting functions
 │
@@ -302,6 +304,7 @@ single_neuron_pattern_learning_paper/
         ├── Figure_7/
         ├── Figure_7_fnorm/
         ├── Supplementary_figure_6_chr2_sensitisation/
+        ├── Figure_RMP_Distribution/
         ├── supplimentary_figure_1/
         ├── supplimentary_figure_1_fnorm/
         ├── supplimentary_figure_2_field_norm/
@@ -420,7 +423,7 @@ python run_plotting_scripts.py --supplementary_fig
 python run_plotting_scripts.py --figures figure_2_fnorm figure_3_fnorm
 
 # Generate specific supplementary figures
-python run_plotting_scripts.py --figures supp_1 supp_2 supp_chr2_sensitisation
+python run_plotting_scripts.py --figures supp_1 supp_2 supp_chr2_sensitisation supp_rmp_distribution
 ```
 
 ### ★ Advanced Statistical Analysis (Figure 2 & 2 fnorm)
