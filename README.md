@@ -1,169 +1,512 @@
-# single_neuron_pattern_learning_paper
-All scripts that's associated with the pattern learning paper
+# Single Neuron Pattern Learning Paper Analysis Pipeline
 
-## Recent Updates
+All scripts associated with the pattern learning paper - comprehensive analysis, conversion, and plotting pipeline for single neuron electrophysiology data.
 
-### 🔧 Bug Fix: Extract Features Script Path Issue (2024-12-04)
-**Fixed hardcoded path in `extract_features_and_save_pickle.py`**
-
-**Issue**: The `pd_all_cells_mean.pickle` file (144MB) was being saved to the repository root instead of the designated tagged folder due to a hardcoded path in line 461.
-
-**Fix**: Updated `write_pkl(pd_all_cells_mean, "pd_all_cells_mean")` to `write_pkl(pd_all_cells_mean, outpath)` to use the proper output directory path.
-
-**Result**: All analysis files now correctly save to `data/pickle_files/extract_features/pickle_files_from_analysis/` maintaining the organized tagged folder structure.
-
-## Project Organization
-
-### Data Structure
-```
-data/
-├── cells_min_30mins_long/          # Raw ABF files organized by cell
-├── images/                         # All microscopy images, screenshots, etc.
-├── illustations/                   # Figure illustrations and Affinity Designer files
-├── pickle_files/                   # Processed data files
-│   ├── analysis/                   # Analysis output pickle files
-│   ├── all_data_with_training_df.pickle  # Main dataset
-│   └── all_cell_firing_traces.pickle     # Firing traces
-└── hdf5_files/                     # HDF5 format cell data
-    └── cell_stats.h5               # Cell statistics
-```
-
-### Data Processing Workflow
-1. **Raw ABF Files → HDF5 Conversion**: 
-   - `conversion_scripts/convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py`
-
-2. **HDF5 → Pickle Aggregation**: 
-   - `conversion_scripts/compile_cell_dfs_to_pickle.py`
-
-3. **Feature Extraction & Analysis**: 
-   - `analysis_scripts/extract_features_and_save_pickle.py`
-
-4. **Figure Generation**: 
-   - **NEW**: Use `run_plotting_scripts.py` for automated figure generation
-   - `plotting_scripts/main_figures/` - Main manuscript figures (Figures 1-6 only)
-   - `plotting_scripts/supplementary_figures/` - All other figures (f_norm, supplementary, etc.)
-   - `plotting_scripts/shared_utils/` - Shared plotting utilities
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Complete Project Structure](#complete-project-structure)
+- [Data Processing Workflow](#data-processing-workflow)
+- [Analysis Scripts Usage](#analysis-scripts-usage)
+- [Plotting Scripts Usage](#plotting-scripts-usage)
+- [Output Organization](#output-organization)
+- [Statistical Tests Implementation](#statistical-tests-implementation)
+- [Configuration Files](#configuration-files)
+- [Requirements](#requirements)
 
 ## Quick Start
 
-### Running Analysis and Conversion Scripts
-
-Use the new wrapper script for all data processing:
+### 🚀 Complete Pipeline (From Raw Data to Figures)
 
 ```bash
-# List all available scripts and workflows
-python run_analysis_conversion.py --list
-
-# Run complete conversion pipeline (ABF → HDF5 → Pickle)
-python run_analysis_conversion.py --workflow full_conversion
-
-# Run analysis pipeline
-python run_analysis_conversion.py --workflow full_analysis
-
-# Run complete pipeline from raw data to analysis
+# 1. Run complete analysis pipeline (ABF → HDF5 → Pickle → Feature Extraction)
 python run_analysis_conversion.py --workflow complete_pipeline
 
-# Run individual scripts
-python run_analysis_conversion.py --script abf_to_hdf5
-python run_analysis_conversion.py --script extract_features
+# 2. Generate all main manuscript figures
+python run_plotting_scripts.py --main_fig
+
+# 3. Generate all supplementary figures
+python run_plotting_scripts.py --supplementary_fig
 ```
 
-### Running Plotting Scripts
-
-Use the plotting script runner for figure generation:
+### 📊 Generate Specific Figures
 
 ```bash
 # List all available figures
 python run_plotting_scripts.py --list
 
-# Run all main figures (standard analysis)
-python run_plotting_scripts.py --figures all_main
+# Generate specific figures with multiple statistical tests
+python run_plotting_scripts.py --figures figure_2 figure_2_fnorm
 
-# Run all supplementary figures
-python run_plotting_scripts.py --figures all_supplementary
-
-# Run specific figures
-python run_plotting_scripts.py --figures figure_1 figure_2
-
-# Run with field normalization
-python run_plotting_scripts.py --figures figure_1_fnorm figure_2_fnorm
+# Generate field-normalized versions
+python run_plotting_scripts.py --analysis_type field_normalized
 ```
 
-## Latest Version Management
+## Complete Project Structure
 
-**🎯 All scripts now use only the latest versions from main branch:**
+```
+single_neuron_pattern_learning_paper/
+├── 📁 Root Configuration Files
+│   ├── README.md                        # This comprehensive guide
+│   ├── requirements.txt                 # Python dependencies
+│   ├── LICENSE                         # AGPL v3 License
+│   ├── .gitignore                      # Git ignore rules
+│   ├── analysis_config.yaml            # Analysis pipeline configuration
+│   ├── plotting_config.yaml            # Plotting scripts configuration
+│   ├── run_analysis_conversion.py      # Main analysis/conversion runner
+│   └── run_plotting_scripts.py         # Main plotting runner
+│
+├── 📁 conversion_scripts/              # Data format conversion scripts
+│   ├── convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py
+│   ├── compile_cell_dfs_to_pickle.py   # HDF5 → Pickle compilation
+│   └── compile_firing_data_protocols_to_pickle_and_extract_features.py
+│
+├── 📁 analysis_scripts/                # Data analysis and feature extraction
+│   ├── extract_features_and_save_pickle.py           # Main analysis pipeline
+│   ├── calculate_scale_bar_40x_automated_image_save.py # Scale bar calculation
+│   └── sensitisation_data_pickle_generation_from_training_data.py
+│
+├── 📁 plotting_scripts/               # Figure generation scripts
+│   ├── 📁 main_figures/              # Main manuscript figures (1-6)
+│   │   ├── figure_generation_script_1.py            # Figure 1: Overview
+│   │   ├── figure_generation_script_2.py            # Figure 2: EPSP Analysis (3 statistical tests)
+│   │   ├── figure_generation_script_3.py            # Figure 3: Pattern Learning
+│   │   ├── figure_generation_script_4.py            # Figure 4: Temporal Analysis
+│   │   ├── figure_generation_script_5.py            # Figure 5: Plasticity
+│   │   └── figure_generation_script_6_v2.py         # Figure 6: Network Analysis
+│   ├── 📁 supplementary_figures/     # Supplementary and field-normalized figures
+│   │   ├── figure_generation_script_2_fnorm.py      # Figure 2 field-normalized (3 statistical tests)
+│   │   ├── figure_generation_script_3_fnorm.py      # Figure 3 field-normalized
+│   │   ├── figure_generation_script_4_fnorm.py      # Figure 4 field-normalized
+│   │   ├── figure_generation_script_5_fnorm.py      # Figure 5 field-normalized
+│   │   ├── figure_generation_script_6_v2_fnorm.py   # Figure 6 field-normalized
+│   │   ├── figure_generation_script_7_v3.py         # Figure 7: Learner comparison
+│   │   ├── figure_generation_script_7_fnorm.py      # Figure 7 field-normalized
+│   │   ├── supplementary_figure_generation_script_1.py     # Supplementary Figure 1
+│   │   ├── supplementary_figure_generation_script_1_fnorm.py
+│   │   ├── supplementary_figure_generation_script_2.py     # Supplementary Figure 2
+│   │   ├── supplementary_figure_generation_script_2_fnorm.py
+│   │   ├── supplementary_figure_generation_script_2_field_norm.py
+│   │   ├── supplementary_figure_generation_script_2_field_norm_fnorm.py
+│   │   └── supplementary_figure_chr2_sensitisation.py      # CHR2 Sensitisation
+│   └── 📁 shared_utils/              # Shared plotting utilities
+│       └── baisic_plot_fuctnions_and_features.py    # Common plotting functions
+│
+├── 📁 data/                          # All experimental data (organized by type)
+│   ├── 📁 abf_all_cells/            # Raw ABF files (by cell)
+│   │   ├── 2022_12_12_cell_2/       # Individual cell directories
+│   │   │   ├── *.abf                # Raw electrophysiology files (~32GB total)
+│   │   │   └── result_plots_multi/  # Individual analysis plots
+│   │   ├── 2022_12_12_cell_5/
+│   │   ├── 2022_12_19_cell_2/
+│   │   ├── ... (32 total cells)
+│   │   └── 2023_03_22_cell_2/
+│   ├── 📁 hdf5_files/               # Converted HDF5 data
+│   │   └── abf_to_hdf5/
+│   │       ├── all_cells_hdf/       # Individual cell HDF5 files (~15GB)
+│   │       └── cell_stats.h5        # Combined cell statistics
+│   ├── 📁 pickle_files/             # Processed analysis data
+│   │   ├── compile_cells_to_pickle/ # Compiled cell data
+│   │   │   └── all_data_df.pickle   # Master cell dataframe (~2GB)
+│   │   ├── compile_firing_data/     # Firing properties
+│   │   │   ├── all_cell_all_trial_firing_properties.pickle
+│   │   │   └── all_cell_firing_traces.pickle
+│   │   └── extract_features/        # Feature extraction outputs
+│   │       └── pickle_files_from_analysis/
+│   │           ├── all_cells_classified_dict.pickle       # Cell classification (120MB)
+│   │           ├── all_cells_fnorm_classifeied_dict.pickle # Field-normalized classification (120MB)
+│   │           ├── all_cells_inR.pickle                   # Input resistance data (77MB)
+│   │           ├── baseline_traces_all_cells.pickle       # Baseline traces (1.2GB)
+│   │           ├── pd_all_cells_all_trials.pickle         # All trials data (410MB)
+│   │           ├── pd_all_cells_mean.pickle               # Mean responses (137MB)
+│   │           ├── pd_training_data_all_cells_all_trials.pickle # Training data (8.4MB)
+│   │           └── sensitisation_plot_data.pickle         # CHR2 sensitisation data (26MB)
+│   ├── 📁 images/                   # Microscopy images and screenshots
+│   │   ├── 40X1mm_micrometerslide_01mm_div.tiff          # Scale calibration
+│   │   ├── with fluorescence and pipette.bmp             # Setup images
+│   │   └── *.png, *.jpeg, *.bmp     # Various experimental images
+│   └── 📁 illustations/            # Figure illustrations and design files
+│       ├── figure_1.afdesign       # Affinity Designer source files
+│       ├── figure_2_1.jpg          # Figure components
+│       ├── figure_2_2.jpg
+│       ├── figure_2_3.png
+│       ├── Figure_3_1.png
+│       ├── Figure_5_1.png
+│       ├── Figure_6_1.png
+│       └── *.afdesign              # Editable design files
+│
+└── 📁 outputs/                     # Generated figures (auto-created)
+    ├── 📁 main_figures/            # Main manuscript figures
+    │   ├── Figure_1/
+    │   │   └── figure_1.png
+    │   ├── Figure_2/               # 🔥 Multiple statistical test versions
+    │   │   ├── figure_2_wilcox_sr_test.png        # Wilcoxon signed-rank
+    │   │   ├── figure_2_rep_mesure_anova.png      # Repeated measures ANOVA
+    │   │   ├── figure_2_mixd_effect_model.png     # Mixed effect model
+    │   │   └── figure_2.png                      # Legacy version
+    │   ├── Figure_3/
+    │   ├── Figure_4/
+    │   ├── Figure_5/
+    │   └── Figure_6/
+    └── 📁 supplementary_figures/   # Supplementary figures
+        ├── Figure_2_fnorm/         # 🔥 Field-normalized with multiple stats
+        │   ├── figure_2_fnorm_wilcox_sr_test.png
+        │   ├── figure_2_fnorm_rep_mesure_anova.png
+        │   ├── figure_2_fnorm_mixd_effect_model.png
+        │   └── figure_2_fnorm.png
+        ├── Figure_3_fnorm/
+        ├── Figure_4_fnorm/
+        ├── Figure_5_fnorm/
+        ├── Figure_6_fnorm/
+        ├── Figure_7/
+        ├── Figure_7_fnorm/
+        ├── Supplementary_figure_6_chr2_sensitisation/
+        ├── supplimentary_figure_1/
+        ├── supplimentary_figure_1_fnorm/
+        ├── supplimentary_figure_2_field_norm/
+        ├── supplimentary_figure_2_field_norm_fnorm/
+        └── supplimentary_figure_2_fnorm/
+```
 
-### Version Control Summary
-- **Figure 6**: Uses `figure_generation_script_6_v2.py` (latest, 2024-11-28)
-- **Figure 7 Learner Comparison**: Uses `figure_generation_script_7_learner_non_learner_comparison_v3.py` (latest, 2024-12-04)
-- **All other figures**: Use the most recent versions from main branch
+## Data Processing Workflow
 
-### Script Organization
-- **Main Figures**: 6 scripts (Figures 1-6, latest versions only)
-- **Supplementary Figures**: 14 scripts (f_norm variants, supplementary figures)
-- **Not Used**: Older versions moved to `plotting_scripts/not_used/`
+### 🔄 Complete Analysis Pipeline
 
-### Benefits
-- ✅ **No Version Confusion**: Only one version per figure type
-- ✅ **Exact Main Branch Match**: Results identical to main branch
-- ✅ **Clean Configuration**: `plotting_config.yaml` references latest versions only
-- ✅ **Maintained Functionality**: All plotting capabilities preserved
+```bash
+# Option 1: Run entire pipeline at once
+python run_analysis_conversion.py --workflow complete_pipeline
 
-See `LATEST_VERSIONS_CLEANUP_SUMMARY.md` for detailed cleanup documentation.
+# Option 2: Run step by step
+python run_analysis_conversion.py --workflow full_conversion    # ABF → HDF5 → Pickle
+python run_analysis_conversion.py --workflow full_analysis      # Feature extraction
+```
 
-## Detailed Usage
+### 📋 Individual Pipeline Steps
 
-### Data Organization
-- **Images**: All `.png`, `.jpg`, `.jpeg`, `.bmp`, `.tiff` files are in `data/images/`
-- **Illustrations**: All `.afdesign` files and figure illustrations are in `data/illustations/`
-- **Pickle Files**: All analysis outputs are organized in `data/pickle_files/analysis/`
-- **HDF5 Files**: Cell statistics and converted data in `data/hdf5_files/`
+```bash
+# 1. Convert ABF files to HDF5 format
+python run_analysis_conversion.py --script abf_to_hdf5
 
-### Script Configuration
-- **Plotting**: Configure in `plotting_config.yaml`
-- **Analysis/Conversion**: Configure in `analysis_config.yaml`
+# 2. Compile HDF5 files to master pickle
+python run_analysis_conversion.py --script compile_to_pickle
 
-### Workflows Available
-1. **full_conversion**: ABF → HDF5 → Pickle conversion
-2. **full_analysis**: Feature extraction and cell classification
-3. **complete_pipeline**: Full pipeline from raw data to analysis
+# 3. Extract firing properties
+python run_analysis_conversion.py --script firing_data
 
-## File Structure
+# 4. Extract features and classify cells
+python run_analysis_conversion.py --script extract_features
 
-### Core Scripts
-- `run_analysis_conversion.py` - Wrapper for analysis and conversion scripts
-- `run_plotting_scripts.py` - Wrapper for plotting scripts
-- `plotting_config.yaml` - Plotting configuration
-- `analysis_config.yaml` - Analysis and conversion configuration
+# 5. Generate sensitisation data
+python run_analysis_conversion.py --script sensitisation_data
+```
 
-### Analysis Scripts
-- `analysis_scripts/extract_features_and_save_pickle.py` - Main analysis pipeline
-- `analysis_scripts/calculate_scale_bar_40x_automated_image_save.py` - Scale bar calculation
+### 📊 Data Flow Overview
 
-### Conversion Scripts
-- `conversion_scripts/convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py` - ABF to HDF5
-- `conversion_scripts/compile_cell_dfs_to_pickle.py` - HDF5 to pickle compilation
-- `conversion_scripts/compile_firing_data_protocols_to_pickle_and_extract_features.py` - Firing data compilation
+```
+Raw ABF Files → HDF5 Files → Master Pickle → Feature Extraction → Classification → Analysis-Ready Data
+     ↓              ↓            ↓               ↓                 ↓              ↓
+  Individual     Combined    Structured      Extracted        Cell Types     Ready for
+  recordings     format      dataframe       features       identified      plotting
+     32GB         15GB          2GB            1.5GB           120MB         120MB
+```
 
-### Plotting Scripts
-- `plotting_scripts/main_figures/` - Main manuscript figures (1-6)
-- `plotting_scripts/supplementary_figures/` - Supplementary and f_norm figures
-- `plotting_scripts/shared_utils/` - Shared plotting utilities
-- `plotting_scripts/not_used/` - Deprecated scripts
+## Analysis Scripts Usage
+
+### 🔬 extract_features_and_save_pickle.py
+
+**Purpose**: Main analysis pipeline - extracts features, classifies cells, and generates analysis-ready datasets.
+
+```bash
+python run_analysis_conversion.py --script extract_features
+
+# Or run directly:
+python analysis_scripts/extract_features_and_save_pickle.py \
+    --pickle-path data/pickle_files/compile_cells_to_pickle/all_data_df.pickle \
+    --outdir data/pickle_files/extract_features/pickle_files_from_analysis/
+```
+
+**Outputs Generated**:
+- `pd_all_cells_mean.pickle` (137MB) - Mean responses per cell/pattern/timepoint
+- `all_cells_classified_dict.pickle` (120MB) - Standard cell classification
+- `all_cells_fnorm_classifeied_dict.pickle` (120MB) - Field-normalized classification  
+- `all_cells_inR.pickle` (77MB) - Input resistance measurements
+- `baseline_traces_all_cells.pickle` (1.2GB) - Raw baseline traces
+- `pd_training_data_all_cells_all_trials.pickle` (8.4MB) - Training protocol data
+
+### 🔧 convert_abf_to_hdf5_cell_by_cell.py
+
+**Purpose**: Converts raw ABF electrophysiology files to structured HDF5 format.
+
+```bash
+python run_analysis_conversion.py --script abf_to_hdf5
+
+# Manual execution:
+python conversion_scripts/convert_abf_to_hdf5_cell_by_cell_with_stats_training_control_included.py \
+    --abf-dir data/abf_all_cells/ \
+    --outdir data/hdf5_files/abf_to_hdf5/
+```
+
+### 📦 compile_cell_dfs_to_pickle.py
+
+**Purpose**: Compiles individual HDF5 files into master pickle dataframe.
+
+```bash
+python run_analysis_conversion.py --script compile_to_pickle
+```
+
+## Plotting Scripts Usage
+
+### 🎨 Main Figure Generation
+
+```bash
+# Generate all main figures (Figures 1-6)
+python run_plotting_scripts.py --main_fig
+
+# Generate specific main figures
+python run_plotting_scripts.py --figures figure_1 figure_2 figure_3
+
+# View available figures
+python run_plotting_scripts.py --list
+```
+
+### 📈 Supplementary Figure Generation  
+
+```bash
+# Generate all supplementary figures
+python run_plotting_scripts.py --supplementary_fig
+
+# Generate field-normalized versions
+python run_plotting_scripts.py --figures figure_2_fnorm figure_3_fnorm
+
+# Generate specific supplementary figures
+python run_plotting_scripts.py --figures supp_1 supp_2 supp_chr2_sensitisation
+```
+
+### 🔥 Advanced Statistical Analysis (Figure 2 & 2 fnorm)
+
+**Figure 2 and Figure 2 fnorm automatically generate three versions with different statistical tests:**
+
+```bash
+# Generate Figure 2 with all statistical tests
+python run_plotting_scripts.py --figures figure_2
+
+# Outputs created:
+# - figure_2_wilcox_sr_test.png      (Wilcoxon signed-rank test)
+# - figure_2_rep_mesure_anova.png    (Repeated measures ANOVA)  
+# - figure_2_mixd_effect_model.png   (Mixed effect model)
+
+# Generate Figure 2 fnorm with all statistical tests
+python run_plotting_scripts.py --figures figure_2_fnorm
+
+# Outputs created:
+# - figure_2_fnorm_wilcox_sr_test.png
+# - figure_2_fnorm_rep_mesure_anova.png
+# - figure_2_fnorm_mixd_effect_model.png
+```
+
+### 📊 Individual Script Execution
+
+```bash
+# Run individual plotting scripts (advanced users)
+cd plotting_scripts
+
+# Main figures
+python main_figures/figure_generation_script_2.py \
+    --pikl-path ../data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle \
+    --sortedcell-path ../data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle \
+    --outdir-path ../outputs/main_figures/
+
+# Supplementary figures  
+python supplementary_figures/figure_generation_script_2_fnorm.py \
+    --pikl-path ../data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle \
+    --sortedcell-path ../data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_fnorm_classifeied_dict.pickle \
+    --outdir-path ../outputs/supplementary_figures/
+```
+
+## Output Organization
+
+### 📁 Figure Outputs Structure
+
+All generated figures are saved to `outputs/` directory with organized subdirectories:
+
+- **Main Figures**: `outputs/main_figures/Figure_X/`
+- **Supplementary Figures**: `outputs/supplementary_figures/Figure_X_fnorm/`
+- **File Naming**: Descriptive names indicating statistical method used
+
+### 🔢 Statistical Test Versions
+
+**Figure 2 (Main) & Figure 2 fnorm (Supplementary)** generate multiple versions:
+
+1. **Wilcoxon Signed-Rank Test** (`*_wilcox_sr_test.png`)
+   - Non-parametric paired test
+   - Default method, robust to outliers
+   
+2. **Repeated Measures ANOVA** (`*_rep_mesure_anova.png`)
+   - Parametric test with Bonferroni correction
+   - Tests main effect with post-hoc comparisons
+   
+3. **Mixed Effect Model** (`*_mixd_effect_model.png`)
+   - Advanced linear mixed model
+   - Accounts for random effects, FDR correction
+
+### 📊 File Size Reference
+
+- **Individual Figures**: ~175KB each (PNG format)
+- **Total Main Figures**: ~1MB (6 figures)
+- **Total Supplementary**: ~3MB (17 figures)
+- **Figure 2 variants**: ~700KB (4 versions including statistical tests)
+
+## Statistical Tests Implementation
+
+### 🧮 Technical Details
+
+**Repeated Measures ANOVA**:
+- Uses `pingouin.rm_anova()` with subject ID as repeated measure
+- Post-hoc: Pairwise t-tests with Bonferroni correction
+- Fallback: Individual paired t-tests if ANOVA fails
+
+**Mixed Effect Model**:
+- Uses `statsmodels.mixedlm()` with random intercept per subject
+- Dummy coding for time points (pre = reference)
+- Fallback: FDR-corrected paired t-tests
+
+**Error Handling**:
+- All methods include graceful fallbacks
+- Console output shows which method was used
+- Maintains visual consistency across all versions
+
+### 📋 Data Structure for Statistical Tests
+
+All tests compare **pre vs post timepoints** (post_0, post_1, post_2, post_3) across three stimulus patterns:
+- **Pattern 0**: Trained pattern
+- **Pattern 1**: Overlapping pattern  
+- **Pattern 2**: Non-overlapping pattern
+
+## Configuration Files
+
+### ⚙️ plotting_config.yaml
+
+Controls all figure generation parameters:
+
+```yaml
+figures:
+  main_figures:
+    figure_2:
+      standard:
+        script: "main_figures/figure_generation_script_2.py"
+        args:
+          file: "data/pickle_files/extract_features/pickle_files_from_analysis/pd_all_cells_mean.pickle"
+          stats: "data/pickle_files/extract_features/pickle_files_from_analysis/all_cells_classified_dict.pickle"
+          # ... other parameters
+```
+
+### ⚙️ analysis_config.yaml
+
+Controls analysis pipeline parameters:
+
+```yaml
+workflows:
+  complete_pipeline:
+    description: "Full pipeline from ABF to analysis"
+    scripts: ["abf_to_hdf5", "compile_to_pickle", "firing_data", "extract_features"]
+```
 
 ## Requirements
-- Python 3.8+
-- See `requirements.txt` for package dependencies
-- Recommended: 32GB RAM for full analysis pipeline
 
-## Author
-- **Anzal KS** (anzal.ks@gmail.com)
-- Repository: https://github.com/anzalks/
+### 💻 System Requirements
 
-## Notes
-- All scripts maintain exact plot appearance from main branch
-- Shared utilities ensure consistent plotting across all figures
-- Wrapper scripts provide unified interface for all operations
-- Data is organized by type for easy access and management
+- **Python**: 3.8+ (tested with 3.9-3.11)
+- **Memory**: 32GB RAM recommended for full pipeline
+- **Storage**: ~50GB free space for complete dataset
+- **OS**: macOS, Linux, Windows (tested on macOS)
 
+### 📦 Python Dependencies
 
+Install with: `pip install -r requirements.txt`
+
+**Key Dependencies**:
+- `numpy>=1.21.0` - Numerical computing
+- `pandas>=1.3.0` - Data manipulation
+- `matplotlib>=3.5.0` - Plotting
+- `seaborn>=0.11.0` - Statistical plotting
+- `scipy>=1.7.0` - Scientific computing
+- `pingouin>=0.5.0` - Statistical analysis
+- `statsmodels>=0.13.0` - Advanced statistics
+- `h5py>=3.1.0` - HDF5 file handling
+- `pyabf>=2.3.0` - ABF file reading
+- `pyyaml>=6.0` - Configuration files
+- `tqdm>=4.60.0` - Progress bars
+
+### 🚀 Installation
+
+```bash
+# Clone repository
+git clone https://github.com/anzalks/single_neuron_pattern_learning_paper.git
+cd single_neuron_pattern_learning_paper
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify installation
+python run_plotting_scripts.py --list
+python run_analysis_conversion.py --list
+```
+
+## Latest Updates
+
+### 🔧 Recent Improvements (2024-12-07)
+
+**Multi-Statistical Test Implementation**:
+- Added three statistical test methods for Figure 2 and Figure 2 fnorm
+- Wilcoxon signed-rank test (original), Repeated measures ANOVA, Mixed effect model
+- Automatic generation of all statistical variants with single command
+- Graceful fallbacks and error handling for robust analysis
+
+**Bug Fixes**:
+- Fixed hardcoded path in `extract_features_and_save_pickle.py` (2024-12-04)
+- All analysis files now correctly save to designated output directories
+- Maintained organized tagged folder structure for all outputs
+
+**Pipeline Improvements**:
+- Unified plotting runner system with comprehensive configuration
+- Version control cleanup - only latest versions maintained
+- Enhanced documentation with detailed usage instructions
+
+## Author & License
+
+**Author**: Anzal KS  
+**Email**: anzal.ks@gmail.com  
+**Repository**: https://github.com/anzalks/single_neuron_pattern_learning_paper  
+**License**: GNU Affero General Public License v3.0 (AGPL v3)
+
+## Notes & Tips
+
+### 💡 Best Practices
+
+1. **Always run analysis from project root**: Ensures proper imports and paths
+2. **Use wrapper scripts**: `run_plotting_scripts.py` and `run_analysis_conversion.py` handle all dependencies
+3. **Check output directories**: Figures save to organized subdirectories automatically
+4. **Monitor memory usage**: Large datasets require substantial RAM
+5. **Backup analysis outputs**: Pickle files take hours to generate
+
+### 🔧 Troubleshooting
+
+**Import Errors**: Ensure you're running from project root directory
+**Memory Errors**: Reduce batch size or use a machine with more RAM  
+**File Not Found**: Check that data files exist in expected locations
+**Statistical Test Failures**: Check console output for fallback method used
+
+### 🔄 Version Control
+
+This project uses Git for version control. All scripts maintain exact plot appearance and analysis consistency. The project follows semantic versioning for releases.
+
+### 📊 Data Reproducibility
+
+All analysis outputs are deterministic and reproducible given the same input data. Random seeds are fixed where applicable. Statistical tests include multiple methods for robustness validation.
+
+### 🎯 Citing This Work
+
+If you use this code or data in your research, please cite the associated publication and link to this repository: https://github.com/anzalks/single_neuron_pattern_learning_paper
+
+---
+
+**License Notice**: This project is licensed under AGPL v3. If you modify and distribute this software, you must also provide the source code of your modifications under the same license terms.

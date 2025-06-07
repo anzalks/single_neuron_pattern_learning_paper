@@ -1158,7 +1158,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_trn],0.05,0.05,1)
     axs_trn.text(-0.1,1.1,'F',transform=axs_trn.transAxes,    
                  fontsize=16, fontweight='bold', ha='center', va='center')
- 
+
     plt.tight_layout()
     outpath = f"{outdir}/figure_3_fnorm.png"
     #outpath = f"{outdir}/figure_3.svg"

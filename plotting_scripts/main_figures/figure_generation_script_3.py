@@ -429,20 +429,20 @@ def plot_fi_curve(firing_properties, sc_data_dict, fig, axs):
     # Plotting learners
     sns.stripplot(data=learners_data, x="injected_current", y="spike_frequency",
                   alpha=0.2, color=bpf.CB_color_cycle[0])
-    sns.pointplot(data=learners_data, x="injected_current", y="spike_frequency", 
+    sns.pointplot(data=learners_data, x="injected_current", y="spike_frequency",
                   color=bpf.CB_color_cycle[0], capsize=0.15, label="learners")
     
     # Plotting non-learners
     sns.stripplot(data=non_learners_data, x="injected_current", y="spike_frequency",
                   alpha=0.2, color=bpf.CB_color_cycle[1])
-    sns.pointplot(data=non_learners_data, x="injected_current", y="spike_frequency", 
+    sns.pointplot(data=non_learners_data, x="injected_current", y="spike_frequency",
                   color=bpf.CB_color_cycle[1], capsize=0.15, label="non-learners")
     
     axs.set_ylabel("spike frequency\n(spikes/s)")
     axs.set_xlabel("injected current\n(pA)")
     axs.spines[['right', 'top']].set_visible(False)
     axs.xaxis.set_major_locator(MultipleLocator(6))
-
+    
     # Perform statistical tests on the spike frequency distributions
     #ks_stat, ks_p_value = ks_2samp(learners_data["spike_frequency"], non_learners_data["spike_frequency"])
     mw_stat, mw_p_value = mannwhitneyu(learners_data["spike_frequency"], non_learners_data["spike_frequency"])
@@ -556,9 +556,9 @@ def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,plt_color,
                 pvalList.append(posti.pvalue)
                 anotp_list.append(("pre",i))
             annotator = Annotator(axs,anotp_list,data=pat, 
-        x="pre_post_status", 
+                                  x="pre_post_status",
                                   y=f"{val_to_plot}",
-        order=order, 
+                                  order=order,
                                  fontsize=8)
             #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
             annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
@@ -681,7 +681,7 @@ def plot_cell_category_trace(fig, learner_status, gs, cell_df, label_letter, leg
                     axs.set_title(None)
             
             axs.set_ylim(-5, 6)
-    axs.spines[['right', 'top']].set_visible(False)
+            axs.spines[['right', 'top']].set_visible(False)
     
     return legend_added
 

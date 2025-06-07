@@ -192,12 +192,12 @@ def main():
     if args.cells_path is None:
         p = repo_root / 'data' / 'cells_min_30mins_long'
     else:
-        p = Path(args.cells_path)
+    p = Path(args.cells_path)
     
     if args.cellstat_path is None:
         stats_path = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5' / 'cell_stats.h5'
     else:
-        stats_path = Path(args.cellstat_path)
+    stats_path = Path(args.cellstat_path)
     
     # Output to pickle_files directory with analysis tag
     outdir = repo_root / 'data' / 'pickle_files' / 'compile_firing_data'

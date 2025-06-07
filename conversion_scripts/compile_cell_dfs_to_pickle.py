@@ -74,7 +74,7 @@ def main():
     if args.cells_path is None:
         h5_folder_path = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5' / 'all_cells_hdf'
     else:
-        h5_folder_path = Path(args.cells_path)
+    h5_folder_path = Path(args.cells_path)
     
     if args.cell_stat is None:
         cell_stat_path = repo_root / 'data' / 'hdf5_files' / 'abf_to_hdf5' / 'cell_stats.h5'
