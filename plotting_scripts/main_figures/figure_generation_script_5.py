@@ -544,10 +544,10 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     
     # Plot learners
     sns.pointplot(data=points_df_pre_learners, x="frame_id", y="min_trace",
-                  ax=axs_lr, color=pre_color, label='Learners - Pre', capsize=0.15,
+                  ax=axs_lr, color=pre_color, capsize=0.15,
                   order=order, errorbar='se')
     sns.pointplot(data=points_df_post_learners, x="frame_id", y="min_trace",
-                  ax=axs_lr, color=lrn_post_color, label='Learners - Post', capsize=0.15,
+                  ax=axs_lr, color=lrn_post_color, capsize=0.15,
                   order=order, errorbar='se')
     sns.stripplot(data=points_df_pre_learners, x="frame_id", y="min_trace", 
                   ax=axs_lr, color=pre_color, alpha=0.2, order=order)
@@ -556,10 +556,10 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
 
     # Plot non-learners
     sns.pointplot(data=points_df_pre_non_learners, x="frame_id", y="min_trace",
-                  ax=axs_nl, color=pre_color, label='Non-Learners - Pre', capsize=0.15,
+                  ax=axs_nl, color=pre_color, capsize=0.15,
                   order=order, errorbar='se')
     sns.pointplot(data=points_df_post_non_learners, x="frame_id", y="min_trace",
-                  ax=axs_nl, color=non_lrn_post_color, label='Non-Learners - Post', capsize=0.15,
+                  ax=axs_nl, color=non_lrn_post_color, capsize=0.15,
                   order=order, errorbar='se')
     sns.stripplot(data=points_df_pre_non_learners, x="frame_id", y="min_trace", 
                   ax=axs_nl, color=pre_color, alpha=0.2, order=order)
@@ -597,7 +597,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     axs_lr.spines[['right', 'top']].set_visible(False)
     axs_lr.set_xticklabels(x_ticklabels)
     #axs_lr.set_xticklabels([])#x_ticklabels)
-    axs_lr.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
+    #    #axs_lr.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
 
     # Customize axes for non-learners
     axs_nl.set_ylim(-50, 500)
@@ -607,7 +607,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     axs_nl.set_xticklabels(x_ticklabels)
     #axs_nl.set_ylabel(None)
     #axs_nl.set_yticklabels([])
-    axs_nl.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
+    #axs_nl.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
 
 
 
