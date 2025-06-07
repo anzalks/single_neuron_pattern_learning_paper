@@ -138,7 +138,7 @@ single_neuron_pattern_learning_paper/
     ├── 📁 main_figures/            # Main manuscript figures
     │   ├── Figure_1/
     │   │   └── figure_1.png
-    │   ├── Figure_2/               # 🔥 Multiple statistical test versions
+    │   ├── Figure_2/               # ★ Multiple statistical test versions
     │   │   ├── figure_2_wilcox_sr_test.png        # Wilcoxon signed-rank
     │   │   ├── figure_2_rep_mesure_anova.png      # Repeated measures ANOVA
     │   │   ├── figure_2_mixd_effect_model.png     # Mixed effect model
@@ -148,7 +148,7 @@ single_neuron_pattern_learning_paper/
     │   ├── Figure_5/
     │   └── Figure_6/
     └── 📁 supplementary_figures/   # Supplementary figures
-        ├── Figure_2_fnorm/         # 🔥 Field-normalized with multiple stats
+        ├── Figure_2_fnorm/         # ★ Field-normalized with multiple stats
         │   ├── figure_2_fnorm_wilcox_sr_test.png
         │   ├── figure_2_fnorm_rep_mesure_anova.png
         │   ├── figure_2_fnorm_mixd_effect_model.png
@@ -281,7 +281,7 @@ python run_plotting_scripts.py --figures figure_2_fnorm figure_3_fnorm
 python run_plotting_scripts.py --figures supp_1 supp_2 supp_chr2_sensitisation
 ```
 
-### 🔥 Advanced Statistical Analysis (Figure 2 & 2 fnorm)
+### ★ Advanced Statistical Analysis (Figure 2 & 2 fnorm)
 
 **Figure 2 and Figure 2 fnorm automatically generate three versions with different statistical tests:**
 
@@ -432,7 +432,9 @@ Install with: `pip install -r requirements.txt`
 - `pingouin>=0.5.0` - Statistical analysis
 - `statsmodels>=0.13.0` - Advanced statistics
 - `h5py>=3.1.0` - HDF5 file handling
-- `pyabf>=2.3.0` - ABF file reading
+- `neo>=0.10.0` - Electrophysiology data handling
+- `statannotations>=0.2.3` - Statistical plot annotations
+- `pillow>=8.0.0` - Image processing
 - `pyyaml>=6.0` - Configuration files
 - `tqdm>=4.60.0` - Progress bars
 
