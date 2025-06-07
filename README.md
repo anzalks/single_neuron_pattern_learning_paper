@@ -4,6 +4,7 @@ All scripts associated with the pattern learning paper - comprehensive analysis,
 
 ## Table of Contents
 - [Quick Start](#quick-start)
+- [Usage Scenarios](#usage-scenarios)
 - [Complete Project Structure](#complete-project-structure)
 - [Data Processing Workflow](#data-processing-workflow)
 - [Analysis Scripts Usage](#analysis-scripts-usage)
@@ -28,17 +29,158 @@ python run_plotting_scripts.py --main_fig
 python run_plotting_scripts.py --supplementary_fig
 ```
 
-### 📊 Generate Specific Figures
+## Usage Scenarios
 
+### 📋 **Complete Workflows**
+
+```bash
+# 🎯 SCENARIO 1: Complete Pipeline (Raw Data → Analysis → All Figures)
+python run_analysis_conversion.py --workflow complete_pipeline
+python run_plotting_scripts.py --all_fig
+
+# 🎯 SCENARIO 2: Analysis Only (if data already converted)
+python run_analysis_conversion.py --workflow full_analysis
+python run_plotting_scripts.py --all_fig
+
+# 🎯 SCENARIO 3: Data Conversion Only
+python run_analysis_conversion.py --workflow full_conversion
+```
+
+### 📊 **Plotting Scenarios**
+
+```bash
+# 🎨 Generate ALL figures (main + supplementary)
+python run_plotting_scripts.py --all_fig
+
+# 📄 Generate ONLY main manuscript figures (Figures 1-6)
+python run_plotting_scripts.py --main_fig
+
+# 📚 Generate ONLY supplementary figures
+python run_plotting_scripts.py --supplementary_fig
+
+# 🔬 Generate specific figures
+python run_plotting_scripts.py --figures figure_1 figure_2 figure_3
+
+# 📐 Generate field-normalized figures only
+python run_plotting_scripts.py --analysis_type field_normalized
+```
+
+### 🔧 **Analysis Scenarios**
+
+```bash
+# 🔄 Complete data conversion pipeline
+python run_analysis_conversion.py --workflow full_conversion
+
+# 📊 Complete analysis pipeline (assumes data already converted)
+python run_analysis_conversion.py --workflow full_analysis
+
+# 🧪 Run individual analysis steps
+python run_analysis_conversion.py --script extract_features
+python run_analysis_conversion.py --script chr2_sensitisation
+
+# 💾 Run individual conversion steps
+python run_analysis_conversion.py --script abf_to_hdf5
+python run_analysis_conversion.py --script compile_cells_to_pickle
+```
+
+### 📝 **Available Commands Reference**
+
+**Analysis/Conversion Script Commands:**
+```bash
+# List all available options
+python run_analysis_conversion.py --list
+
+# Command structure
+python run_analysis_conversion.py [--script SCRIPT_NAME | --workflow WORKFLOW_NAME] [--args "custom_args"]
+
+# Available workflows:
+# - complete_pipeline: Full pipeline (ABF → HDF5 → pickle → features → CHR2)
+# - full_conversion: Data conversion only (ABF → HDF5 → pickle)  
+# - full_analysis: Analysis only (features → CHR2)
+
+# Available scripts:
+# - abf_to_hdf5: Convert ABF files to HDF5
+# - compile_cells_to_pickle: Combine HDF5 files to pickle
+# - compile_firing_data: Extract firing properties
+# - extract_features: Main feature extraction and cell classification
+# - calculate_scale_bar: Process microscopy scale images
+# - chr2_sensitisation: Generate CHR2 sensitisation data
+```
+
+**Plotting Script Commands:**
 ```bash
 # List all available figures
 python run_plotting_scripts.py --list
 
-# Generate specific figures with multiple statistical tests
+# Command structure  
+python run_plotting_scripts.py [--all_fig | --main_fig | --supplementary_fig | --figures FIGURE_LIST] [--analysis_type TYPE]
+
+# Bulk options:
+# - --all_fig: Generate all figures (main + supplementary)
+# - --main_fig: Generate main figures only (1-6)
+# - --supplementary_fig: Generate supplementary figures only
+
+# Specific options:
+# - --figures: Space-separated list of specific figures
+# - --analysis_type: 'standard' or 'field_normalized'
+# - --output_dir: Custom output directory
+# - --config: Custom config file path
+```
+
+### 📖 **Available Figures Reference**
+
+| **Figure Type** | **Figure ID** | **Description** | **Command Example** |
+|-----------------|---------------|-----------------|---------------------|
+| **Main Figures** | | | |
+| | `figure_1` | Overview | `python run_plotting_scripts.py --figures figure_1` |
+| | `figure_2` | EPSP Analysis (★ 3 statistical tests) | `python run_plotting_scripts.py --figures figure_2` |
+| | `figure_3` | Pattern Learning | `python run_plotting_scripts.py --figures figure_3` |
+| | `figure_4` | Temporal Analysis | `python run_plotting_scripts.py --figures figure_4` |
+| | `figure_5` | Plasticity | `python run_plotting_scripts.py --figures figure_5` |
+| | `figure_6` | Network Analysis | `python run_plotting_scripts.py --figures figure_6` |
+| **Supplementary** | | | |
+| | `figure_2_fnorm` | EPSP Analysis - Field Normalized (★ 3 statistical tests) | `python run_plotting_scripts.py --figures figure_2_fnorm` |
+| | `figure_3_fnorm` | Pattern Learning - Field Normalized | `python run_plotting_scripts.py --figures figure_3_fnorm` |
+| | `figure_4_fnorm` | Temporal Analysis - Field Normalized | `python run_plotting_scripts.py --figures figure_4_fnorm` |
+| | `figure_5_fnorm` | Plasticity - Field Normalized | `python run_plotting_scripts.py --figures figure_5_fnorm` |
+| | `figure_6_v2_fnorm` | Network Analysis - Field Normalized | `python run_plotting_scripts.py --figures figure_6_v2_fnorm` |
+| | `figure_7_v3` | Learner vs Non-Learner Comparison | `python run_plotting_scripts.py --figures figure_7_v3` |
+| | `figure_7_fnorm` | Learner Comparison - Field Normalized | `python run_plotting_scripts.py --figures figure_7_fnorm` |
+| | `supp_1` | Supplementary Figure 1 | `python run_plotting_scripts.py --figures supp_1` |
+| | `supp_1_fnorm` | Supplementary Figure 1 - Field Normalized | `python run_plotting_scripts.py --figures supp_1_fnorm` |
+| | `supp_2` | Supplementary Figure 2 | `python run_plotting_scripts.py --figures supp_2` |
+| | `supp_2_fnorm` | Supplementary Figure 2 - Field Normalized | `python run_plotting_scripts.py --figures supp_2_fnorm` |
+| | `supp_2_field_norm` | Supplementary Figure 2 - Field Norm | `python run_plotting_scripts.py --figures supp_2_field_norm` |
+| | `supp_2_field_norm_fnorm` | Supplementary Figure 2 - Field Norm + fnorm | `python run_plotting_scripts.py --figures supp_2_field_norm_fnorm` |
+| | `supp_chr2_sensitisation` | CHR2 Sensitisation Analysis | `python run_plotting_scripts.py --figures supp_chr2_sensitisation` |
+
+**★ Note:** Figure 2 and Figure 2 fnorm automatically generate multiple statistical test versions (Wilcoxon, ANOVA, Mixed Effect Model)
+
+### 💡 **Common Use Cases Examples**
+
+```bash
+# 📋 For new users - Complete pipeline from scratch
+python run_analysis_conversion.py --workflow complete_pipeline
+python run_plotting_scripts.py --all_fig
+
+# 📊 Generate only main paper figures (fast)
+python run_plotting_scripts.py --main_fig
+
+# 🔬 Generate only statistical analysis figures (Figure 2 variants)
 python run_plotting_scripts.py --figures figure_2 figure_2_fnorm
 
-# Generate field-normalized versions
-python run_plotting_scripts.py --analysis_type field_normalized
+# 📚 Generate all supplementary figures for appendix
+python run_plotting_scripts.py --supplementary_fig
+
+# 🎯 Generate specific figure combinations
+python run_plotting_scripts.py --figures figure_1 figure_3 figure_5 supp_1
+
+# 🔄 Re-run analysis if data changed
+python run_analysis_conversion.py --workflow full_analysis
+python run_plotting_scripts.py --main_fig
+
+# 💾 Only convert data (if you have new ABF files)
+python run_analysis_conversion.py --workflow full_conversion
 ```
 
 ## Complete Project Structure
