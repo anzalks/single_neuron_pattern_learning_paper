@@ -42,6 +42,8 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 from shared_utils import baisic_plot_fuctnions_and_features as bpf
 from matplotlib.lines import Line2D
+from scipy.stats import ttest_rel, mannwhitneyu, wilcoxon, permutation_test, ks_2samp
+import multiprocessing as mp
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -136,9 +138,63 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
         # Shrink the plot
         axs.set_position(new_pos)
 
+def gamma_fit(expt, gamma):
+    """
+    Gamma function fit model with fixed parameters:
+    beta = 1, alpha = 0.
+    """
+    beta = 1  # Fixed value
+    alpha = 0  # Fixed value
+    return expt - (((beta * expt) / (gamma + expt)) * expt) - alpha
 
+def fitGamma( data ):
+    data = data.transpose()
+    [ret], cov = scipy.optimize.curve_fit(gamma_fit, 
+        data[0], data[1], p0 = [2.0], bounds=(0, 60))
+    return ret
 
+# Define the worker function at the top level
+def bootstrap_worker(args):
+    combined, len_A = args
+    idx = np.arange(len(combined))
+    
+    # Resample with replacement
+    temp = np.random.choice(idx, size=len_A, replace=True)
+    A_boot = combined[temp]
+    temp = np.random.choice(idx, size=len_A, replace=True)
+    B_boot = combined[temp]
+    
+    # Compute test statistic for resampled data
+    return fitGamma(A_boot) - fitGamma(B_boot)
 
+# Main bootstrap function
+def bootstrap_scram(A, B, nIter=10000):
+    # Convert list to array
+    A = np.array(A)
+    B = np.array(B)
+
+    # Combine datasets
+    combined = np.concatenate([A, B])
+
+    # Calculate observed test statistic (e.g., difference in means)
+    observed_stat = fitGamma(A) - fitGamma(B)
+
+    # Prepare arguments for the worker function
+    args = (combined, len(A))
+
+    # Create a pool of workers
+    num_processes = mp.cpu_count()
+    with mp.Pool(processes=num_processes) as pool:
+        # Use pool.imap to distribute the computation across processes
+        bootstrap_stats = list(tqdm(pool.imap(bootstrap_worker, [args] * nIter), total=nIter, desc="Bootstrapping"))
+
+    # Convert to numpy array
+    bootstrap_stats = np.array(bootstrap_stats)
+
+    # Calculate p-value (two-tailed)
+    p_value = np.mean(np.abs(bootstrap_stats) >= np.abs(observed_stat))
+
+    return p_value
 
 #def gama_fit(expt,alp,bet,gam):
 #    return expt-(((bet*expt)/(gam+expt))*expt)-alp
@@ -175,15 +231,18 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
 
     # Perform curve fitting only for the 'gam' parameter
     param_pre, _ = scipy.optimize.curve_fit(gama_fit, pre_arr1, pre_arr2, bounds=(0, 60))
-    param, _ = scipy.optimize.curve_fit(gama_fit, arr1, arr2, bounds=(0, 60))
+    param_post, _ = scipy.optimize.curve_fit(gama_fit, arr1, arr2, bounds=(0, 60))
 
     # Generate x-values for plotting
     pre_x = np.linspace(-0.5, 10, len(pre_arr2))
     x = np.linspace(-0.5, 10, len(arr2))
 
+    test_results = bootstrap_scram(list_of_x_y_responses_pre,
+                                   list_of_x_y_responses)
+    test_results= bpf.convert_pvalue_to_asterisks(test_results)
     # Generate fitted y-values using the optimized 'gam' parameter
     pre_y = gama_fit(pre_x, param_pre[0])
-    y = gama_fit(x, param[0])
+    y = gama_fit(x, param_post[0])
 
     # Choose color based on cell type
     color = bpf.CB_color_cycle[0] if cell_type == "learners" else bpf.CB_color_cycle[1]
@@ -192,12 +251,15 @@ def eq_fit(list_of_x_y_responses_pre, list_of_x_y_responses, pat_num, cell_type,
     axs.plot(pre_x, pre_y, color='k', linestyle='-', alpha=0.8, label="pre_training", linewidth=3)
     axs.plot(x, y, color=color, linestyle='-', alpha=0.8, label="post_training", linewidth=3)
 
-    # Set plot properties
+    # Display the fitted gamma values and test results on the plot
     axs.set_aspect(0.6)
-    axs.text(0.5, 0.9, f'γ_post = {np.around(param[0], 1)}', transform=axs.transAxes, fontsize=12, ha='center')
-    axs.text(0.5, 0.7, f'γ_pre = {np.around(param_pre[0], 1)}', transform=axs.transAxes, fontsize=12, ha='center')
+    axs.text(0.5, 0.9, f'γ_post = {np.around(param_post[0], 2)}', transform=axs.transAxes, fontsize=12, ha='center')
+    axs.text(0.5, 0.7, f'γ_pre = {np.around(param_pre[0], 2)}', transform=axs.transAxes, fontsize=12, ha='center')
     
-    return x, y
+    # Display statistical test results with p-values
+    axs.text(0.12, 0.8, f'{test_results}', transform=axs.transAxes, fontsize=12, ha='center')
+    
+    return param_pre[0], param_post[0], test_results
 
 
 
