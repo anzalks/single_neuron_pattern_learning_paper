@@ -95,6 +95,7 @@ def plot_rmp_distribution_violin(cell_stats_with_category, fig, axs):
         ax=axs,
         palette=palette,
         inner="quartile",
+        linewidth=2,  # Add standardized line width
         order=['All Healthy Cells', 'Learners', 'Non-learners']
     )
     
@@ -107,8 +108,8 @@ def plot_rmp_distribution_violin(cell_stats_with_category, fig, axs):
     # Add text with statistics
     stats_text = f'All Healthy Cells:\nn = {n_cells}\nMean: {rmp_mean:.1f} ± {rmp_std:.1f} mV\nMedian: {rmp_median:.1f} mV'
     axs.text(0.02, 0.98, stats_text, transform=axs.transAxes, 
-             fontsize=9, verticalalignment='top',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+             fontsize=10, verticalalignment='top',
+             bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
     # Statistical test between learners and non-learners only
     learners_rmp = learners_data['rmp'].values
@@ -129,9 +130,10 @@ def plot_rmp_distribution_violin(cell_stats_with_category, fig, axs):
     axs.set_xlabel(None)
     axs.set_ylim(-80, -55)
     axs.tick_params(axis='x', rotation=45)
+    axs.tick_params(axis='y')
     
-    # Remove top and right spines
-    sns.despine(ax=axs, top=True, right=True)
+    # Remove top and right spines with proper styling
+    axs.spines[['right', 'top']].set_visible(False)
     
     return axs
 
@@ -178,7 +180,7 @@ def plot_rmp_epsp_correlation(epsp_data, cell_stats_with_category, timepoint, fi
     
     # Create scatter plot without classification
     axs.scatter(correlation_df['rmp'], correlation_df['epsp_amplitude'], 
-               color=bpf.CB_color_cycle[2], alpha=0.7, s=50)
+               color=bpf.CB_color_cycle[2], alpha=0.9, s=60)
     
     # Calculate correlation
     if len(correlation_df) > 2:
@@ -188,28 +190,28 @@ def plot_rmp_epsp_correlation(epsp_data, cell_stats_with_category, timepoint, fi
         z = np.polyfit(correlation_df['rmp'], correlation_df['epsp_amplitude'], 1)
         p = np.poly1d(z)
         axs.plot(correlation_df['rmp'], p(correlation_df['rmp']), 
-                color=bpf.CB_color_cycle[3], linestyle='--', alpha=0.8)
+                color=bpf.CB_color_cycle[3], linestyle='--', alpha=0.7, linewidth=3)
         
         # Add correlation text
-        corr_text = f'r = {correlation_coef:.3f}\np = {p_value:.3f}'
+        corr_text = f'Combined: n = {len(correlation_df)} cells\nr = {correlation_coef:.3f}, p = {p_value:.3f}'
         if p_value < 0.05:
             corr_text += ' *'
         else:
             corr_text += ' (ns)'
             
         axs.text(0.02, 0.98, corr_text, transform=axs.transAxes, 
-                fontsize=9, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
     # Set labels and title
     axs.set_xlabel("Resting Membrane Potential (mV)")
     axs.set_ylabel("EPSP Amplitude (mV)")
     
     timepoint_label = 'Pre-training' if timepoint == 'pre' else f'30mins post training'
-    axs.set_title(f'RMP vs EPSP Amplitude\n({timepoint_label})', fontsize=10)
+    axs.set_title(f'RMP vs EPSP Amplitude\n({timepoint_label})')
     
     # Remove top and right spines
-    sns.despine(ax=axs, top=True, right=True)
+    axs.spines[['right', 'top']].set_visible(False)
     
     return axs
 
@@ -263,73 +265,89 @@ def plot_rmp_epsp_learner_nonlearner(epsp_data, cell_stats_with_category, fig, a
     if learner_data:
         learner_df = pd.DataFrame(learner_data)
         axs.scatter(learner_df['rmp'], learner_df['epsp_amplitude'], 
-                   color=bpf.CB_color_cycle[0], alpha=0.7, s=50, label='Learners')
+                   color=bpf.CB_color_cycle[0], alpha=0.9, s=60, label='Learners')
         
         # Fit line for learners
         if len(learner_df) > 2:
-            z_learners = np.polyfit(learner_df['rmp'], learner_df['epsp_amplitude'], 1)
-            p_learners = np.poly1d(z_learners)
-            axs.plot(learner_df['rmp'], p_learners(learner_df['rmp']), 
-                    color=bpf.CB_color_cycle[0], linestyle='--', alpha=0.8)
+            z_learner = np.polyfit(learner_df['rmp'], learner_df['epsp_amplitude'], 1)
+            p_learner = np.poly1d(z_learner)
+            axs.plot(learner_df['rmp'], p_learner(learner_df['rmp']), 
+                    color=bpf.CB_color_cycle[0], linestyle='--', alpha=0.7, linewidth=3)
             
             # Calculate correlation for learners
             corr_learners, p_learners_val = spst.pearsonr(learner_df['rmp'], learner_df['epsp_amplitude'])
             
             # Add correlation text for learners
-            corr_text_learners = f'Learners: r = {corr_learners:.3f}'
+            learner_corr_text = f'Learners:\nr = {corr_learners:.3f}, p = {p_learners_val:.3f}'
             if p_learners_val < 0.05:
-                corr_text_learners += ' *'
+                learner_corr_text += ' *'
             else:
-                corr_text_learners += ' (ns)'
+                learner_corr_text += ' (ns)'
+            
+                    # Calculate correlation for learners
+        corr_learners, p_learners_val = spst.pearsonr(learner_df['rmp'], learner_df['epsp_amplitude'])
+        
+        # Add correlation text for learners
+        learner_corr_text = f'Learners:\nr = {corr_learners:.3f}, p = {p_learners_val:.3f}'
+        if p_learners_val < 0.05:
+            learner_corr_text += ' *'
+        else:
+            learner_corr_text += ' (ns)'
     
     # Plot non-learners
     if non_learner_data:
         non_learner_df = pd.DataFrame(non_learner_data)
         axs.scatter(non_learner_df['rmp'], non_learner_df['epsp_amplitude'], 
-                   color=bpf.CB_color_cycle[1], alpha=0.7, s=50, label='Non-learners')
+                   color=bpf.CB_color_cycle[1], alpha=0.9, s=60, label='Non-learners')
         
         # Fit line for non-learners
         if len(non_learner_df) > 2:
-            z_non_learners = np.polyfit(non_learner_df['rmp'], non_learner_df['epsp_amplitude'], 1)
-            p_non_learners = np.poly1d(z_non_learners)
-            axs.plot(non_learner_df['rmp'], p_non_learners(non_learner_df['rmp']), 
-                    color=bpf.CB_color_cycle[1], linestyle='--', alpha=0.8)
+            z_non_learner = np.polyfit(non_learner_df['rmp'], non_learner_df['epsp_amplitude'], 1)
+            p_non_learner = np.poly1d(z_non_learner)
+            axs.plot(non_learner_df['rmp'], p_non_learner(non_learner_df['rmp']), 
+                    color=bpf.CB_color_cycle[1], linestyle='--', alpha=0.7, linewidth=3)
             
             # Calculate correlation for non-learners
             corr_non_learners, p_non_learners_val = spst.pearsonr(non_learner_df['rmp'], non_learner_df['epsp_amplitude'])
             
             # Add correlation text for non-learners
-            corr_text_non_learners = f'Non-learners: r = {corr_non_learners:.3f}'
+            non_learner_corr_text = f'Non-learners:\nr = {corr_non_learners:.3f}, p = {p_non_learners_val:.3f}'
             if p_non_learners_val < 0.05:
-                corr_text_non_learners += ' *'
+                non_learner_corr_text += ' *'
             else:
-                corr_text_non_learners += ' (ns)'
+                non_learner_corr_text += ' (ns)'
+            
+
     
-    # Combine correlation text if both groups exist
+    # Add correlation text boxes positioned to avoid overlap
     if learner_data and non_learner_data:
-        combined_text = f'{corr_text_learners}\n{corr_text_non_learners}'
-        axs.text(0.02, 0.98, combined_text, transform=axs.transAxes, 
-                fontsize=9, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        # Position learner text on top left
+        axs.text(0.02, 0.98, learner_corr_text, transform=axs.transAxes, 
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
+        # Position non-learner text below learner text
+        axs.text(0.02, 0.72, non_learner_corr_text, transform=axs.transAxes, 
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     elif learner_data:
-        axs.text(0.02, 0.98, corr_text_learners, transform=axs.transAxes, 
-                fontsize=9, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        axs.text(0.02, 0.98, learner_corr_text, transform=axs.transAxes, 
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     elif non_learner_data:
-        axs.text(0.02, 0.98, corr_text_non_learners, transform=axs.transAxes, 
-                fontsize=9, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        axs.text(0.02, 0.98, non_learner_corr_text, transform=axs.transAxes, 
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
     # Set labels and title
     axs.set_xlabel("Resting Membrane Potential (mV)")
     axs.set_ylabel("EPSP Amplitude (mV)")
-    axs.set_title('RMP vs EPSP Amplitude\n(30mins post training)', fontsize=10)
+    axs.set_title('RMP vs EPSP Amplitude\n(Learners vs Non-learners)')
     
     # Add legend
     axs.legend(loc='lower right', frameon=True, fancybox=True, shadow=True)
     
     # Remove top and right spines
-    sns.despine(ax=axs, top=True, right=True)
+    axs.spines[['right', 'top']].set_visible(False)
     
     return axs
 
@@ -374,7 +392,7 @@ def plot_rmp_firing_frequency_correlation(firing_properties, cell_stats_with_cat
     
     # Create scatter plot with green color for combined healthy cells
     axs.scatter(correlation_df['rmp'], correlation_df['firing_frequency'], 
-               color=bpf.CB_color_cycle[2], alpha=0.7, s=50, label='All Healthy Cells')
+               color=bpf.CB_color_cycle[2], alpha=0.9, s=60, label='All Healthy Cells')
     
     # Calculate correlation
     if len(correlation_df) > 2:
@@ -384,34 +402,34 @@ def plot_rmp_firing_frequency_correlation(firing_properties, cell_stats_with_cat
         z = np.polyfit(correlation_df['rmp'], correlation_df['firing_frequency'], 1)
         p = np.poly1d(z)
         axs.plot(correlation_df['rmp'], p(correlation_df['rmp']), 
-                color=bpf.CB_color_cycle[3], linestyle='--', alpha=0.8)
+                color=bpf.CB_color_cycle[3], linestyle='--', alpha=0.7, linewidth=3)
         
         # Add correlation text
-        corr_text = f'r = {correlation_coef:.3f}\np = {p_value:.3f}'
+        corr_text = f'Combined: n = {len(correlation_df)} cells\nr = {correlation_coef:.3f}, p = {p_value:.3f}'
         if p_value < 0.05:
             corr_text += ' *'
         else:
             corr_text += ' (ns)'
             
         axs.text(0.02, 0.98, corr_text, transform=axs.transAxes, 
-                fontsize=9, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
-    # Add sample size info
+    # Add sample size info in bottom right to avoid overlap with correlation text
     n_cells = len(correlation_df['cell_ID'].unique())
     n_measurements = len(correlation_df)
     info_text = f'n = {n_cells} cells\n({n_measurements} measurements)'
     axs.text(0.98, 0.02, info_text, transform=axs.transAxes, 
-            fontsize=9, verticalalignment='bottom', horizontalalignment='right',
-            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+             verticalalignment='bottom', horizontalalignment='right',
+             bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
     # Set labels and title
     axs.set_xlabel("Resting Membrane Potential (mV)")
     axs.set_ylabel("Firing Frequency (Hz)")
-    axs.set_title('RMP vs Firing Frequency\n(All Current Injections)', fontsize=10)
+    axs.set_title('RMP vs Firing Frequency\n(All Healthy Cells)')
     
     # Remove top and right spines
-    sns.despine(ax=axs, top=True, right=True)
+    axs.spines[['right', 'top']].set_visible(False)
     
     return axs
 
@@ -495,13 +513,16 @@ def plot_rmp_chr2_firing_frequency_correlation(sensitisation_data, cell_stats_wi
     unique_cells = sorted(correlation_df['cell_ID'].unique())
     colors = plt.cm.tab10(np.linspace(0, 1, len(unique_cells)))  # Use tab10 colormap for distinct colors
     
-    # Plot each cell with a different color
-    for i, cell_id in enumerate(unique_cells):
+    # Use color map for multiple cells
+    colors = plt.cm.tab10(np.linspace(0, 1, len(unique_cells)))
+    cell_colors = {cell: colors[i] for i, cell in enumerate(unique_cells)}
+    
+    for cell_id in unique_cells:
         cell_data = correlation_df[correlation_df['cell_ID'] == cell_id]
-        # Use short cell name for legend (last part after underscore)
-        short_name = cell_id.split('_')[-1] if '_' in cell_id else cell_id
+        color = cell_colors[cell_id]
+        
         axs.scatter(cell_data['rmp'], cell_data['firing_frequency'], 
-                   color=colors[i], alpha=0.7, s=50, label=f'Cell {short_name}')
+                   color=color, alpha=0.9, s=60, label=cell_id.split('_')[-1])
     
     # Calculate correlation
     if len(correlation_df) > 2:
@@ -511,54 +532,43 @@ def plot_rmp_chr2_firing_frequency_correlation(sensitisation_data, cell_stats_wi
         z = np.polyfit(correlation_df['rmp'], correlation_df['firing_frequency'], 1)
         p = np.poly1d(z)
         axs.plot(correlation_df['rmp'], p(correlation_df['rmp']), 
-                color=bpf.CB_color_cycle[3], linestyle='--', alpha=0.8)
+                color=bpf.CB_color_cycle[3], linestyle='--', alpha=0.7, linewidth=3)
         
         # Add correlation text
-        corr_text = f'r = {correlation_coef:.3f}\np = {p_value:.3f}'
+        corr_text = f'Combined: n = {len(correlation_df)} cells\nr = {correlation_coef:.3f}, p = {p_value:.3f}'
         if p_value < 0.05:
             corr_text += ' *'
         else:
             corr_text += ' (ns)'
             
         axs.text(0.02, 0.98, corr_text, transform=axs.transAxes, 
-                fontsize=9, verticalalignment='top',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
-    # Add sample size info and outlier identification
+    # Position info text in bottom right to avoid overlap
     n_cells = len(correlation_df['cell_ID'].unique())
-    n_measurements = len(correlation_df)
-    
-    # Identify potential outliers (values > 2 standard deviations from mean)
-    mean_freq = correlation_df['firing_frequency'].mean()
-    std_freq = correlation_df['firing_frequency'].std()
-    outliers = correlation_df[abs(correlation_df['firing_frequency'] - mean_freq) > 2 * std_freq]
-    
-    info_text = f'n = {n_cells} cells\n({n_measurements} trials)'
-    if len(outliers) > 0:
-        outlier_cells = outliers['cell_ID'].unique()
-        outlier_names = [cell.split('_')[-1] for cell in outlier_cells]
-        info_text += f'\nOutliers: {", ".join(outlier_names)}'
-    
+    n_trials = len(correlation_df)
+    info_text = f'n = {n_cells} cells\n({n_trials} trials)'
     axs.text(0.98, 0.02, info_text, transform=axs.transAxes, 
-            fontsize=8, verticalalignment='bottom', horizontalalignment='right',
-            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+            verticalalignment='bottom', horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
     # Add legend with limited number of entries to avoid overcrowding
     if len(unique_cells) <= 8:  # Only show legend if not too many cells
-        axs.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8, frameon=True)
+        axs.legend(bbox_to_anchor=(1.05, 1), loc='upper left', frameon=True)
     else:
-        # For many cells, just add a note about color coding
+        # For many cells, just add a note about color coding in bottom left
         axs.text(0.02, 0.02, 'Each color = different cell', transform=axs.transAxes,
-                fontsize=8, verticalalignment='bottom',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                verticalalignment='bottom',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
     
     # Set labels and title
     axs.set_xlabel("Resting Membrane Potential (mV)")
     axs.set_ylabel("Firing Frequency (Hz)")
-    axs.set_title('RMP vs Firing Frequency\n(Training Data)', fontsize=10)
+    axs.set_title('RMP vs Firing Frequency\n(Training Data)')
     
     # Remove top and right spines
-    sns.despine(ax=axs, top=True, right=True)
+    axs.spines[['right', 'top']].set_visible(False)
     
     return axs
 
@@ -613,10 +623,10 @@ def create_rmp_distribution_figure(cell_stats_df, sc_data_dict, epsp_data, firin
     print(f"Non-learners: {len(healthy_cells[healthy_cells['cell_type'] == 'non-learners'])}")
     print(f"Excluded cells: {len(cell_stats_with_category[cell_stats_with_category['cell_type'] == 'other'])}")
     
-    # Create figure with 6 subplots: RMP distribution, RMP vs EPSP (pre), RMP vs EPSP (post_3), learners vs non-learners (post_3), firing freq, CHR2 firing freq
-    fig = plt.figure(figsize=(18, 10))
+    # Create figure with standardized parameters
+    fig = plt.figure(figsize=(18, 10), dpi=100)
     gs = GridSpec(2, 3, figure=fig, width_ratios=[1.5, 1, 1], height_ratios=[1, 1])
-    gs.update(wspace=0.3, hspace=0.4)
+    gs.update(wspace=0.35, hspace=0.45)  # Slightly increased spacing for better readability
     
     # Subplot A: RMP distribution violin plots
     axs_rmp = fig.add_subplot(gs[0, 0])
@@ -654,9 +664,9 @@ def create_rmp_distribution_figure(cell_stats_df, sc_data_dict, epsp_data, firin
     axs_chr2_firing.text(-0.1, 1.1, 'F', transform=axs_chr2_firing.transAxes,
                         fontsize=16, fontweight='bold', ha='center', va='center')
     
-    # Add main title
+    # Add main title with proper size
     fig.suptitle('Resting Membrane Potential Analysis in Healthy Cells', 
-                 fontsize=14, fontweight='bold', y=0.98)
+                 fontweight='bold', y=0.98)
     
     plt.tight_layout()
     
