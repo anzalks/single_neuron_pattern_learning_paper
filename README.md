@@ -30,6 +30,22 @@ python run_plotting_scripts.py --main_fig
 python run_plotting_scripts.py --supplementary_fig
 ```
 
+### ⚡ **NEW: Unified Saving System Quick Examples**
+
+```bash
+# Generate all figures with labels in PNG and PDF formats
+python run_plotting_scripts.py --all_fig --alpha_labels_on --multi_format png pdf
+
+# Generate all figures without labels (automatically tagged with _no_label)
+python run_plotting_scripts.py --all_fig --alpha_labels_off --multi_format png pdf
+
+# High-quality publication figures
+python run_plotting_scripts.py --main_fig --high_quality --multi_format png pdf svg
+
+# Presentation figures with transparent background
+python run_plotting_scripts.py --main_fig --transparent --format png
+```
+
 ## Usage Scenarios
 
 ### 📋 **Complete Workflows**
@@ -761,6 +777,27 @@ python run_analysis_conversion.py --list
 
 ### 🔧 Recent Improvements (2024-12-07)
 
+**🎯 Unified Figure Saving System Implementation**:
+- **Complete Migration**: All 21 plotting scripts now use unified saving system
+- **Global Format Control**: PNG, PDF, SVG, EPS with command-line and environment variable control
+- **Quality Presets**: Standard (300 DPI) and high-quality (600 DPI) modes
+- **Intelligent Filename Tagging**: Automatic `_no_label` suffix when labels are disabled
+- **Multi-format Generation**: Generate multiple formats simultaneously with single command
+- **Backward Compatibility**: Seamless integration with existing workflows
+
+**🏷️ Filename Tagging System**:
+- **Smart Tagging**: `figure_1.png` (labels on) vs `figure_1_no_label.png` (labels off)
+- **Command Line Control**: `--label_tag_on/off` flags for tagging control
+- **Environment Variables**: `FIGURE_LABEL_TAG` for batch processing
+- **Complete Coverage**: Works across all 21 plotting scripts
+
+**📊 Advanced Format Control**:
+- **Single Format**: `--format png/pdf/svg/eps`
+- **Multiple Formats**: `--multi_format png pdf svg`
+- **Quality Control**: `--high_quality` (600 DPI), `--dpi` (custom)
+- **Transparency**: `--transparent` for presentation figures
+- **Label Control**: `--alpha_labels_on/off` with automatic filename tagging
+
 **Multi-Statistical Test Implementation**:
 - Added three statistical test methods for Figure 2 and Figure 2 fnorm
 - Wilcoxon signed-rank test (original), Repeated measures ANOVA, Mixed effect model
@@ -771,11 +808,13 @@ python run_analysis_conversion.py --list
 - Fixed hardcoded path in `extract_features_and_save_pickle.py` (2024-12-04)
 - All analysis files now correctly save to designated output directories
 - Maintained organized tagged folder structure for all outputs
+- Fixed migration issues with undefined variables in plotting scripts
 
 **Pipeline Improvements**:
 - Unified plotting runner system with comprehensive configuration
 - Version control cleanup - only latest versions maintained
 - Enhanced documentation with detailed usage instructions
+- Complete system testing and validation across all figure types
 
 ## Author & License
 
