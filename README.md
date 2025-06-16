@@ -5,6 +5,7 @@ All scripts associated with the pattern learning paper - comprehensive analysis,
 ## Table of Contents
 - [Quick Start](#quick-start)
 - [Usage Scenarios](#usage-scenarios)
+- [Unified Figure Saving System](#unified-figure-saving-system)
 - [Complete Project Structure](#complete-project-structure)
 - [Data Processing Workflow](#data-processing-workflow)
 - [Analysis Scripts Usage](#analysis-scripts-usage)
@@ -184,6 +185,164 @@ python run_plotting_scripts.py --main_fig
 python run_analysis_conversion.py --workflow full_conversion
 ```
 
+## Unified Figure Saving System
+
+### 🎯 **Overview**
+
+A comprehensive, production-ready system for consistent figure generation across all plotting scripts with global format control, quality settings, automatic filename management, and intelligent filename tagging.
+
+### ✨ **Key Features**
+
+- **🎨 Multiple Format Support**: PNG, PDF, SVG, EPS with optimized quality settings
+- **🔧 Global Control**: Command-line flags and environment variables for scriptable automation  
+- **📊 Quality Presets**: Standard (300 DPI) and high-quality (600 DPI) modes
+- **🏷️ Smart Labeling**: Automatic subplot label control across all figures
+- **🏷️ Filename Tagging**: Intelligent filename tagging based on label state (`_no_label` suffix)
+- **📁 Auto Directory Creation**: Automatic output directory structure management
+- **🔄 Backward Compatibility**: Seamless integration with existing scripts
+- **⚡ Batch Processing**: Generate all figures simultaneously with consistent settings
+
+### 🔧 **Command Line Flags**
+
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--format` | Single output format | `--format pdf` |
+| `--multi_format` | Multiple output formats | `--multi_format png pdf svg` |
+| `--dpi` | Custom DPI setting | `--dpi 450` |
+| `--high_quality` | High quality mode (600 DPI) | `--high_quality` |
+| `--transparent` | Transparent background | `--transparent` |
+| `--alpha_labels_on` | Enable subplot labels (default) | `--alpha_labels_on` |
+| `--alpha_labels_off` | Disable subplot labels | `--alpha_labels_off` |
+| `--no_labels` | Alias for --alpha_labels_off | `--no_labels` |
+| `--label_tag_on` | Enable filename tagging (default) | `--label_tag_on` |
+| `--label_tag_off` | Disable filename tagging | `--label_tag_off` |
+
+### 🏷️ **Filename Tagging System**
+
+The system automatically adds intelligent tags to filenames based on the label state:
+
+**🎯 Tagging Behavior:**
+- **Labels ON**: `figure_1.png` (base filename)
+- **Labels OFF**: `figure_1_no_label.png` (tagged filename)
+- **Tagging disabled**: `figure_1.png` (always base filename)
+
+**📋 Examples:**
+
+```bash
+# Generate figures with labels (default filename)
+python run_plotting_scripts.py --figures figure_1 --alpha_labels_on --format png
+# Output: figure_1.png
+
+# Generate figures without labels (tagged filename)  
+python run_plotting_scripts.py --figures figure_1 --alpha_labels_off --format png
+# Output: figure_1_no_label.png
+
+# Generate without labels but disable tagging (base filename)
+python run_plotting_scripts.py --figures figure_1 --alpha_labels_off --label_tag_off --format png
+# Output: figure_1.png
+
+# Generate both versions with multiple formats
+python run_plotting_scripts.py --figures figure_1 --alpha_labels_on --multi_format png pdf
+python run_plotting_scripts.py --figures figure_1 --alpha_labels_off --multi_format png pdf
+# Output: figure_1.png, figure_1.pdf, figure_1_no_label.png, figure_1_no_label.pdf
+```
+
+### 🎨 **Format Control Examples**
+
+```bash
+# Single format examples
+python run_plotting_scripts.py --all_fig --format png
+python run_plotting_scripts.py --all_fig --format pdf
+python run_plotting_scripts.py --all_fig --format svg
+
+# Multiple format examples
+python run_plotting_scripts.py --all_fig --multi_format png pdf
+python run_plotting_scripts.py --all_fig --multi_format png pdf svg eps
+
+# Quality control examples
+python run_plotting_scripts.py --all_fig --format png --dpi 600
+python run_plotting_scripts.py --all_fig --high_quality --format pdf
+python run_plotting_scripts.py --all_fig --transparent --format png
+
+# Complete workflow examples
+python run_plotting_scripts.py --all_fig --alpha_labels_on --multi_format png pdf
+python run_plotting_scripts.py --all_fig --alpha_labels_off --multi_format png pdf
+# This generates both labeled and unlabeled versions in PNG and PDF formats
+```
+
+### 🌍 **Environment Variables**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `FIGURE_FORMAT` | Single format | `png`, `pdf`, `svg`, `eps` |
+| `FIGURE_FORMATS` | Multiple formats | `png,pdf,svg` |
+| `FIGURE_DPI` | DPI setting | `300`, `600` |
+| `FIGURE_TRANSPARENT` | Transparency | `True`, `False` |
+| `SUBPLOT_LABELS_ENABLED` | Subplot labels state | `True`, `False` |
+| `FIGURE_LABEL_TAG` | Filename tagging | `True`, `False` |
+
+**📋 Environment Variable Examples:**
+
+```bash
+# Set environment variables for batch processing
+export FIGURE_FORMAT=pdf
+export FIGURE_DPI=600
+export SUBPLOT_LABELS_ENABLED=False
+export FIGURE_LABEL_TAG=True
+
+# Run with environment settings
+python run_plotting_scripts.py --all_fig
+# All figures will be generated as high-quality PDFs without labels, with _no_label tags
+
+# Override environment with command line
+python run_plotting_scripts.py --all_fig --format png --alpha_labels_on
+# Overrides environment settings
+```
+
+### 📊 **Quality Settings**
+
+| Format | Standard DPI | High Quality DPI | Transparency Support |
+|--------|--------------|------------------|---------------------|
+| PNG | 300 | 600 | ✅ Yes |
+| PDF | 300 | 600 | ✅ Yes |
+| SVG | Vector | Vector | ✅ Yes |
+| EPS | Vector | Vector | ❌ No |
+
+### 🔧 **Advanced Usage**
+
+```bash
+# Generate publication-ready figures (high quality, multiple formats)
+python run_plotting_scripts.py --main_fig --high_quality --multi_format png pdf svg
+
+# Generate presentation figures (transparent background)
+python run_plotting_scripts.py --main_fig --transparent --format png
+
+# Generate both labeled and unlabeled versions for all figures
+python run_plotting_scripts.py --all_fig --alpha_labels_on --multi_format png pdf
+python run_plotting_scripts.py --all_fig --alpha_labels_off --multi_format png pdf
+
+# Custom DPI for specific requirements
+python run_plotting_scripts.py --figures figure_1 figure_2 --dpi 450 --format png
+
+# Batch processing with environment control
+FIGURE_FORMATS=png,pdf,svg FIGURE_DPI=600 python run_plotting_scripts.py --all_fig
+```
+
+### 🎯 **Migration Status**
+
+**✅ Complete Migration**: All 21 plotting scripts now use the unified saving system:
+- **Main figures**: 6 scripts (figure_1 through figure_6_v2)  
+- **Supplementary figures**: 15 scripts (all supplementary variants)
+- **Total coverage**: 21/21 scripts (100% migrated)
+
+**🔧 System Benefits:**
+- ✅ **Consistent quality** across all figures (300 DPI default, 600 DPI high-quality)
+- ✅ **Global format control** via command line or environment variables
+- ✅ **Intelligent filename tagging** based on label state
+- ✅ **Multi-format generation** in single command
+- ✅ **Automatic directory creation** and organization
+- ✅ **Backward compatibility** with existing workflows
+
 ## Complete Project Structure
 
 ```
@@ -222,16 +381,16 @@ single_neuron_pattern_learning_paper/
 │   │   ├── figure_generation_script_4_fnorm.py      # Figure 4 field-normalized
 │   │   ├── figure_generation_script_5_fnorm.py      # Figure 5 field-normalized
 │   │   ├── figure_generation_script_6_v2_fnorm.py   # Figure 6 field-normalized
-│   │   ├── figure_generation_script_7_v3.py         # Figure 7: Learner comparison
+│   │   ├── figure_generation_script_7_learner_non_learner_comparison_v3.py  # Figure 7: Learner comparison
 │   │   ├── figure_generation_script_7_fnorm.py      # Figure 7 field-normalized
-│   │   ├── supplementary_figure_generation_script_1.py     # Supplementary Figure 1
-│   │   ├── supplementary_figure_generation_script_1_fnorm.py
-│   │   ├── supplementary_figure_generation_script_2.py     # Supplementary Figure 2
-│   │   ├── supplementary_figure_generation_script_2_fnorm.py
-│   │   ├── supplementary_figure_generation_script_2_field_norm.py
-│   │   ├── supplementary_figure_generation_script_2_field_norm_fnorm.py
-│   │   ├── supplementary_figure_chr2_sensitisation.py      # CHR2 Sensitisation
-│   │   └── figure_generation_script_rmp_distribution.py    # RMP Distribution & Correlation
+│   │   ├── figure_generation_script_supp_1.py       # Supplementary Figure 1
+│   │   ├── figure_generation_script_supp_1_fnorm.py # Supplementary Figure 1 field-normalized
+│   │   ├── figure_generation_script_supp_2.py       # Supplementary Figure 2
+│   │   ├── figure_generation_script_supp_2_fnorm.py # Supplementary Figure 2 field-normalized
+│   │   ├── figure_generation_script_supp_2_field_norm.py      # Supplementary Figure 2 field norm
+│   │   ├── figure_generation_script_supp_2_field_norm_fnorm.py # Supplementary Figure 2 field norm + fnorm
+│   │   ├── Supplementary_figure_6_chr2_sensitiation.py        # CHR2 Sensitisation
+│   │   └── figure_generation_script_rmp_distribution.py       # RMP Distribution & Correlation
 │   └── 📁 shared_utils/              # Shared plotting utilities
 │       └── baisic_plot_fuctnions_and_features.py    # Common plotting functions
 │

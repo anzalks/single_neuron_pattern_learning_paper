@@ -126,6 +126,12 @@ def main():
     parser.add_argument('--no_labels', action='store_true', 
                        help='Alias for --alpha_labels_off (disable all subplot labels)')
     
+    # Filename tagging control
+    parser.add_argument('--label_tag_off', action='store_true',
+                       help='Disable filename tagging based on label state (always use base filename)')
+    parser.add_argument('--label_tag_on', action='store_true',
+                       help='Enable filename tagging based on label state (default: adds "_no_label" when labels off)')
+    
     # Figure format control
     parser.add_argument('--format', choices=['png', 'pdf', 'svg', 'eps'], 
                        default='png', help='Output format for all figures (default: png)')
@@ -151,6 +157,17 @@ def main():
     else:
         # Default behavior - labels enabled
         os.environ['SUBPLOT_LABELS_ENABLED'] = 'True'
+    
+    # Handle filename tagging control
+    if args.label_tag_off:
+        os.environ['FIGURE_LABEL_TAG'] = 'False'
+        print("🏷️  Filename label tagging DISABLED (always use base filename)")
+    elif args.label_tag_on:
+        os.environ['FIGURE_LABEL_TAG'] = 'True'
+        print("🏷️  Filename label tagging ENABLED (adds '_no_label' when labels off)")
+    else:
+        # Default behavior - tagging enabled
+        os.environ['FIGURE_LABEL_TAG'] = 'True'
     
     # Handle figure format control
     if args.multi_format:

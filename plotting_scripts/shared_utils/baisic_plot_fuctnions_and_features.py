@@ -715,6 +715,10 @@ FIGURE_DPI = int(_env_dpi) if _env_dpi.isdigit() else 300
 _env_transparent = os.environ.get('FIGURE_TRANSPARENT', 'False')
 FIGURE_TRANSPARENT = _env_transparent.lower() in ('true', '1', 'yes', 'on')
 
+# Check for filename tagging based on labels
+_env_label_tag = os.environ.get('FIGURE_LABEL_TAG', 'True')
+FIGURE_LABEL_TAG = _env_label_tag.lower() in ('true', '1', 'yes', 'on')
+
 # Quality settings for different formats (dynamically updated from environment)
 def _get_base_quality_settings():
     """Get base quality settings with current environment values."""
@@ -758,10 +762,51 @@ def get_figure_format():
     """
     return FIGURE_FORMAT
 
+def set_figure_label_tag(enabled):
+    """
+    Set whether to add label tags to filenames.
+    
+    Parameters:
+    - enabled (bool): True to add label tags, False to disable
+    """
+    global FIGURE_LABEL_TAG
+    FIGURE_LABEL_TAG = enabled
+    print(f"✓ Figure label tagging {'ENABLED' if enabled else 'DISABLED'}")
+
+def get_figure_label_tag():
+    """
+    Get current state of figure label tagging.
+    
+    Returns:
+    - bool: Current state of FIGURE_LABEL_TAG
+    """
+    return FIGURE_LABEL_TAG
+
+def _get_filename_with_label_tag(base_filename):
+    """
+    Add label tag to filename based on current label state.
+    
+    Parameters:
+    - base_filename (str): Base filename without extension
+    
+    Returns:
+    - str: Filename with appropriate label tag
+    """
+    if not FIGURE_LABEL_TAG:
+        return base_filename
+    
+    if SUBPLOT_LABELS_ENABLED:
+        # Labels are ON - use base filename as is
+        return base_filename
+    else:
+        # Labels are OFF - add "_no_label" tag
+        return f"{base_filename}_no_label"
+
 def save_figure_smart(fig, output_dir, filename, create_dir=True, verbose=True):
     """
     Smart figure saving that automatically handles global format settings.
     Uses FIGURE_FORMATS if set, otherwise uses FIGURE_FORMAT.
+    Automatically adds label tags to filename based on current label state.
     
     Parameters:
     - fig: matplotlib figure object
@@ -773,14 +818,17 @@ def save_figure_smart(fig, output_dir, filename, create_dir=True, verbose=True):
     Returns:
     - list: List of full paths of saved files
     """
+    # Apply label tagging to filename
+    tagged_filename = _get_filename_with_label_tag(filename)
+    
     if FIGURE_FORMATS:
         # Multiple formats requested
-        return save_figure_multiple_formats(fig, output_dir, filename, 
+        return save_figure_multiple_formats(fig, output_dir, tagged_filename, 
                                           formats=FIGURE_FORMATS,
                                           create_dir=create_dir, verbose=verbose)
     else:
         # Single format
-        saved_path = save_figure(fig, output_dir, filename, 
+        saved_path = save_figure(fig, output_dir, tagged_filename, 
                                format_override=FIGURE_FORMAT,
                                create_dir=create_dir, verbose=verbose)
         return [saved_path]
@@ -915,4 +963,67 @@ def save_plot(fig, outpath, **kwargs):
     return save_figure(fig, output_dir, filename, 
                       format_override=format_detected, 
                       create_dir=True, verbose=True)
+
+# Additional helper functions for filename tagging
+def get_current_filename_tag():
+    """
+    Get the current filename tag that would be applied.
+    
+    Returns:
+    - str: The tag that would be added ("" for no tag, "_no_label" for no labels)
+    
+    Example Usage:
+    --------------
+    tag = bpf.get_current_filename_tag()
+    print(f"Current tag: '{tag}'")
+    """
+    if not FIGURE_LABEL_TAG:
+        return ""
+    
+    if SUBPLOT_LABELS_ENABLED:
+        return ""
+    else:
+        return "_no_label"
+
+def preview_filename(base_filename):
+    """
+    Preview what the final filename would be with current settings.
+    
+    Parameters:
+    - base_filename (str): Base filename without extension
+    
+    Returns:
+    - str: Final filename that would be used (without extension)
+    
+    Example Usage:
+    --------------
+    final_name = bpf.preview_filename("figure_1")
+    print(f"Final filename: {final_name}")
+    """
+    return _get_filename_with_label_tag(base_filename)
+
+def print_current_settings():
+    """
+    Print all current unified saving system settings.
+    
+    Example Usage:
+    --------------
+    bpf.print_current_settings()
+    """
+    print("🔧 UNIFIED SAVING SYSTEM - CURRENT SETTINGS")
+    print("=" * 50)
+    print(f"📊 Figure Format: {FIGURE_FORMAT.upper()}")
+    if FIGURE_FORMATS:
+        print(f"📊 Multiple Formats: {', '.join(FIGURE_FORMATS).upper()}")
+    print(f"🎯 DPI: {FIGURE_DPI}")
+    print(f"🔍 Transparent: {'YES' if FIGURE_TRANSPARENT else 'NO'}")
+    print(f"🏷️  Subplot Labels: {'ENABLED' if SUBPLOT_LABELS_ENABLED else 'DISABLED'}")
+    print(f"🏷️  Filename Tagging: {'ENABLED' if FIGURE_LABEL_TAG else 'DISABLED'}")
+    if FIGURE_LABEL_TAG:
+        tag = get_current_filename_tag()
+        if tag:
+            print(f"🏷️  Current Tag: '{tag}'")
+        else:
+            print(f"🏷️  Current Tag: (none - labels enabled)")
+    print("=" * 50)
 
