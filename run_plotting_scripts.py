@@ -119,8 +119,26 @@ def main():
     parser.add_argument('--all_fig', action='store_true', help='Generate all figures (main + supplementary)')
     parser.add_argument('--main_fig', action='store_true', help='Generate only main figures')
     parser.add_argument('--supplementary_fig', action='store_true', help='Generate only supplementary figures')
+    parser.add_argument('--alpha_labels_off', action='store_true', 
+                       help='Disable alphabetical subplot labels (A, B, C, etc.) for all figures')
+    parser.add_argument('--alpha_labels_on', action='store_true', 
+                       help='Enable alphabetical subplot labels (A, B, C, etc.) for all figures (default)')
+    parser.add_argument('--no_labels', action='store_true', 
+                       help='Alias for --alpha_labels_off (disable all subplot labels)')
     
     args = parser.parse_args()
+    
+    # Handle subplot labels control
+    if args.alpha_labels_off or args.no_labels:
+        # Set environment variable that scripts can check
+        os.environ['SUBPLOT_LABELS_ENABLED'] = 'False'
+        print("🏷️  Alphabetical subplot labels DISABLED for all figures")
+    elif args.alpha_labels_on:
+        os.environ['SUBPLOT_LABELS_ENABLED'] = 'True'
+        print("🏷️  Alphabetical subplot labels ENABLED for all figures")
+    else:
+        # Default behavior - labels enabled
+        os.environ['SUBPLOT_LABELS_ENABLED'] = 'True'
     
     # Load configuration
     try:

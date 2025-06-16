@@ -1111,7 +1111,8 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,3:5])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
-    bpf.add_subplot_label(axs_pie, 'A', xpos=-0.025, ypos=0.85, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_pie.text(-0.025,0.85,'A',transform=axs_pie.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_pie],-0.075,0.125,1)
     
     #plot F-I curve
@@ -1121,7 +1122,8 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot_fi_curve_with_ks(firing_properties,sc_data_dict,fig,axs_fi)
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
     move_axis([axs_fi],-0.05,0,1)
-    bpf.add_subplot_label(axs_fi, 'B', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_fi.text(-0.1,1.1,'B',transform=axs_fi.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
@@ -1129,8 +1131,10 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,0,1)
-    bpf.add_subplot_label(axs_inr, 'C', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
-    bpf.add_subplot_label(axs_rmp, 'D', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_inr.text(-0.1,1.1,'C',transform=axs_inr.transAxes,    
+                fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_rmp.text(-0.1,1.1,'D',transform=axs_rmp.transAxes,    
+                fontsize=16, fontweight='bold', ha='center', va='center')
     
     
 
@@ -1146,16 +1150,14 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_mini_freq],0.05,0.05,0.9)
     #move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
     axs_mini_list = [axs_mini_amp,axs_mini_freq]
-    e_axes = axs_mini_list
-    e_labels = bpf.generate_letter_roman_labels('E', len(e_axes))
-    bpf.add_subplot_labels_from_list(e_axes, e_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})    
+    label_axis(axs_mini_list,"E")    
     
     #plot training timing details
     axs_trn = fig.add_subplot(gs[7:8,5:7])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0.05,1)
-    bpf.add_subplot_label(axs_trn, 'F', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_trn.text(-0.1,1.1,'F',transform=axs_trn.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     plt.tight_layout()
     outpath = f"{outdir}/figure_3_fnorm.png"

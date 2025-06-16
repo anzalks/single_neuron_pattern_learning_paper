@@ -4,24 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Supplementary Figure 2: Extended Analysis
+Supplementary Figure 2 (Field Norm): Extended Analysis
 
-This script generates Supplementary Figure 2 of the pattern learning paper, which shows:
-- Extended analysis and additional data supporting the main conclusions
-- Detailed statistical comparisons and supplementary measurements
-- Additional cellular and synaptic property analysis
-- Extended pattern-specific response characterization
-- Supporting data for plasticity mechanism analysis
-- Comprehensive additional analysis beyond main figures
+This script generates the field norm version of Supplementary Figure 2, which shows:
+- Field normalization extended analysis and additional data supporting main conclusions
+- Detailed statistical comparisons with specialized field normalization methodology
+- Additional cellular and synaptic property analysis with field norm correction
+- Extended pattern-specific response characterization using field norm approach
+- Supporting field norm data for plasticity mechanism analysis
+- Comprehensive field norm additional analysis beyond main figures
 
 Input files:
 - pd_all_cells_mean.pickle: Mean cellular responses
-- all_cells_classified_dict.pickle: Cell classification data
-- pd_all_cells_all_trials.pickle: Trial-by-trial data
+- all_cells_fnorm_classifeied_dict.pickle: Field norm cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field norm correction
 - cell_stats.h5: Cell statistics
 - Figure_3_1.jpg: Illustration image
 
-Output: supplimentary_figure_2/supplimentary_figure_2.png showing extended analysis
+Output: supplimentary_figure_2_field_norm/supplimentary_figure_2_field_norm.png showing field norm extended analysis
 """
 
 import pandas as pd
@@ -44,6 +44,7 @@ from shared_utils import baisic_plot_fuctnions_and_features as bpf
 import re
 from scipy.stats import ttest_1samp
 from scipy.stats import spearmanr
+from matplotlib.lines import Line2D
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -68,6 +69,7 @@ def natural_sort_key(s):
 
 def human_sort(lst):
     return sorted(lst, key=natural_sort_key)
+
 def plot_patterns(axs_pat1,axs_pat2,axs_pat3,xoffset,yoffset,title_row_num):
     if title_row_num==1:
         pattern_list = ["trained pattern","Overlapping pattern",
@@ -168,35 +170,53 @@ def move_axis(axs_list,xoffset,yoffset,pltscale):
         # Shrink the plot
         axs.set_position(new_pos)
 
-
-
-def norm_values(cell_list, val_to_plot):
+def field_norm_values(cell_list,val_to_plot):
+    #cell_list is a pandas Df
     cell_list = cell_list.copy()
-    
-    # Group by cell_ID
-    cell_grp = cell_list.groupby("cell_ID")
-    
+    #print(f"cell list inside func : {cell_list}")
+    cell_grp=cell_list.groupby(by="cell_ID")
     for c, cell in cell_grp:
-        # Group by frame_id within each cell
-        pat_grp = cell.groupby("frame_id")
-        
-        for p, pat in pat_grp:
-            # Extract the "pre" value for normalization
-            pre_val = float(pat[pat["pre_post_status"] == "pre"][val_to_plot].mean())
-            
-            # Check if pre_val is zero or NaN before normalization
-            if pre_val == 0 or np.isnan(pre_val):
-                print(f"Warning: pre_val is zero or NaN for cell_ID {c}, frame_id {p}")
-                continue  # Skip normalization for this group
-            
-            # Normalize values for each pre_post_status
-            cell_list.loc[
-                (cell_list["cell_ID"] == c) & (cell_list["frame_id"] == p),
-                val_to_plot
-            ] = (pat[val_to_plot] / pre_val) * 100
+        pat_grp = cell.groupby(by="frame_id")
+        for p,pat in pat_grp:
+            #print(f"c:{c}, p:{p}")
+            pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
+            field_val_pre=np.abs(float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")]["min_field"]))
+            pre_val_f= pre_val/field_val_pre
+            pp_grp = pat.groupby(by="pre_post_status")
+            for pr, pp in pp_grp:
+                norm_val=float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
+                field_val_pr=np.abs(float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)]["min_field"]))
+                norm_val_f = norm_val/field_val_pr
+                norm_val = (norm_val_f/pre_val_f)*100
+                #norm_val = (norm_val/pre_val)*100
+                cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
 
     return cell_list
 
+
+
+
+
+
+
+
+
+
+def norm_values(cell_list,val_to_plot):
+    cell_list = cell_list.copy()
+    #print(f"cell list inside func : {cell_list}")
+    cell_grp=cell_list.groupby(by="cell_ID")
+    for c, cell in cell_grp:
+        pat_grp = cell.groupby(by="frame_id")
+        for p,pat in pat_grp:
+            #print(f"c:{c}, p:{p}")
+            pre_val= float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]=="pre")][val_to_plot])
+            pp_grp = pat.groupby(by="pre_post_status")
+            for pr, pp in pp_grp:
+                norm_val = float(cell[(cell["cell_ID"]==c)&(cell["frame_id"]==p)&(cell["pre_post_status"]==pr)][val_to_plot])
+                norm_val = (norm_val/pre_val)*100
+                cell_list.loc[(cell_list["cell_ID"]==c)&(cell_list["frame_id"]==p)&(cell_list["pre_post_status"]==pr),val_to_plot]=norm_val
+    return cell_list
 
 def del_values(cell_list,val_to_plot):
     cell_list = cell_list.copy()
@@ -242,12 +262,16 @@ def norm_values_all_trials(cell_list, val_to_plot):
                         cell_list.loc[combined_mask, val_to_plot] = norm_val
     return cell_list
 
+
 def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
                    x_label, cell_type, plt_color, resp_color):
     pat_num = int(pattern_number.split("_")[-1])
     num_cells = len(catcell_dist["cell_ID"].unique())
     pfd = catcell_dist.groupby(by="frame_id")
-
+    if val_to_plot=="max_trace":
+        ylabel="field normalised\n% change in\nEPSP amplitude"
+    else:
+        ylabel="field normalised\n% change in\nPSH amplitude"
     # Set a fixed y-axis limit for consistency across all plots
     axs.set_ylim(y_lim)
 
@@ -303,7 +327,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
                 annotation_text = bpf.convert_pvalue_to_asterisks(pval)
                 axs.text(
                     (x1_pos + x2_pos) / 2, base_y + idx * step_y + 2, 
-                    annotation_text, ha='center', va='bottom', fontsize=8
+                    annotation_text, ha='center', va='bottom', fontsize=10
                 )
 
             # Draw a horizontal reference line at 100
@@ -312,7 +336,7 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
             # Adjust axis labels and ticks
             if pat_num == 0:
                 sns.despine(ax=axs, top=True, right=True)
-                axs.set_ylabel("% change in\nEPSP amplitude")
+                axs.set_ylabel(ylabel)
                 axs.set_xlabel(None)
             elif pat_num == 1:
                 sns.despine(ax=axs, top=True, right=True)
@@ -340,105 +364,119 @@ def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
     return axs
 
 
-def plot_cell_category_classified_EPSP_features(esp_feat_cells_df, val_to_plot, fig, axs1, axs2, axs3, cell_type, pattern):
-    # Normalize values
-    cell_df = norm_values(esp_feat_cells_df, val_to_plot)
-
-    # Filter data by pattern
-    pattern_df = cell_df[cell_df["frame_id"] == pattern]
-
-    # Set colors and limits based on cell type
-    if cell_type == "pot_cells":
-        strp_color = bpf.CB_color_cycle[0]
-        line_color = bpf.CB_color_cycle[5]
-        y_lim = (0, 700)
-        x_label = None
-    elif cell_type == "dep_cells":
-        strp_color = bpf.CB_color_cycle[1]
-        line_color = bpf.CB_color_cycle[5]
-        y_lim = (-5, 300)
-        x_label = "time points (mins)"
+def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
+                                                fig,axs1,axs2,axs3,cell_type):
+    cell_df= field_norm_values(esp_feat_cells_df,val_to_plot)
+    if val_to_plot=="max_trace":
+        if cell_type=="pot_cells":
+            strp_color = bpf.CB_color_cycle[0]
+            line_color = bpf.CB_color_cycle[5]
+            y_lim = (0,700)
+            x_label = None
+        elif cell_type=="dep_cells":
+            strp_color = bpf.CB_color_cycle[1]
+            line_color = bpf.CB_color_cycle[5]
+            y_lim = (-5,300)
+            x_label = "time points (mins)"
+        else:
+            print("uncagerised cell")
     else:
-        print("uncategorized cell")
-        return
+        if cell_type=="pot_cells":
+            strp_color = bpf.CB_color_cycle[0]
+            line_color = bpf.CB_color_cycle[5]
+            y_lim = (0,700)
+            x_label = None
+        elif cell_type=="dep_cells":
+            strp_color = bpf.CB_color_cycle[1]
+            line_color = bpf.CB_color_cycle[5]
+            y_lim = (-5,600)
+            x_label = "time points (mins)"
+        else:
+            print("uncagerised cell")
 
-    # Plot the distributions for the selected pattern
-    plot_cell_dist(pattern_df, val_to_plot, fig, axs1, pattern, y_lim, x_label, cell_type, line_color, strp_color)
+
+
+    plot_cell_dist(cell_df,val_to_plot,fig,axs1,"pattern_0",
+                   y_lim,x_label,cell_type,line_color,strp_color
+                  )
+    plot_cell_dist(cell_df,val_to_plot,fig,axs2,"pattern_1",
+                   y_lim,x_label,cell_type,line_color,strp_color
+                  )
+    plot_cell_dist(cell_df,val_to_plot,fig,axs3,"pattern_2",
+                   y_lim,x_label,cell_type,line_color,strp_color
+                  )
 
 
 
 
 
-
-def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles):
-    """
-    This function loops through all variables and creates subplots for each.
-    Each variable gets its own set of rows (one for pot_cells, one for dep_cells),
-    and each row has columns 0-2 for pattern_0, pattern_1, pattern_2.
-    """
-    num_patterns = 3  # Number of patterns (pattern_0, pattern_1, pattern_2)
-
-    # Loop through the list of variables to plot for both pot_cells and dep_cells
-    for idx, (val_to_plot, y_label, title) in enumerate(zip(list_of_variables, y_labels, subplot_titles)):
-        # Calculate row indices
-        pot_start_row = idx * 4       # 4 rows per variable (2 for pot_cells, 2 for dep_cells)
-        pot_end_row = pot_start_row + 2
-        dep_start_row = pot_end_row
-        dep_end_row = dep_start_row + 2
-
-        # Plot for pot_cells
-        for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
-            col_start = pattern_idx
-            col_end = col_start + 1
-
-            # Create subplot for pot_cells
-            axs_p = fig.add_subplot(gs[pot_start_row:pot_end_row, col_start:col_end])
-            plot_cell_category_classified_EPSP_features(
-                sc_data_dict["ap_cells"], val_to_plot, fig, axs_p, None, None, "pot_cells", pattern
-            )
-            # Set title and label only once to avoid overlap
-            if pattern_idx == 0:
-                axs_p.set_ylabel(y_label)
-            
-            axs_p.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
-            label_axis([axs_p], f"{val_to_plot}_p_{pattern}", xpos=-0.1, ypos=1.1)
-
-        # Plot for dep_cells
-        for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
-            col_start = pattern_idx
-            col_end = col_start + 1
-
-            # Create subplot for dep_cells
-            axs_d = fig.add_subplot(gs[dep_start_row:dep_end_row, col_start:col_end])
-            plot_cell_category_classified_EPSP_features(
-                sc_data_dict["an_cells"], val_to_plot, fig, axs_d, None, None, "dep_cells", pattern
-            )
-            # Set title and label only once to avoid overlap
-            if pattern_idx == 0:
-                axs_d.set_ylabel(y_label)
-            
-            axs_d.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
-            label_axis([axs_d], f"{val_to_plot}_d_{pattern}", xpos=-0.1, ypos=1.1)
+def plot_response_summary_bar(sc_data_dict, fig, axs):
+    order = ["pre", "post_3"]
     
-    # Adjust layout to prevent overlapping
-    plt.tight_layout()
+    def preprocess_data(df, group):
+        df = df.copy()
+        df = norm_values(df, "max_trace")
+        df = df[df["pre_post_status"] == "post_3"]
+        df['group'] = group
+        df['combined'] = group + '_' + df['frame_id'] + "_" + df['pre_post_status']
+        return df[df["frame_id"].isin(["pattern_0", "pattern_1", "pattern_2"])]
+    
+    learners_df = preprocess_data(sc_data_dict["ap_cells"], 'learners')
+    non_learners_df = preprocess_data(sc_data_dict["an_cells"], 'non_learners')
+    combined_df = pd.concat([learners_df, non_learners_df])
+
+    palette = {"learners": bpf.CB_color_cycle[0], "non_learners": bpf.CB_color_cycle[1]}
+
+    sns.barplot(data=combined_df, x='frame_id', y='max_trace', hue='group', palette=palette, ax=axs, ci=None)
+
+    grouped = combined_df.groupby(['combined', 'group'])['max_trace'].agg(['mean', 'sem']).reset_index()
+    
+    baseline = 100
+    pval_list = [
+        ttest_1samp(combined_df[combined_df['combined'] == group]['max_trace'], popmean=baseline)[1] 
+        if len(combined_df[combined_df['combined'] == group]) > 0 else None 
+        for group in grouped['combined'].unique()
+    ]
+
+    # Add error bars and p-values
+    annotation_texts = [bpf.convert_pvalue_to_asterisks(p) for p in pval_list]
+    for patch, row, annotation in zip(axs.patches, grouped.itertuples(), annotation_texts):
+        bar_x = patch.get_x() + patch.get_width() / 2
+        axs.errorbar(bar_x, row.mean, yerr=row.sem, fmt='none', c='black', capsize=5)
+        
+        if annotation:
+            bar_y = patch.get_height() + 0.25 * patch.get_height()*0.9
+            #bar_y = patch.get_height() + 10
+            axs.text(bar_x, bar_y, annotation, ha='center', va='bottom', fontsize=10, color='black')
+
+    # Formatting plot
+    axs.axhline(baseline, linestyle=":", color="k", alpha=0.6)
+    axs.set_ylabel("% change in\nEPSP amplitude")
+    axs.set_xlabel(None)
+    #axs.set_xlabel("pattern type")
+    
+    # Change x tick labels
+    axs.set_xticklabels(['trained', 'overlapping',
+                         'non\noverlapping'],rotation=15)
+    
+    axs.xaxis.set_ticks_position('none')
+    axs.xaxis.set_tick_params(top=False)
+    axs.yaxis.set_tick_params(right=False)
+    axs.spines[['right', 'top']].set_visible(False)
+
+    # Adjusting the legend
+    if axs.legend_ is not None:
+        # Get the current handles and labels
+        handles, labels = axs.get_legend_handles_labels()
+        # Replace 'non_learners' with 'non-leaners' in the labels
+        labels = ['learners' if label == 'learners' else 'non-leaners' for label in labels]
+        # Set the updated legend
+        legend = axs.legend(handles, labels, bbox_to_anchor=(0.9, 1.05), loc='center', frameon=False)
+        legend.set_title('')
+        legend.get_frame().set_alpha(0)
 
 
-def label_axis(axes_list, label, xpos=0, ypos=1):
-    """
-    Adds a label to the given axes at the specified position.
-    Ensures that the label does not overlap with existing titles.
-    """
-    for ax in axes_list:
-        # Only add the label if there is no existing title
-        if ax.get_title() == "":
-            ax.text(xpos, ypos, label, transform=ax.transAxes, 
-                    fontsize=10, fontweight='normal', va='top')
-
-
-
-
-def plot_supp_fig_1(extracted_feature_pickle_file_path,
+def plot_figure_4(extracted_feature_pickle_file_path,
                   all_trial_path,
                   cell_categorised_pickle_file,
                   cell_stats_pickle_file,
@@ -458,110 +496,188 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     sc_data_df = pd.concat([sc_data_dict["ap_cells"],
                             sc_data_dict["an_cells"]]).reset_index(drop=True)
     print(f"sc data : {sc_data_df['cell_ID'].unique()}")
-    ## Define the width and height ratios
-    #height_ratios = [1, 1, 1, 1, 1, 
-    #                 1, 1, 1, 1, 1,
-    #                 1, 1, 1, 1, 1,
-    #                 1, 1, 1, 1, 1,
-    #                 1, 1, 1, 1, 1,
-    #                 1, 1, 1, 1, 1,
-    #                 1
-    #                 ]  # Adjust these values as needed
-    #width_ratios = [1, 1, 1, 1, 1, 
-    #                1, 1, 1, 1, 1, 
-    #                1, 1]# Adjust these values as needed
+    # Define the width and height ratios
+    height_ratios = [1, 1, 1, 1, 1, 
+                     1, 1, 1, 1, 1,
+                     1, 1, 1, 1, 1,
+                     1, 1, 1, 1, 1,
+                     1, 1, 1, 1 
+                     ]  # Adjust these values as needed
+    width_ratios = [1, 1, 1, 1, 1, 
+                    1, 1, 1, 1, 1, 
+                    1, 1]# Adjust these values as needed
 
-    #fig = plt.figure(figsize=(12,30))
-    #gs = GridSpec(31, 12,width_ratios=width_ratios,
-    #              height_ratios=height_ratios,figure=fig)
-    ##gs.update(wspace=0.2, hspace=0.8)
-    #gs.update(wspace=0.4, hspace=0.5)
+    fig = plt.figure(figsize=(14,16))
+    gs = GridSpec(24, 12,width_ratios=width_ratios,
+                  height_ratios=height_ratios,figure=fig)
+    #gs.update(wspace=0.2, hspace=0.8)
+    gs.update(wspace=0.4, hspace=0.5)
 
 
 
-    ##plot patterns
-    #axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
-    #axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
-    #axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
-    #plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.05,1)
-    #move_axis([axs_pat_1,axs_pat_2,axs_pat_3],xoffset=0,yoffset=0.015,pltscale=1)
+    #plot patterns
+    axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
+    axs_pat_2 = fig.add_subplot(gs[0:1,4:5])
+    axs_pat_3 = fig.add_subplot(gs[0:1,7:8])
+    plot_patterns(axs_pat_1,axs_pat_2,axs_pat_3,0,-0.05,1)
+
+    #plot distribution epsp for learners and non-leaners
+    axs_ex_pat1 = fig.add_subplot(gs[2:7,0:3])
+    axs_ex_pat2 = fig.add_subplot(gs[2:7,3:6])
+    axs_ex_pat3 = fig.add_subplot(gs[2:7,6:9])
+    plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
+                                                "max_trace",fig,axs_ex_pat1,
+                                                axs_ex_pat2,axs_ex_pat3,
+                                                "pot_cells"
+                                               )
+    axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
+    label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
 
 
-    ## Example usage with your defined variables
-    #list_of_variables = ['abs_area', 'pos_area', 'neg_area', 'onset_time', 'slope']
-    #y_labels = [
-    #    '% change in\nabsolute area', '% change in\npositive area', 
-    #    '% change in\nnegative area', '% change in\nonset time', '% change in slope'
-    #]
-    #subplot_titles = ['absolute area', 'positive area', 'negative area', 'onset time', 'slope']
-
-    #plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles)
-
-    ##plot distribution epsp for learners and non-leaners
-    #axs_ex_pat1 = fig.add_subplot(gs[2:7,0:3])
-    #axs_ex_pat2 = fig.add_subplot(gs[2:7,3:6])
-    #axs_ex_pat3 = fig.add_subplot(gs[2:7,6:9])
-    #plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
-    #                                            "abs_area",fig,axs_ex_pat1,
-    #                                            axs_ex_pat2,axs_ex_pat3,
-    #                                            "pot_cells"
-    #                                           )
-    #axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #a_axes = axs_ex_list
-    #a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    #bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[7:12,3:6])
+    axs_in_pat3 = fig.add_subplot(gs[7:12,6:9])
+    plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
+                                                "max_trace",fig,axs_in_pat1,
+                                                axs_in_pat2,axs_in_pat3,
+                                                "dep_cells"
+                                               )
+    axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
+    label_axis(axs_in_list,"B", xpos=0.075, ypos=0.95)
 
 
-    #axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
-    #axs_in_pat2 = fig.add_subplot(gs[7:12,3:6])
-    #axs_in_pat3 = fig.add_subplot(gs[7:12,6:9])
-    #plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
-    #                                            "abs_area",fig,axs_in_pat1,
-    #                                            axs_in_pat2,axs_in_pat3,
-    #                                            "dep_cells"
-    #                                           )
-    #axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #b_axes = axs_in_list
-    #b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    #bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-    #                            base_params={'xpos': 0.1, 'ypos': 0.9, 'fontsize': 16, 'fontweight': 'bold'})
+    #plot distribution epsp for learners and non-leaners
+    axs_ex_pat1 = fig.add_subplot(gs[13:18,0:3])                                  
+    axs_ex_pat2 = fig.add_subplot(gs[13:18,3:6])
+    axs_ex_pat3 = fig.add_subplot(gs[13:18,6:9])
+    plot_cell_category_classified_EPSP_features(sc_data_dict["ap_cells"],
+                                                "min_trace",fig,axs_ex_pat1,
+                                                axs_ex_pat2,axs_ex_pat3,
+                                                "pot_cells"
+                                               )
+    axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
+    label_axis(axs_ex_list,"C", xpos=-0.05, ypos=1.1)
+                                                                             
+                                                                             
+    axs_in_pat1 = fig.add_subplot(gs[18:23,0:3])
+    axs_in_pat2 = fig.add_subplot(gs[18:23,3:6])
+    axs_in_pat3 = fig.add_subplot(gs[18:23,6:9])
+    plot_cell_category_classified_EPSP_features(sc_data_dict["an_cells"],
+                                                "min_trace",fig,axs_in_pat1,
+                                                axs_in_pat2,axs_in_pat3,
+                                                "dep_cells"
+                                               )
+    axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
+    label_axis(axs_in_list,"D", xpos=0.075, ypos=0.95)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #axs_bar = fig.add_subplot(gs[12:14,0:2])
+    #plot_response_summary_bar(sc_data_dict,fig,axs_bar)
+    #move_axis([axs_bar],0,-0.03,1)
+    #axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center',
+    #             va='center')
+
+    ##axs_comp_peaks = fig.add_subplot(gs[12:14,4:6])
+    ##plot_peak_comp_pre_post(sc_data_dict,fig,axs_comp_peaks)
+    ##move_axis([axs_comp_peaks],-0.055,-0.1,1.75)
+    ##axs_comp_peaks.text(-0.05,1.05,'D',transform=axs_comp_peaks.transAxes,    
+    ##             fontsize=16, fontweight='bold', ha='center',
+    ##             va='center')
+#   # axs_comp_per_1 = fig.add_subplot(gs[16:18,0:1])
+#   # axs_comp_per_2 = fig.add_subplot(gs[16:18,2:3])
+    #axs_learners_pat_trained = fig.add_subplot(gs[12:14,3:4])
+    #axs_learners_pat_overlapping = fig.add_subplot(gs[12:14,4:5]) 
+    #axs_learners_pat_non_overlappin = fig.add_subplot(gs[12:14,5:6])
+    #axs_non_learners_pat_trained = fig.add_subplot(gs[12:14,6:7])
+    #axs_non_learners_pat_overlapping  = fig.add_subplot(gs[12:14,7:8])
+    #axs_non_learners_pat_non_overlapping = fig.add_subplot(gs[12:14,8:9])
+    #plot_peak_perc_comp(sc_data_dict, 
+    #                    axs_learners_pat_trained,
+    #                    axs_learners_pat_overlapping, 
+    #                    axs_learners_pat_non_overlappin,
+    #                    axs_non_learners_pat_trained,
+    #                    axs_non_learners_pat_overlapping, 
+    #                    axs_non_learners_pat_non_overlapping)
+    #axs_scatr_list= [axs_learners_pat_trained,
+    #                axs_learners_pat_overlapping,
+    #                axs_learners_pat_non_overlappin,
+    #                axs_non_learners_pat_trained,
+    #                axs_non_learners_pat_overlapping,
+    #                axs_non_learners_pat_non_overlapping
+    #                ]
+    #move_axis(axs_scatr_list,0,-0.04,1)
+    #label_axis(axs_scatr_list,"D", xpos=-0.2, ypos=1.25)
+
+
+
+
+
+#    #plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
+#    plot_peak_perc_comp(sc_data_dict, fig, axs_comp_per_1, axs_comp_per_2)
+#    move_axis([axs_comp_per_1,axs_comp_per_2],-0.0545,-0.075,1.75)
+#    label_axis([axs_comp_per_1,axs_comp_per_2],"D", xpos=-0.2, ypos=1.1)
+#    #axs_comp_per.text(-0.05,1.05,'D',transform=axs_comp_per.transAxes,    
+#    #                    fontsize=16, fontweight='bold', ha='center',
+#    #                    va='center')
+#    
+    #axs_points_img_1 = fig.add_subplot(gs[15:16,0:4])
+    #plot_points(axs_points_img_1,-0.05,-0.09,zoom=1.7)
+    #axs_points_img_2 = fig.add_subplot(gs[15:16,5:9])
+    #plot_points(axs_points_img_2,-0.05,-0.09,zoom=1.7)#
+    #
+
+    #axs_points_lr = fig.add_subplot(gs[16:19,0:4])
+    #axs_points_nl = fig.add_subplot(gs[16:19,5:9])
+    #plot_point_plasticity_dist(cell_features_all_trials,sc_data_dict,fig,
+    #                           axs_points_lr,axs_points_nl)
+    #move_axis([axs_points_lr,axs_points_nl],0,-0.075,1)
+    #label_axis([axs_points_lr,axs_points_nl],"E", xpos=-0.05, ypos=1.05)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #handles, labels = plt.gca().get_legend_handles_labels()
+    #by_label = dict(zip(labels, handles))
+    #fig.legend(by_label.values(), by_label.keys(), 
+    #           bbox_to_anchor =(0.5, 0.175),
+    #           ncol = 6,title="Legend",
+    #           loc='upper center')#,frameon=False)#,loc='lower center'    
     
 
-
-    # Example usage with your defined variables
-    list_of_variables = ['abs_area', 'pos_area', 'neg_area', 'onset_time', 'slope']
-    y_labels = [
-        '% change in\nabsolute area', '% change in\npositive area', 
-        '% change in\nnegative area', '% change in\nonset time', '% change in slope'
-    ]
-    subplot_titles = ['absolute area', 'positive area', 'negative area', 'onset time', 'slope']
-
-    # Create the figure and GridSpec
-    fig = plt.figure(figsize=(12, 20))
-    gs = GridSpec(len(list_of_variables) * 6, 3, figure=fig)  # 4 rows per variable, 3 columns for patterns
-
-    # Plot all features
-    plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     plt.tight_layout()
-    outpath = f"{outdir}/supplimentary_figure_1.png"
+    outpath = f"{outdir}/supplimentary_figure_2_field_norm.png"
     #outpath = f"{outdir}/figure_4.svg"
     #outpath = f"{outdir}/figure_4.pdf"
     plt.savefig(outpath,bbox_inches='tight')
@@ -573,7 +689,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
 
 def main():
     # Argument parser.
-    description = '''Generates supplimentary figure 1'''
+    description = '''Generates figure 4'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str
@@ -613,10 +729,10 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'supplimentary_figure_1'
+    globoutdir= globoutdir/'supplimentary_figure_2_field_norm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
-    plot_supp_fig_1(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)
+    plot_figure_4(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)
     print(f"illustration path: {illustration_path}")
 
 

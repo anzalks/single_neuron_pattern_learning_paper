@@ -4,24 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Supplementary Figure 2: Extended Analysis
+Supplementary Figure 1 (Field Normalized): Additional Analysis
 
-This script generates Supplementary Figure 2 of the pattern learning paper, which shows:
-- Extended analysis and additional data supporting the main conclusions
-- Detailed statistical comparisons and supplementary measurements
-- Additional cellular and synaptic property analysis
-- Extended pattern-specific response characterization
-- Supporting data for plasticity mechanism analysis
-- Comprehensive additional analysis beyond main figures
+This script generates the field-normalized version of Supplementary Figure 1, which shows:
+- Field-normalized additional detailed analysis supporting the main figures
+- Extended statistical analysis with field potential correction
+- Supplementary cellular property measurements corrected for field variations
+- Additional pattern-specific response analysis with field normalization
+- Extended comparison between experimental conditions using field-corrected data
+- Supporting field-normalized data for main figure conclusions
 
 Input files:
 - pd_all_cells_mean.pickle: Mean cellular responses
-- all_cells_classified_dict.pickle: Cell classification data
-- pd_all_cells_all_trials.pickle: Trial-by-trial data
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field correction
 - cell_stats.h5: Cell statistics
 - Figure_3_1.jpg: Illustration image
 
-Output: supplimentary_figure_2/supplimentary_figure_2.png showing extended analysis
+Output: supplimentary_figure_1_fnorm/supplimentary_figure_1_fnorm.png showing field-normalized additional analysis
 """
 
 import pandas as pd
@@ -368,8 +368,6 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df, val_to_plot, 
 
 
 
-
-
 def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles):
     """
     This function loops through all variables and creates subplots for each.
@@ -377,6 +375,7 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
     and each row has columns 0-2 for pattern_0, pattern_1, pattern_2.
     """
     num_patterns = 3  # Number of patterns (pattern_0, pattern_1, pattern_2)
+    all_axes = []  # List to collect all axes
 
     # Loop through the list of variables to plot for both pot_cells and dep_cells
     for idx, (val_to_plot, y_label, title) in enumerate(zip(list_of_variables, y_labels, subplot_titles)):
@@ -399,9 +398,16 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
             # Set title and label only once to avoid overlap
             if pattern_idx == 0:
                 axs_p.set_ylabel(y_label)
+            if pattern == "pattern_0":
+                pattern = "trained"
+            elif pattern == "pattern_1":
+                pattern = "overlapping"
+            else:
+                pattern = "non-overlapping"
+
             
             axs_p.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
-            label_axis([axs_p], f"{val_to_plot}_p_{pattern}", xpos=-0.1, ypos=1.1)
+            all_axes.append(axs_p)  # Collect axis
 
         # Plot for dep_cells
         for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
@@ -416,24 +422,110 @@ def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplo
             # Set title and label only once to avoid overlap
             if pattern_idx == 0:
                 axs_d.set_ylabel(y_label)
+            if pattern == "pattern_0":
+                pattern = "trained"
+            elif pattern == "pattern_1":
+                pattern = "overlapping"
+            else:
+                pattern = "non-overlapping"
             
             axs_d.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
-            label_axis([axs_d], f"{val_to_plot}_d_{pattern}", xpos=-0.1, ypos=1.1)
+            all_axes.append(axs_d)  # Collect axis
+
+    # Label all axes at once after they have been created
+    label_axis(all_axes, xpos=-0.01, ypos=1.1)
     
     # Adjust layout to prevent overlapping
     plt.tight_layout()
 
 
-def label_axis(axes_list, label, xpos=0, ypos=1):
+#def plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles):
+#    """
+#    This function loops through all variables and creates subplots for each.
+#    Each variable gets its own set of rows (one for pot_cells, one for dep_cells),
+#    and each row has columns 0-2 for pattern_0, pattern_1, pattern_2.
+#    """
+#    num_patterns = 3  # Number of patterns (pattern_0, pattern_1, pattern_2)
+#
+#    # Loop through the list of variables to plot for both pot_cells and dep_cells
+#    for idx, (val_to_plot, y_label, title) in enumerate(zip(list_of_variables, y_labels, subplot_titles)):
+#        # Calculate row indices
+#        pot_start_row = idx * 4       # 4 rows per variable (2 for pot_cells, 2 for dep_cells)
+#        pot_end_row = pot_start_row + 2
+#        dep_start_row = pot_end_row
+#        dep_end_row = dep_start_row + 2
+#
+#        # Plot for pot_cells
+#        for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
+#            col_start = pattern_idx
+#            col_end = col_start + 1
+#
+#            # Create subplot for pot_cells
+#            axs_p = fig.add_subplot(gs[pot_start_row:pot_end_row, col_start:col_end])
+#            plot_cell_category_classified_EPSP_features(
+#                sc_data_dict["ap_cells"], val_to_plot, fig, axs_p, None, None, "pot_cells", pattern
+#            )
+#            # Set title and label only once to avoid overlap
+#            if pattern_idx == 0:
+#                axs_p.set_ylabel(y_label)
+#            
+#            axs_p.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
+#            #label_axis([axs_p], f"{val_to_plot}_p_{pattern}", xpos=-0.1, ypos=1.1)
+#            label_axis([axs_p], xpos=-0.1, ypos=1.1)
+#
+#        # Plot for dep_cells
+#        for pattern_idx, pattern in enumerate(["pattern_0", "pattern_1", "pattern_2"]):
+#            col_start = pattern_idx
+#            col_end = col_start + 1
+#
+#            # Create subplot for dep_cells
+#            axs_d = fig.add_subplot(gs[dep_start_row:dep_end_row, col_start:col_end])
+#            plot_cell_category_classified_EPSP_features(
+#                sc_data_dict["an_cells"], val_to_plot, fig, axs_d, None, None, "dep_cells", pattern
+#            )
+#            # Set title and label only once to avoid overlap
+#            if pattern_idx == 0:
+#                axs_d.set_ylabel(y_label)
+#            if pattern=="pattern_0":
+#                pattern="trained"
+#            elif pattern=="pattern_1":
+#                pattern="overlapping"
+#            else:
+#                pattern = "non-overlapping"
+#            
+#            axs_d.set_title(f"{title} ({pattern})", fontweight='normal', fontsize=10)
+#            #label_axis([axs_d], f"{val_to_plot}_d_{pattern}", xpos=-0.1, ypos=1.1)
+#            label_axis([axs_p], xpos=-0.05, ypos=1.1)
+#    
+#    # Adjust layout to prevent overlapping
+#    plt.tight_layout()
+
+
+
+def label_axis(axes, xpos=-0.05, ypos=1.1, fontsize=14):
     """
-    Adds a label to the given axes at the specified position.
-    Ensures that the label does not overlap with existing titles.
+    Adds labels to each subplot in the format 'Ai', 'Aii', etc.
     """
-    for ax in axes_list:
-        # Only add the label if there is no existing title
-        if ax.get_title() == "":
-            ax.text(xpos, ypos, label, transform=ax.transAxes, 
-                    fontsize=10, fontweight='normal', va='top')
+    row_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    col_labels = ['i', 'ii', 'iii']
+    
+    for idx, ax in enumerate(axes):
+        row = idx // len(col_labels)
+        col = idx % len(col_labels)
+        label = f"{row_labels[row]}{col_labels[col]}"
+        ax.text(xpos, ypos, label, transform=ax.transAxes,
+                fontsize=fontsize, fontweight='bold', va='top', ha='right', color='black')
+
+#def label_axis(axes_list, label, xpos=0, ypos=1):
+#    """
+#    Adds a label to the given axes at the specified position.
+#    Ensures that the label does not overlap with existing titles.
+#    """
+#    for ax in axes_list:
+#        # Only add the label if there is no existing title
+#        if ax.get_title() == "":
+#            ax.text(xpos, ypos, label, transform=ax.transAxes, 
+#                    fontsize=10, fontweight='normal', va='top')
 
 
 
@@ -507,10 +599,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     #                                            "pot_cells"
     #                                           )
     #axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #a_axes = axs_ex_list
-    #a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    #bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
 
 
     #axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -522,10 +611,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     #                                            "dep_cells"
     #                                           )
     #axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #b_axes = axs_in_list
-    #b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    #bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-    #                            base_params={'xpos': 0.1, 'ypos': 0.9, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_in_list,"B", xpos=0.1, ypos=0.9)
     
 
 
@@ -538,8 +624,8 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     subplot_titles = ['absolute area', 'positive area', 'negative area', 'onset time', 'slope']
 
     # Create the figure and GridSpec
-    fig = plt.figure(figsize=(12, 20))
-    gs = GridSpec(len(list_of_variables) * 6, 3, figure=fig)  # 4 rows per variable, 3 columns for patterns
+    fig = plt.figure(figsize=(12, 30))
+    gs = GridSpec(len(list_of_variables) * 4, 3, figure=fig)  # 4 rows per variable, 3 columns for patterns
 
     # Plot all features
     plot_all_features(sc_data_dict, fig, gs, list_of_variables, y_labels, subplot_titles)
@@ -561,9 +647,9 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
 
 
     plt.tight_layout()
-    outpath = f"{outdir}/supplimentary_figure_1.png"
-    #outpath = f"{outdir}/figure_4.svg"
-    #outpath = f"{outdir}/figure_4.pdf"
+    outpath = f"{outdir}/supplimentary_figure_1_fnorm.png"
+    #outpath = f"{outdir}/upplimentary_figure_1.svg"
+    #outpath = f"{outdir}/supplimentary_figure_1.pdf"
     plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
@@ -613,7 +699,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'supplimentary_figure_1'
+    globoutdir= globoutdir/'supplimentary_figure_1_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_supp_fig_1(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)

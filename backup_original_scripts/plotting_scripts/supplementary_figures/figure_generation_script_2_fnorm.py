@@ -406,18 +406,21 @@ def plot_figure_2_with_stats(extracted_feature_pickle_file_path,
     
     
 
-    bpf.add_subplot_label(axs_img, 'A', xpos=0, ypos=0.95, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_img.text(0,0.95,'A',transform=axs_img.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')
     
     axs_pat_ill = fig.add_subplot(gs[:3, 6:])
     plot_image(patillustration,axs_pat_ill,-0.15,-0.02,2.2)    
     
-    bpf.add_subplot_label(axs_pat_ill, 'B', xpos=0.01, ypos=0.9, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_pat_ill.text(0.01,0.9,'B',transform=axs_pat_ill.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     axs_vpat1=fig.add_subplot(gs[3,0])
     axs_vpat2=fig.add_subplot(gs[4,0])
     axs_vpat3=fig.add_subplot(gs[5,0])
     plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,0,2)
-    bpf.add_subplot_label(axs_vpat1, 'C', xpos=-0.07, ypos=1.35, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_vpat1.text(-0.07,1.35,'C',transform=axs_vpat1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
 
     plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs)
     
@@ -445,16 +448,14 @@ def plot_figure_2_with_stats(extracted_feature_pickle_file_path,
                                                  axs_slp3, stat_method=stat_method)
     
     axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    d_axes = axs_slp_list
-    d_labels = bpf.generate_letter_roman_labels('D', len(d_axes))
-    bpf.add_subplot_labels_from_list(d_axes, d_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
 
     axs_dist = fig.add_subplot(gs[9:10,0:4])
     plot_frequency_distribution(sc_data_df, "max_trace", fig, 
                                 axs_dist, time_point='post_3', 
                                 colors=None)
-    bpf.add_subplot_label(axs_dist, 'E', xpos=-0.07, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_dist.text(-0.07,1,'E',transform=axs_dist.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_dist],xoffset=0,yoffset=-0.03,pltscale=1)
     
     #axs_inr = fig.add_subplot(gs[9:10,3:6])

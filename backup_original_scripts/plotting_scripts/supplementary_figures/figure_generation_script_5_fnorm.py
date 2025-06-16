@@ -930,7 +930,8 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     axs_illu = fig.add_subplot(gs[0:2,1:3])
     plot_image(psh_illust,axs_illu,0,0,1.5)
     move_axis([axs_illu],0.1,0.035,1)
-    bpf.add_subplot_label(axs_illu, 'A', xpos=0.05, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     
     #plot patterns
     axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
@@ -948,10 +949,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    b_axes = axs_ex_list
-    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_ex_list,"B")
 
 
     axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -963,15 +961,14 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    c_axes = axs_in_list
-    c_labels = bpf.generate_letter_roman_labels('C', len(c_axes))
-    bpf.add_subplot_labels_from_list(c_axes, c_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_in_list,"C")
 
     axs_bar = fig.add_subplot(gs[12:14,0:2])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.03,1)
-    bpf.add_subplot_label(axs_bar, 'D', xpos=-0.1, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_bar.text(-0.1,1,'D',transform=axs_bar.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
 #    #comment here
 #    axs_comp_per = fig.add_subplot(gs[18:20,0:3])
 #    plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
@@ -1021,10 +1018,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                     axs_non_learners_pat_non_overlapping
                     ]
     move_axis(axs_scatr_list,0,-0.04,1)
-    e_axes = axs_scatr_list
-    e_labels = bpf.generate_letter_roman_labels('E', len(e_axes))
-    bpf.add_subplot_labels_from_list(e_axes, e_labels, 
-                                base_params={'xpos': -0.2, 'ypos': 1.25, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_scatr_list,"E", xpos=-0.2, ypos=1.25)
 
 
 

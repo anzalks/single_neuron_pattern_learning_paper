@@ -4,24 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Supplementary Figure 2: Extended Analysis
+Supplementary Figure 2 (Field Normalized): Extended Analysis
 
-This script generates Supplementary Figure 2 of the pattern learning paper, which shows:
-- Extended analysis and additional data supporting the main conclusions
-- Detailed statistical comparisons and supplementary measurements
-- Additional cellular and synaptic property analysis
-- Extended pattern-specific response characterization
-- Supporting data for plasticity mechanism analysis
-- Comprehensive additional analysis beyond main figures
+This script generates the field-normalized version of Supplementary Figure 2, which shows:
+- Field-normalized extended analysis and additional data supporting main conclusions
+- Detailed statistical comparisons with field potential correction
+- Additional cellular and synaptic property analysis corrected for field variations
+- Extended pattern-specific response characterization with field normalization
+- Supporting field-corrected data for plasticity mechanism analysis
+- Comprehensive field-normalized additional analysis beyond main figures
 
 Input files:
 - pd_all_cells_mean.pickle: Mean cellular responses
-- all_cells_classified_dict.pickle: Cell classification data
-- pd_all_cells_all_trials.pickle: Trial-by-trial data
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field correction
 - cell_stats.h5: Cell statistics
 - Figure_3_1.jpg: Illustration image
 
-Output: supplimentary_figure_2/supplimentary_figure_2.png showing extended analysis
+Output: supplimentary_figure_2_fnorm/supplimentary_figure_2_fnorm.png showing field-normalized extended analysis
 """
 
 import pandas as pd
@@ -507,10 +507,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     #                                            "pot_cells"
     #                                           )
     #axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #a_axes = axs_ex_list
-    #a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    #bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
 
 
     #axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -522,10 +519,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     #                                            "dep_cells"
     #                                           )
     #axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #b_axes = axs_in_list
-    #b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    #bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-    #                            base_params={'xpos': 0.1, 'ypos': 0.9, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_in_list,"B", xpos=0.1, ypos=0.9)
     
 
 
@@ -561,7 +555,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
 
 
     plt.tight_layout()
-    outpath = f"{outdir}/supplimentary_figure_1.png"
+    outpath = f"{outdir}/supplimentary_figure_2_fnorm.png"
     #outpath = f"{outdir}/figure_4.svg"
     #outpath = f"{outdir}/figure_4.pdf"
     plt.savefig(outpath,bbox_inches='tight')
@@ -613,7 +607,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'supplimentary_figure_1'
+    globoutdir= globoutdir/'supplimentary_figure_2_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_supp_fig_1(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)

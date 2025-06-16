@@ -4,23 +4,23 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Figure 7 (Supplementary): Synaptic Properties
+Figure 7 (Supplementary, Field Normalized): Synaptic Properties
 
-This script generates Supplementary Figure 7 of the pattern learning paper, which shows:
-- Detailed synaptic property analysis comparing learners and non-learners
-- Field amplitude time series analysis across different patterns
-- Synaptic response characteristics and their correlation with learning
-- Pattern-specific synaptic plasticity profiles
-- Statistical analysis of synaptic mechanisms underlying learning
-- Comprehensive comparison of synaptic properties between cell types
+This script generates the field-normalized version of Figure 7 for supplementary analysis, which shows:
+- Field-normalized synaptic property analysis comparing learners and non-learners
+- Field amplitude time series with field potential correction
+- Synaptic response characteristics corrected for field variations
+- Pattern-specific synaptic plasticity profiles with field normalization
+- Statistical analysis of synaptic mechanisms using field-corrected data
+- Comprehensive comparison of field-normalized synaptic properties
 
 Input files:
-- pd_all_cells_mean.pickle: Mean cellular responses for synaptic analysis
-- all_cells_classified_dict.pickle: Cell classification for comparison
-- cell_stats.h5: Detailed synaptic statistics
+- pd_all_cells_mean.pickle: Mean cellular responses
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- cell_stats.h5: Synaptic statistics with field correction
 - Figure_3_1.png: Illustration of synaptic analysis methodology
 
-Output: Figure_7/figure_7.png showing comprehensive synaptic properties analysis
+Output: Figure_7_fnorm/figure_7_fnorm.png showing field-normalized synaptic properties analysis
 """
 
 import pandas as pd
@@ -40,7 +40,6 @@ import argparse
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import Affine2D
 from shared_utils import baisic_plot_fuctnions_and_features as bpf
-from PIL import ImageDraw, ImageFont
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -280,10 +279,6 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
             annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
             annotator.annotate()
 
-            # Remove legends from all panels since we have custom legend
-            if axslist[ax_no].get_legend() is not None:
-                axslist[ax_no].get_legend().remove()
-
             # Customize labels for learners and non-learners
             if cell_type == "learners":
                 g.set_xlabel(None)
@@ -305,6 +300,11 @@ def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property, cell_ty
                 else:
                     g.set_ylabel(None)
                     g.set_yticklabels([])
+
+    # Remove legends from stripplots
+    handles, labels = axslist[ax_no].get_legend_handles_labels()
+    if g.legend_ is not None:
+        g.legend_.remove()
 
 
 #def plot_field_amplitudes_time_series(pd_cell_data_mean, trace_property,cell_type,axs1,axs2,axs3):
@@ -1018,10 +1018,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #                          "learners","no norm",
     #                          fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
     #axs_ex_fl_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #a_axes = axs_ex_fl_list
-    #a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    #bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_ex_fl_list,"A")
     #move_axis(axs_ex_fl_list,0,0,1)
 
     #axs_in_pat1 = fig.add_subplot(gs[1:3,4:5])
@@ -1032,10 +1029,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #                          fig,axs_in_pat1,axs_in_pat2,axs_in_pat3)
     #
     #axs_in_fl_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #b_axes = axs_in_fl_list
-    #b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    #bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_in_fl_list,"B")
     #move_axis(axs_in_fl_list,-0.05,0,1)
     
     #axs_pat_fl1 = fig.add_subplot(gs[4:5,0:1])
@@ -1052,11 +1046,15 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
     #                                  "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
     #axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
-    #c_axes = axs_ex_fl_list
-    #c_labels = bpf.generate_letter_roman_labels('C', len(c_axes))
-    #bpf.add_subplot_labels_from_list(c_axes, c_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})    
+    #label_axis(axs_ex_fl_list,"C")    
     #axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
+    #axs_in_fl2 = fig.add_subplot(gs[7:9,2:4])
+    #axs_in_fl3 = fig.add_subplot(gs[7:9,4:6])
+    #plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
+    #                                  "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
+    #axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
+    #label_axis(axs_in_fl_list,"D")
+    #axs_all_field = fig.add_subplot(gs[9:11,0:2])
     ##plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     ##                         axs_all_field)
     ##axs_all_field1= fig.add_subplot(gs[9:11,0:2])
@@ -1104,20 +1102,14 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
                                       "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
     axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
-    a_axes = axs_ex_fl_list
-    a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})    
+    label_axis(axs_ex_fl_list,"A")    
     axs_in_fl1 = fig.add_subplot(gs[3:5,0:2])
     axs_in_fl2 = fig.add_subplot(gs[3:5,2:4])
     axs_in_fl3 = fig.add_subplot(gs[3:5,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
     axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
-    b_axes = axs_in_fl_list
-    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_in_fl_list,"B")
     axs_all_field = fig.add_subplot(gs[5:7,0:2])
     #plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     #                         axs_all_field)
@@ -1139,27 +1131,42 @@ def plot_figure_7(extracted_feature_pickle_file_path,
                                                                                        
                                                                                        
     move_axis([axs_all_field],0,-0.02,1)
-    bpf.add_subplot_label(axs_all_field, 'C', xpos=0.05, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_all_field.text(0.05,1,'C',transform=axs_all_field.transAxes,    
+                        fontsize=16, fontweight='bold',
+                        ha='center',va='center')
 
-    # Add custom legend in the white space to the right of panel C
-    from matplotlib.lines import Line2D
-    legend_elements = [
-        Line2D([0], [0], marker='o', color='w', markerfacecolor=bpf.CB_color_cycle[6], 
-               markersize=8, label='Field response', linestyle='None'),
-        Line2D([0], [0], marker='o', color=bpf.CB_color_cycle[0], 
-               markersize=8, label='Learners', linestyle='None'),
-        Line2D([0], [0], marker='o', color=bpf.CB_color_cycle[1], 
-               markersize=8, label='Non-learners', linestyle='None')
-    ]
-    
-    # Create an invisible axis for the legend in the white space
-    axs_legend = fig.add_subplot(gs[5:7, 2:4])
-    axs_legend.axis('off')
-    axs_legend.legend(handles=legend_elements, loc='center', frameon=True, 
-                     fancybox=True, shadow=False, fontsize=10)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_7.png"
+    outpath = f"{outdir}/figure_7_fnorm.png"
     #outpath = f"{outdir}/figure_7.svg"
     #outpath = f"{outdir}/figure_7.pdf"
     plt.savefig(outpath,bbox_inches='tight')
@@ -1203,7 +1210,7 @@ def main():
     illustration_path = Path(args.illustration_path)
     cell_stat_path = Path(args.cellstat_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_7'
+    globoutdir= globoutdir/'Figure_7_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_7(pklpath,scpath,cell_stat_path,globoutdir)

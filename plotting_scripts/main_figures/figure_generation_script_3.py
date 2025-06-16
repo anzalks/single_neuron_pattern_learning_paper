@@ -840,8 +840,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #place illustration
     axs_img = fig.add_subplot(gs[0:2, 0:2])
     plot_image(illustration,axs_img, 0,0,1)
-    axs_img.text(0,1,'A',transform=axs_img.transAxes,    
-            fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_img, 'A', xpos=0, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_img],-0.08,0.0225,1.3)
 
     #plot EPSP classification for learner & non-learner
@@ -855,8 +854,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     axs_pat2 = fig.add_subplot(gs[1,2:3])
     axs_pat3 = fig.add_subplot(gs[2,2:3])
     plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.035,0,2)
-    axs_pat1.text(0,1.35,'C',transform=axs_pat1.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_pat1, 'C', xpos=0, ypos=1.35, fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot distribution epsp for learners and non-leaners
     axs_dist1 = fig.add_subplot(gs[2:3,0:2])
@@ -864,15 +862,13 @@ def plot_figure_3(extracted_feature_pickle_file_path,
                                              sc_data_dict["an_cells"],
                                              "max_trace",fig,axs_dist1,
                                              )    
-    axs_dist1.text(-0.1,1.05,'B',transform=axs_dist1.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_dist1, 'B', xpos=-0.1, ypos=1.05, fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_dist1],0,0.05,1)
     
     #plot pie chart of the distribution
     axs_pie = fig.add_subplot(gs[4:6,0:2])
     plot_pie_cell_dis(fig,axs_pie,cell_dist,cell_dist_key)
-    axs_pie.text(-0.025,0.85,'D',transform=axs_pie.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_pie, 'D', xpos=-0.025, ypos=0.85, fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_pie],-0.075,0.095,1)
     
     #plot F-I curve
@@ -882,8 +878,7 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     #plot_fi_curve_with_ks(firing_properties,sc_data_dict,fig,axs_fi)
     plot_fi_curve(firing_properties,sc_data_dict,fig,axs_fi)
     move_axis([axs_fi],-0.05,-0.05,1)
-    axs_fi.text(-0.1,1.1,'E',transform=axs_fi.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_fi, 'E', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
 
     #plot cell property comparison
     axs_inr = fig.add_subplot(gs[4:6,3:5])
@@ -891,11 +886,9 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     compare_cell_properties(cell_stats_df,fig,axs_rmp,axs_inr,
                             sc_data_dict["ap_cells"], sc_data_dict["an_cells"])
     move_axis([axs_inr],-0.045,-0.05,1)
-    axs_inr.text(-0.1,1.1,'F',transform=axs_inr.transAxes,    
-                fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_inr, 'F', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
     move_axis([axs_rmp],-0.045,-0.05,1)
-    axs_rmp.text(-0.1,1.1,'G',transform=axs_rmp.transAxes,    
-                fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_rmp, 'G', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
     
     
 
@@ -911,27 +904,27 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     move_axis([axs_mini_freq],0.05,0,0.9)
     #move_axis([axs_mini_comp_freq],0.05,0.05,0.9)
     axs_mini_list = [axs_mini_amp,axs_mini_freq]
-    label_axis(axs_mini_list,"H")    
+    h_axes = axs_mini_list
+    h_labels = bpf.generate_letter_roman_labels('H', len(h_axes))
+    bpf.add_subplot_labels_from_list(h_axes, h_labels, 
+                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})    
     
     #plot training timing details
     axs_trn = fig.add_subplot(gs[7:8,5:7])
     plot_threshold_timing(training_data,sc_data_dict,fig,axs_trn)
     move_axis([axs_trn],0.05,0,1)
-    axs_trn.text(-0.1,1.1,'I',transform=axs_trn.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')
+    bpf.add_subplot_label(axs_trn, 'I', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
     
     #plot sag
     axs_inr = fig.add_subplot(gs[8:9,3:6])
     inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
     move_axis([axs_inr],0,0,1)
-    axs_inr.text(-0.05,1,'K',transform=axs_inr.transAxes,    
-                 fontsize=16, fontweight='bold', ha='center', va='center')            
+    bpf.add_subplot_label(axs_inr, 'K', xpos=-0.05, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')            
 
     #plot the sag illustration
     axs_inrill = fig.add_subplot(gs[8:9,0:3])
     plot_image(inRillustration,axs_inrill,-0.1,-0.05,1)
-    axs_inrill.text(0.01,1.1,'J',transform=axs_inrill.transAxes,    
-                    fontsize=16, fontweight='bold', ha='center', va='center')            
+    bpf.add_subplot_label(axs_inrill, 'J', xpos=0.01, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')            
 
 
     plt.tight_layout()

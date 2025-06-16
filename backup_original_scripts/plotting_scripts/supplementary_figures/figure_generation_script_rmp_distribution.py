@@ -631,32 +631,38 @@ def create_rmp_distribution_figure(cell_stats_df, sc_data_dict, epsp_data, firin
     # Subplot A: RMP distribution violin plots
     axs_rmp = fig.add_subplot(gs[0, 0])
     plot_rmp_distribution_violin(cell_stats_with_category, fig, axs_rmp)
-    bpf.add_subplot_label(axs_rmp, 'A', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_rmp.text(-0.1, 1.1, 'A', transform=axs_rmp.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Subplot B: RMP vs EPSP correlation (pre)
     axs_pre = fig.add_subplot(gs[0, 1])
     plot_rmp_epsp_correlation(epsp_data, cell_stats_with_category, 'pre', fig, axs_pre)
-    bpf.add_subplot_label(axs_pre, 'B', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_pre.text(-0.1, 1.1, 'B', transform=axs_pre.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Subplot C: RMP vs EPSP correlation (post_3)
     axs_post = fig.add_subplot(gs[0, 2])
     plot_rmp_epsp_correlation(epsp_data, cell_stats_with_category, 'post_3', fig, axs_post)
-    bpf.add_subplot_label(axs_post, 'C', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_post.text(-0.1, 1.1, 'C', transform=axs_post.transAxes,
+                  fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Subplot D: RMP vs EPSP correlation for learners vs non-learners (post_3)
     axs_learner_nonlearner = fig.add_subplot(gs[1, 0])
     plot_rmp_epsp_learner_nonlearner(epsp_data, cell_stats_with_category, fig, axs_learner_nonlearner)
-    bpf.add_subplot_label(axs_learner_nonlearner, 'D', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_learner_nonlearner.text(-0.1, 1.1, 'D', transform=axs_learner_nonlearner.transAxes,
+                                fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Subplot E: RMP vs Firing frequency correlation
     axs_firing = fig.add_subplot(gs[1, 1])
     plot_rmp_firing_frequency_correlation(firing_properties, cell_stats_with_category, fig, axs_firing)
-    bpf.add_subplot_label(axs_firing, 'E', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_firing.text(-0.1, 1.1, 'E', transform=axs_firing.transAxes,
+                    fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Subplot F: RMP vs CHR2 firing frequency correlation
     axs_chr2_firing = fig.add_subplot(gs[1, 2])
     plot_rmp_chr2_firing_frequency_correlation(sensitisation_data, cell_stats_with_category, fig, axs_chr2_firing)
-    bpf.add_subplot_label(axs_chr2_firing, 'F', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_chr2_firing.text(-0.1, 1.1, 'F', transform=axs_chr2_firing.transAxes,
+                        fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Add main title with proper size
     fig.suptitle('Resting Membrane Potential Analysis in Healthy Cells', 

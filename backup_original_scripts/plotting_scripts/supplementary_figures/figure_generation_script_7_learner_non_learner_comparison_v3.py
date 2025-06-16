@@ -1018,10 +1018,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #                          "learners","no norm",
     #                          fig,axs_ex_pat1,axs_ex_pat2,axs_ex_pat3)
     #axs_ex_fl_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #a_axes = axs_ex_fl_list
-    #a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    #bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_ex_fl_list,"A")
     #move_axis(axs_ex_fl_list,0,0,1)
 
     #axs_in_pat1 = fig.add_subplot(gs[1:3,4:5])
@@ -1032,10 +1029,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #                          fig,axs_in_pat1,axs_in_pat2,axs_in_pat3)
     #
     #axs_in_fl_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #b_axes = axs_in_fl_list
-    #b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    #bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_in_fl_list,"B")
     #move_axis(axs_in_fl_list,-0.05,0,1)
     
     #axs_pat_fl1 = fig.add_subplot(gs[4:5,0:1])
@@ -1052,10 +1046,7 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     #plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
     #                                  "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
     #axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
-    #c_axes = axs_ex_fl_list
-    #c_labels = bpf.generate_letter_roman_labels('C', len(c_axes))
-    #bpf.add_subplot_labels_from_list(c_axes, c_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})    
+    #label_axis(axs_ex_fl_list,"C")    
     #axs_in_fl1 = fig.add_subplot(gs[7:9,0:2])
     ##plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     ##                         axs_all_field)
@@ -1104,20 +1095,14 @@ def plot_figure_7(extracted_feature_pickle_file_path,
     plot_field_amplitudes_time_series(sc_data_dict["ap_cells"],"min_field",
                                       "learners",axs_ex_fl1,axs_ex_fl2,axs_ex_fl3)
     axs_ex_fl_list = [axs_ex_fl1,axs_ex_fl2,axs_ex_fl3]
-    a_axes = axs_ex_fl_list
-    a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})    
+    label_axis(axs_ex_fl_list,"A")    
     axs_in_fl1 = fig.add_subplot(gs[3:5,0:2])
     axs_in_fl2 = fig.add_subplot(gs[3:5,2:4])
     axs_in_fl3 = fig.add_subplot(gs[3:5,4:6])
     plot_field_amplitudes_time_series(sc_data_dict["an_cells"],"min_field",
                                       "non-learners",axs_in_fl1,axs_in_fl2,axs_in_fl3)
     axs_in_fl_list = [axs_in_fl1,axs_in_fl2,axs_in_fl3]
-    b_axes = axs_in_fl_list
-    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_in_fl_list,"B")
     axs_all_field = fig.add_subplot(gs[5:7,0:2])
     #plot_minf_compare_all_pat(feature_extracted_data,sc_data_dict,fig,
     #                         axs_all_field)
@@ -1139,7 +1124,9 @@ def plot_figure_7(extracted_feature_pickle_file_path,
                                                                                        
                                                                                        
     move_axis([axs_all_field],0,-0.02,1)
-    bpf.add_subplot_label(axs_all_field, 'C', xpos=0.05, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_all_field.text(0.05,1,'C',transform=axs_all_field.transAxes,    
+                        fontsize=16, fontweight='bold',
+                        ha='center',va='center')
 
     # Add custom legend in the white space to the right of panel C
     from matplotlib.lines import Line2D

@@ -4,24 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Figure 4: Plasticity Mechanisms
+Figure 4 (Supplementary, Field Normalized): Plasticity Mechanisms
 
-This script generates Figure 4 of the pattern learning paper, which shows:
-- Detailed analysis of plasticity mechanisms underlying pattern learning
-- Point-by-point plasticity distribution across stimulation grid
-- EPSP feature analysis (rise time, half-width, decay time) for different patterns
-- Response summary and classification analysis
-- Pattern-specific plasticity changes in learners vs non-learners
-- Peak percentage comparisons across different cell types and patterns
-- Statistical analysis of plasticity distribution and mechanisms
+This script generates the field-normalized version of Figure 4 for supplementary analysis, which shows:
+- Field-normalized analysis of plasticity mechanisms underlying pattern learning
+- Point-by-point plasticity distribution with field potential correction
+- EPSP feature analysis corrected for field variations
+- Response summary and classification with field normalization
+- Pattern-specific plasticity changes using field-corrected data
+- Peak percentage comparisons with field normalization applied
+- Statistical analysis of plasticity mechanisms with field correction
 
 Input files:
 - pd_all_cells_mean.pickle: Mean cellular responses
-- all_cells_classified_dict.pickle: Cell classification data
-- pd_all_cells_all_trials.pickle: Trial-by-trial analysis data
-- cell_stats.h5: Cell statistics and properties
+- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_all_trials.pickle: Trial data for field correction
+- cell_stats.h5: Cell statistics
 
-Output: Figure_4/figure_4.png showing comprehensive plasticity mechanism analysis
+Output: Figure_4_fnorm/figure_4_fnorm.png showing field-normalized plasticity mechanism analysis
 """
 
 import pandas as pd
@@ -45,7 +45,6 @@ import re
 from scipy.stats import ttest_1samp
 from scipy.stats import spearmanr
 from matplotlib.lines import Line2D
-from PIL import ImageDraw, ImageFont
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -871,7 +870,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
                 #        ha='center', va='bottom', fontsize=8, color='black')
     
     # Customize axes for learners
-    axs_lr.set_ylim(-50, 1200)
+    axs_lr.set_ylim(-50, 500)
     axs_lr.set_ylabel("% change in\nEPSP amplitude")
     axs_lr.set_xlabel("point no")
     axs_lr.spines[['right', 'top']].set_visible(False)
@@ -2353,10 +2352,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    a_axes = axs_ex_list
-    a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
 
 
     axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -2368,15 +2364,14 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    b_axes = axs_in_list
-    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-                                base_params={'xpos': 0.1, 'ypos': 0.9, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_in_list,"B", xpos=0.1, ypos=0.9)
 
     axs_bar = fig.add_subplot(gs[12:14,0:2])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.03,1)
-    bpf.add_subplot_label(axs_bar, 'C', xpos=-0.05, ypos=1.05, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_bar.text(-0.05,1.05,'C',transform=axs_bar.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
 
     #axs_comp_peaks = fig.add_subplot(gs[12:14,4:6])
     #plot_peak_comp_pre_post(sc_data_dict,fig,axs_comp_peaks)
@@ -2407,10 +2402,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                     axs_non_learners_pat_non_overlapping
                     ]
     move_axis(axs_scatr_list,0,-0.04,1)
-    d_axes = axs_scatr_list
-    d_labels = bpf.generate_letter_roman_labels('D', len(d_axes))
-    bpf.add_subplot_labels_from_list(d_axes, d_labels, 
-                                base_params={'xpos': -0.2, 'ypos': 1.25, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_scatr_list,"D", xpos=-0.2, ypos=1.25)
 
 
 
@@ -2459,7 +2451,7 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_4.png"
+    outpath = f"{outdir}/figure_4_norm.png"
     #outpath = f"{outdir}/figure_4.svg"
     #outpath = f"{outdir}/figure_4.pdf"
     plt.savefig(outpath,bbox_inches='tight')
@@ -2511,7 +2503,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_4'
+    globoutdir= globoutdir/'Figure_4_fnorm'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_4(pklpath,all_trial_df_path,scpath,cell_stat_path,globoutdir)

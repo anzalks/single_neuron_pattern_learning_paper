@@ -2,7 +2,6 @@ import numpy as np
 import scipy
 import pandas as pd
 import matplotlib.pyplot as plt
-from shared_utils import baisic_plot_fuctnions_and_features as bpf
 
 def load_tsv_data(filename):
     """

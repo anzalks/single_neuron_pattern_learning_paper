@@ -4,23 +4,22 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Figure 2 (Supplementary, Field Normalized): EPSP Amplitude Analysis
+Figure 2: EPSP Amplitude Analysis
 
-This script generates the field-normalized version of Figure 2 for supplementary analysis, which shows:
-- Field-normalized EPSP amplitude changes across time points (pre, post-0, post-1, post-2, post-3)
-- Pattern-specific responses corrected for field potential variations
-- Cell type classification with field normalization applied
-- Input resistance analysis with field correction
-- Statistical comparisons between learners and non-learners using field-normalized data
-- Comprehensive field-corrected analysis of EPSP amplitude changes
+This script generates Figure 2 of the pattern learning paper, which shows:
+- EPSP amplitude changes across different time points (pre, post-0, post-1, post-2, post-3)
+- Pattern-specific responses for trained, overlapping, and non-overlapping patterns
+- Cell type classification and feature analysis
+- Input resistance measurements and their correlation with learning
+- Statistical comparisons between learners and non-learners
 
 Input files:
-- pd_all_cells_mean.pickle: Mean cellular responses
-- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
+- pd_all_cells_mean.pickle: Mean responses for all cells
+- all_cells_classified_dict.pickle: Cell classification (learners/non-learners)
 - all_cells_inR.pickle: Input resistance data
 - Illustration images: Pattern and recording setup diagrams
 
-Output: Figure_2_fnorm/figure_2_fnorm.png showing field-normalized EPSP amplitude analysis
+Output: Figure_2/figure_2.png showing EPSP amplitude analysis and cell classification
 """
 
 import pandas as pd
@@ -48,7 +47,6 @@ from PIL import ImageDraw, ImageFont
 import pingouin as pg
 import statsmodels.api as sm
 from statsmodels.stats.anova import AnovaRM
-from statsmodels.stats.multitest import fdrcorrection
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -211,6 +209,7 @@ def perform_mixed_effect_model(data, val_to_plot):
                 raw_pvals.append(1.0)
         
         # Apply FDR correction
+        from statsmodels.stats.multitest import fdrcorrection
         _, corrected_pvals = fdrcorrection(raw_pvals)
         
         return corrected_pvals.tolist()
@@ -321,11 +320,17 @@ def plot_cell_type_features_with_custom_stats(cell_list, pattern_number, fig, ax
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel("% change in\nEPSP amplitude")
                 axs_slp.set_xlabel(None)
+                # Remove legend for panel Di
+                if axs_slp.get_legend() is not None:
+                    axs_slp.get_legend().remove()
             elif pat_num == 1:
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel(None)
                 axs_slp.set_yticklabels([])
                 axs_slp.set_xlabel("time points (mins)")
+                # Remove legend for panel Dii
+                if axs_slp.get_legend() is not None:
+                    axs_slp.get_legend().remove()
             elif pat_num == 2:
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_xlabel(None)
@@ -366,177 +371,6 @@ def plot_field_normalised_feature_multi_patterns_with_stats(cell_list, val_to_pl
                                             bpf.CB_color_cycle[5], stat_method)
     plot_cell_type_features_with_custom_stats(cell_list, "pattern_2", fig, axs3, val_to_plot,
                                             bpf.CB_color_cycle[5], stat_method)
-
-
-def plot_figure_2_with_stats(extracted_feature_pickle_file_path,
-                           cell_categorised_pickle_file,
-                           inR_all_Cells_df,
-                           illustration_path,
-                           inRillustration_path,
-                           patillustration_path,
-                           outdir, stat_method="wilcoxon", cell_to_plot=cell_to_plot):
-    """
-    Modified version of plot_figure_2 that supports different statistical tests
-    stat_method: "wilcoxon", "rm_anova", or "mixed_effect"
-    """
-    deselect_list = ["no_frame","inR","point"]
-    feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
-    single_cell_df = feature_extracted_data.copy()
-    single_cell_df = single_cell_df[(single_cell_df["cell_ID"]==cell_to_plot)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
-    sc_data = pd.read_pickle(cell_categorised_pickle_file)
-    sc_data_df = pd.concat([sc_data["ap_cells"],
-                            sc_data["an_cells"]]).reset_index(drop=True)
-    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
-    illustration = pillow.Image.open(illustration_path)
-    inRillustration = pillow.Image.open(inRillustration_path)
-    patillustration = pillow.Image.open(patillustration_path)
-    # Define the width and height ratios
-    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
-    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
-                     0.5, 0.5, 0.5, 0.5, 0.2]       # Adjust these values as needed
-
-    fig = plt.figure(figsize=(8,18))
-    gs = GridSpec(11, 7,width_ratios=width_ratios,
-                  height_ratios=height_ratios,figure=fig)
-    #gs.update(wspace=0.2, hspace=0.8)
-    gs.update(wspace=0.2, hspace=0.2)
-    #place illustration
-    axs_img = fig.add_subplot(gs[:3, :6])
-    plot_image(illustration,axs_img,-0.1,-0.01,1)
-    
-    
-
-    bpf.add_subplot_label(axs_img, 'A', xpos=0, ypos=0.95, fontsize=16, fontweight='bold', ha='center', va='center')
-    
-    axs_pat_ill = fig.add_subplot(gs[:3, 6:])
-    plot_image(patillustration,axs_pat_ill,-0.15,-0.02,2.2)    
-    
-    bpf.add_subplot_label(axs_pat_ill, 'B', xpos=0.01, ypos=0.9, fontsize=16, fontweight='bold', ha='center', va='center')
-
-    axs_vpat1=fig.add_subplot(gs[3,0])
-    axs_vpat2=fig.add_subplot(gs[4,0])
-    axs_vpat3=fig.add_subplot(gs[5,0])
-    plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,0,2)
-    bpf.add_subplot_label(axs_vpat1, 'C', xpos=-0.07, ypos=1.35, fontsize=16, fontweight='bold', ha='center', va='center')
-
-    plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs)
-    
-    #plot pattern projections 
-    axs_pat1 = fig.add_subplot(gs[6,0])
-    axs_pat2 = fig.add_subplot(gs[6,2])
-    axs_pat3 = fig.add_subplot(gs[6,4])
-    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.04,1)
-    
-    
-
-    #plot amplitudes over time - USE CUSTOM STATS
-    feature_extracted_data =feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
-    cell_grp = feature_extracted_data.groupby(by="cell_ID")
-    axs_slp1 = fig.add_subplot(gs[7:9,0:2])
-    axs_slp1.set_ylabel("slope (mV/ms)")
-    axs_slp2 = fig.add_subplot(gs[7:9,2:4])
-    axs_slp2.set_yticklabels([])
-    axs_slp3 = fig.add_subplot(gs[7:9,4:6])
-    axs_slp3.set_yticklabels([])
-    
-    # Use the modified function with statistical test selection
-    plot_field_normalised_feature_multi_patterns_with_stats(sc_data_df,"max_trace",
-                                                 fig,axs_slp1,axs_slp2,
-                                                 axs_slp3, stat_method=stat_method)
-    
-    axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
-    d_axes = axs_slp_list
-    d_labels = bpf.generate_letter_roman_labels('D', len(d_axes))
-    bpf.add_subplot_labels_from_list(d_axes, d_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
-
-    axs_dist = fig.add_subplot(gs[9:10,0:4])
-    plot_frequency_distribution(sc_data_df, "max_trace", fig, 
-                                axs_dist, time_point='post_3', 
-                                colors=None)
-    bpf.add_subplot_label(axs_dist, 'E', xpos=-0.07, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
-    move_axis([axs_dist],xoffset=0,yoffset=-0.03,pltscale=1)
-    
-    #axs_inr = fig.add_subplot(gs[9:10,3:6])
-    #inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
-    #axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
-    #         fontsize=16, fontweight='bold', ha='center', va='center')            
-
-
-    #axs_inrill = fig.add_subplot(gs[9:10,0:3])
-    #plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
-    #axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
-    #             fontsize=16, fontweight='bold', ha='center', va='center')            
-
-
-    #handles, labels = plt.gca().get_legend_handles_labels()
-    #by_label = dict(zip(labels, handles))
-    #fig.legend(by_label.values(), by_label.keys(), 
-    #           bbox_to_anchor =(0.5, 0.175),
-    #           ncol = 6,title="Legend",
-    #           loc='upper center')#,frameon=False)#,loc='lower center'    
-    #
-
-    plt.tight_layout()
-    
-    # Generate filename based on statistical method
-    if stat_method == "wilcoxon":
-        filename = "figure_2_fnorm_wilcox_sr_test.png"
-    elif stat_method == "rm_anova":
-        filename = "figure_2_fnorm_rep_mesure_anova.png"
-    elif stat_method == "mixed_effect":
-        filename = "figure_2_fnorm_mixd_effect_model.png"
-    else:
-        filename = f"figure_2_fnorm_{stat_method}.png"
-    
-    outpath = f"{outdir}/{filename}"
-    plt.savefig(outpath,bbox_inches='tight')
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
-    
-    print(f"Saved Figure 2 fnorm with {stat_method} test: {outpath}")
-
-
-def plot_figure_2_fnorm_all_versions(extracted_feature_pickle_file_path,
-                                   cell_categorised_pickle_file,
-                                   inR_all_Cells_df,
-                                   illustration_path,
-                                   inRillustration_path,
-                                   patillustration_path,
-                                   outdir, cell_to_plot=cell_to_plot):
-    """
-    Generate all three versions of Figure 2 fnorm with different statistical tests
-    """
-    print("Generating Figure 2 fnorm with Wilcoxon signed-rank test...")
-    plot_figure_2_with_stats(extracted_feature_pickle_file_path,
-                           cell_categorised_pickle_file,
-                           inR_all_Cells_df,
-                           illustration_path,
-                           inRillustration_path,
-                           patillustration_path,
-                           outdir, stat_method="wilcoxon", cell_to_plot=cell_to_plot)
-    
-    print("Generating Figure 2 fnorm with repeated measures ANOVA...")
-    plot_figure_2_with_stats(extracted_feature_pickle_file_path,
-                           cell_categorised_pickle_file,
-                           inR_all_Cells_df,
-                           illustration_path,
-                           inRillustration_path,
-                           patillustration_path,
-                           outdir, stat_method="rm_anova", cell_to_plot=cell_to_plot)
-    
-    print("Generating Figure 2 fnorm with mixed effect model...")
-    plot_figure_2_with_stats(extracted_feature_pickle_file_path,
-                           cell_categorised_pickle_file,
-                           inR_all_Cells_df,
-                           illustration_path,
-                           inRillustration_path,
-                           patillustration_path,
-                           outdir, stat_method="mixed_effect", cell_to_plot=cell_to_plot)
-    
-    print("All Figure 2 fnorm versions generated successfully!")
-
 
 #def plot_image(image,axs_img,xoffset,yoffset,pltscale):
 #    axs_img.imshow(image, cmap='gray')
@@ -660,7 +494,8 @@ def label_axis(axis_list, letter_label, xpos=0.1, ypos=1, fontsize=16, fontweigh
 
 
 def plot_raw_trace_time_points(single_cell_df,
-                               deselect_list,fig,gs):
+                               deselect_list,fig,gs,
+                               xoffset=0,yoffset=0):
     single_cell_df = single_cell_df[~single_cell_df["frame_status"].isin(deselect_list)]
     sampling_rate = 20000 # for patterns
     sc_pat_grp = single_cell_df.groupby(by="frame_id")
@@ -683,6 +518,7 @@ def plot_raw_trace_time_points(single_cell_df,
                 time = np.linspace(0,time_to_plot,len(trace))*1000
                 axs_trace.plot(time,pre_trace, color=bpf.pre_color,
                                label="baseline response")
+                move_axis([axs_trace],xoffset=xoffset,yoffset=yoffset,pltscale=1)
                 if pat_num==1:
                     axs_trace.set_ylabel("membrane potential(mV)")
                 else:
@@ -709,6 +545,7 @@ def plot_raw_trace_time_points(single_cell_df,
                                #color=bpf.colorFader(bpf.post_color,
                                #                     bpf.post_late,
                                #                     (idx/len(pps_grp))))
+                move_axis([axs_trace],xoffset=xoffset,yoffset=yoffset,pltscale=1)
                 axs_trace.set_ylabel(None)
                 axs_trace.set_yticklabels([])
                 if pat_num==0:
@@ -874,11 +711,17 @@ def plot_cell_type_features(cell_list, pattern_number, fig, axs_slp, val_to_plot
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel("% change in\nEPSP amplitude")
                 axs_slp.set_xlabel(None)
+                # Remove legend for panel Di
+                if axs_slp.get_legend() is not None:
+                    axs_slp.get_legend().remove()
             elif pat_num == 1:
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_ylabel(None)
                 axs_slp.set_yticklabels([])
                 axs_slp.set_xlabel("time points (mins)")
+                # Remove legend for panel Dii
+                if axs_slp.get_legend() is not None:
+                    axs_slp.get_legend().remove()
             elif pat_num == 2:
                 sns.despine(ax=axs_slp, top=True, right=True)
                 axs_slp.set_xlabel(None)
@@ -1011,7 +854,15 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
     # Check if colors are provided; if not, use custom colors
     if colors is None:
         # Define custom colors that are not in the default plots
-        colors = ['teal', 'orange', 'purple']
+        colors = ['#00796B', '#D81B60', '#FFC107']
+        #colors = ['#228B22', '#FF6F61', '#6A5ACD'] 
+        #colors = ['#00796B','#FF6F61','#FFC107']
+        #colors = ['#191970', '#FFD700', '#2E8B57']
+        #colors = ['teal', 'orange', 'purple']
+        #colors = ['#00BFFF', '#FA8072', '#808000']
+        #colors = ['#4682B4', '#FFDAB9', '#9ACD32']
+        #colors = ['#800000', '#FFBF00', '#228B22']
+        #colors = ['#40E0D0', '#E6E6FA', '#CC5500']
 
     # Determine the x-axis limits as desired
     x_min, x_max = -50, 600  # Adjust these values as needed
@@ -1052,7 +903,7 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
             label=pattern_labels[pattern],  # Use the mapped label
             color=color,
             alpha=0.6,
-            edgecolor='black',
+            edgecolor=color,
             linewidth=0.5
         )
 
@@ -1148,7 +999,16 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #    # Determine the x-axis limits as desired
 #    x_min, x_max = -50, 600  # Adjust these values as needed
 #    ax.set_xlim(x_min, x_max)
+#    data_list = cell_list[
+#        cell_list['frame_id'].str.contains("pattern")&
+#        (cell_list['pre_post_status'] == time_point)
+#    ][norm_val_to_plot].to_numpy()
+#    print(f"data_list:{data_list}")
 #
+#
+#    # Define the bins
+#    #bins = np.linspace(x_min, x_max, num=11)  # Adjust 'num' for number of bins
+#    bins = int(np.sqrt(len(data_list)))
 #    # Loop over each pattern and plot the histogram with KDE
 #    for pattern, color in zip(patterns, colors):
 #        # Filter the data for the current pattern and time point
@@ -1204,8 +1064,9 @@ def plot_frequency_distribution(cell_list, val_to_plot, fig, ax,
 #    ax.spines['top'].set_visible(False)
 #    ax.spines['right'].set_visible(False)
 #
-#    # Optionally, adjust tick parameters to match Seaborn's style
-#    ax.tick_params(axis='both', which='both', length=0)
+#    # Ensure x and y ticks are shown by commenting out this line
+#    # ax.tick_params(axis='both', which='both', length=0)
+#
 #
 #    return ax
 
@@ -1419,6 +1280,19 @@ def plot_field_normalised_feature_multi_patterns(cell_list,val_to_plot,
                             bpf.CB_color_cycle[5])
     plot_cell_type_features(cell_list,"pattern_2",fig, axs3,val_to_plot,
                             bpf.CB_color_cycle[5])
+
+
+def plot_field_normalised_feature_multi_patterns_with_stats(cell_list, val_to_plot, fig, axs1, axs2, axs3, stat_method="wilcoxon"):
+    """
+    Modified version that uses different statistical tests
+    """
+    cell_list = norm_values(cell_list, val_to_plot)
+    plot_cell_type_features_with_custom_stats(cell_list, "pattern_0", fig, axs1, val_to_plot,
+                                            bpf.CB_color_cycle[5], stat_method)
+    plot_cell_type_features_with_custom_stats(cell_list, "pattern_1", fig, axs2, val_to_plot,
+                                            bpf.CB_color_cycle[5], stat_method)
+    plot_cell_type_features_with_custom_stats(cell_list, "pattern_2", fig, axs3, val_to_plot,
+                                            bpf.CB_color_cycle[5], stat_method)
     
 
 #["cell_ID","frame_status","pre_post_status","frame_id","min_trace","max_trace","abs_area","pos_area",
@@ -1532,6 +1406,142 @@ def inR_sag_plot(inR_all_Cells_df, fig, axs):
     
     
 
+def plot_figure_2_with_stats(extracted_feature_pickle_file_path,
+                  cell_categorised_pickle_file,
+                  inR_all_Cells_df,
+                  illustration_path,
+                  inRillustration_path,
+                  patillustration_path,
+                  outdir,cell_to_plot=cell_to_plot,
+                  stat_method="wilcoxon"):
+    deselect_list = ["no_frame","inR","point"]
+    feature_extracted_data = pd.read_pickle(extracted_feature_pickle_file_path)
+    single_cell_df = feature_extracted_data.copy()
+    single_cell_df = single_cell_df[(single_cell_df["cell_ID"]==cell_to_plot)&(single_cell_df["pre_post_status"].isin(selected_time_points))]
+    sc_data = pd.read_pickle(cell_categorised_pickle_file)
+    sc_data_df = pd.concat([sc_data["ap_cells"],
+                            sc_data["an_cells"]]).reset_index(drop=True)
+    inR_all_Cells_df = pd.read_pickle(inR_all_Cells_df) 
+    illustration = pillow.Image.open(illustration_path)
+    inRillustration = pillow.Image.open(inRillustration_path)
+    patillustration = pillow.Image.open(patillustration_path)
+    # Define the width and height ratios
+    width_ratios = [1, 1, 1, 1, 1, 1, 0.8]  # Adjust these values as needed
+    height_ratios = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2, 
+                     0.5, 0.5, 0.5, 0.5, 0.2]       # Adjust these values as needed
+
+    fig = plt.figure(figsize=(9,16))
+    gs = GridSpec(11, 7,width_ratios=width_ratios,
+                  height_ratios=height_ratios,figure=fig)
+    #gs.update(wspace=0.2, hspace=0.8)
+    gs.update(wspace=0.2, hspace=0.2)
+    #place illustration
+    axs_img = fig.add_subplot(gs[:3, :6])
+    plot_image(illustration,axs_img,-0.1,-0.01,1)
+    
+    
+
+    axs_img.text(0,0.95,'A',transform=axs_img.transAxes,    
+            fontsize=16, fontweight='bold', ha='center', va='center')
+    
+    axs_pat_ill = fig.add_subplot(gs[:3, 6:])
+    plot_image(patillustration,axs_pat_ill,-0.15,-0.02,2.2)    
+    
+    axs_pat_ill.text(0.01,0.9,'B',transform=axs_pat_ill.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+
+    axs_vpat1=fig.add_subplot(gs[3,0])
+    axs_vpat2=fig.add_subplot(gs[4,0])
+    axs_vpat3=fig.add_subplot(gs[5,0])
+    plot_patterns(axs_vpat1,axs_vpat2,axs_vpat3,-0.075,-0.015,2)
+    axs_vpat1.text(-0.07,1.35,'C',transform=axs_vpat1.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center', va='center')
+
+    plot_raw_trace_time_points(single_cell_df,deselect_list,fig,gs,
+                              xoffset=0,yoffset=-0.01)
+    
+    
+    
+    
+    
+    
+    
+    
+
+    #plot amplitudes over time
+    feature_extracted_data =feature_extracted_data[~feature_extracted_data["frame_status"].isin(deselect_list)]
+    cell_grp = feature_extracted_data.groupby(by="cell_ID")
+    axs_slp1 = fig.add_subplot(gs[7:9,0:2])
+    axs_slp1.set_ylabel("slope (mV/ms)")
+    axs_slp2 = fig.add_subplot(gs[7:9,2:4])
+    axs_slp2.set_yticklabels([])
+    axs_slp3 = fig.add_subplot(gs[7:9,4:6])
+    axs_slp3.set_yticklabels([])
+    plot_field_normalised_feature_multi_patterns_with_stats(sc_data_df,"max_trace",
+                                                 fig,axs_slp1,axs_slp2,
+                                                 axs_slp3, stat_method)
+    axs_slp_list = [axs_slp1,axs_slp2,axs_slp3]
+    label_axis(axs_slp_list,"D",xpos=-0.1, ypos=1.1)
+
+    #plot pattern projections 
+    axs_pat1 = fig.add_subplot(gs[6,0])
+    axs_pat2 = fig.add_subplot(gs[6,2])
+    axs_pat3 = fig.add_subplot(gs[6,4])
+    plot_patterns(axs_pat1,axs_pat2,axs_pat3,0.05,-0.055,1)
+
+
+
+
+
+    axs_dist = fig.add_subplot(gs[9:10,0:4])
+    plot_frequency_distribution(sc_data_df, "max_trace", fig, 
+                                axs_dist, time_point='post_3', 
+                                colors=None)
+    axs_dist.text(-0.07,1,'E',transform=axs_dist.transAxes,    
+                   fontsize=16, fontweight='bold', ha='center', va='center')
+    move_axis([axs_dist],xoffset=0,yoffset=-0.03,pltscale=1)
+    
+    #axs_inr = fig.add_subplot(gs[9:10,3:6])
+    #inR_sag_plot(inR_all_Cells_df,fig,axs_inr)
+    #axs_inr.text(-0.05,1,'F',transform=axs_inr.transAxes,    
+    #         fontsize=16, fontweight='bold', ha='center', va='center')            
+
+
+    #axs_inrill = fig.add_subplot(gs[9:10,0:3])
+    #plot_image(inRillustration,axs_inrill,-0.05,-0.05,1)
+    #axs_inrill.text(0.01,1.1,'E',transform=axs_inrill.transAxes,    
+    #             fontsize=16, fontweight='bold', ha='center', va='center')            
+
+
+    #handles, labels = plt.gca().get_legend_handles_labels()
+    #by_label = dict(zip(labels, handles))
+    #fig.legend(by_label.values(), by_label.keys(), 
+    #           bbox_to_anchor =(0.5, 0.175),
+    #           ncol = 6,title="Legend",
+    #           loc='upper center')#,frameon=False)#,loc='lower center'    
+    #
+
+    plt.tight_layout()
+    
+    # Set filename based on statistical method
+    if stat_method == "wilcoxon":
+        filename = "figure_2_wilcox_sr_test.png"
+    elif stat_method == "rm_anova":
+        filename = "figure_2_rep_mesure_anova.png"
+    elif stat_method == "mixed_effect":
+        filename = "figure_2_mixd_effect_model.png"
+    else:
+        filename = "figure_2.png"
+    
+    outpath = f"{outdir}/{filename}"
+    plt.savefig(outpath,bbox_inches='tight')
+    print(f"Saved: {outpath}")
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
+
+
 def plot_figure_2(extracted_feature_pickle_file_path,
                   cell_categorised_pickle_file,
                   inR_all_Cells_df,
@@ -1540,42 +1550,41 @@ def plot_figure_2(extracted_feature_pickle_file_path,
                   patillustration_path,
                   outdir,cell_to_plot=cell_to_plot):
     """
-    Generate all three versions of Figure 2 fnorm with different statistical tests
+    Generate all three versions of Figure 2 with different statistical tests
     """
-    print("Generating Figure 2 fnorm with Wilcoxon signed-rank test...")
+    print("Generating Figure 2 with Wilcoxon signed-rank test...")
     plot_figure_2_with_stats(extracted_feature_pickle_file_path,
                             cell_categorised_pickle_file,
                             inR_all_Cells_df,
                             illustration_path,
                             inRillustration_path,
                             patillustration_path,
-                            outdir, "wilcoxon", cell_to_plot)
+                            outdir, cell_to_plot, "wilcoxon")
     
-    print("Generating Figure 2 fnorm with repeated measures ANOVA...")
+    print("Generating Figure 2 with repeated measures ANOVA...")
     plot_figure_2_with_stats(extracted_feature_pickle_file_path,
                             cell_categorised_pickle_file,
                             inR_all_Cells_df,
                             illustration_path,
                             inRillustration_path,
                             patillustration_path,
-                            outdir, "rm_anova", cell_to_plot)
+                            outdir, cell_to_plot, "rm_anova")
     
-    print("Generating Figure 2 fnorm with mixed effect model...")
+    print("Generating Figure 2 with mixed effect model...")
     plot_figure_2_with_stats(extracted_feature_pickle_file_path,
                             cell_categorised_pickle_file,
                             inR_all_Cells_df,
                             illustration_path,
                             inRillustration_path,
                             patillustration_path,
-                            outdir, "mixed_effect", cell_to_plot)
+                            outdir, cell_to_plot, "mixed_effect")
     
-    print("All three versions of Figure 2 fnorm have been generated!")
-
+    print("All three versions of Figure 2 have been generated!")
 
 
 def main():
     # Argument parser.
-    description = '''Generates three versions of Figure 2 fnorm with different statistical tests for D panels'''
+    description = '''EPSP Amplitude Analysis - Generates three versions of Figure 2 with different statistical tests for D panels'''
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str
@@ -1618,7 +1627,7 @@ def main():
     patillustration_path =Path(args.patillustration_path) 
     inRillustration_path = Path(args.inRillustration_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_2_fnorm'
+    globoutdir= globoutdir/'Figure_2'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_2(pklpath,scpath,inR_path,illustration_path,

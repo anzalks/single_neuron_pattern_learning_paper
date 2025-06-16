@@ -507,10 +507,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     #                                            "pot_cells"
     #                                           )
     #axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    #a_axes = axs_ex_list
-    #a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
-    #bpf.add_subplot_labels_from_list(a_axes, a_labels, 
-    #                            base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
 
 
     #axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -522,10 +519,7 @@ def plot_supp_fig_1(extracted_feature_pickle_file_path,
     #                                            "dep_cells"
     #                                           )
     #axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    #b_axes = axs_in_list
-    #b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    #bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-    #                            base_params={'xpos': 0.1, 'ypos': 0.9, 'fontsize': 16, 'fontweight': 'bold'})
+    #label_axis(axs_in_list,"B", xpos=0.1, ypos=0.9)
     
 
 

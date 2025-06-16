@@ -4,24 +4,24 @@ __maintainer__       = "Anzal KS"
 __email__            = "anzalks@ncbs.res.in"
 
 """
-Figure 5 (Supplementary, Field Normalized): Temporal Dynamics
+Figure 5: Temporal Dynamics
 
-This script generates the field-normalized version of Figure 5 for supplementary analysis, which shows:
-- Field-normalized temporal dynamics of synaptic plasticity during pattern learning
-- Time-course analysis with field potential correction applied
-- Pattern-specific temporal evolution corrected for field variations
-- Learning time constants and dynamics using field-normalized data
-- Comparison of temporal properties with field correction
-- Statistical analysis of temporal plasticity mechanisms with field normalization
+This script generates Figure 5 of the pattern learning paper, which shows:
+- Temporal dynamics of synaptic plasticity during pattern learning
+- Time-course analysis of EPSP amplitude changes
+- Pattern-specific temporal evolution of responses
+- Detailed analysis of learning time constants and dynamics
+- Comparison of temporal properties between learners and non-learners
+- Statistical analysis of temporal plasticity mechanisms
 
 Input files:
 - pd_all_cells_mean.pickle: Mean cellular responses
-- all_cells_fnorm_classifeied_dict.pickle: Field-normalized cell classification
-- pd_all_cells_all_trials.pickle: Trial data for field correction
-- cell_stats.h5: Cell statistics
+- all_cells_classified_dict.pickle: Cell classification data
+- pd_all_cells_all_trials.pickle: Trial-by-trial temporal data
+- cell_stats.h5: Cell statistics and temporal properties
 - Figure_5_1.png: Illustration of temporal analysis setup
 
-Output: Figure_5_fnorm/figure_5_fnorm.png showing field-normalized temporal dynamics analysis
+Output: Figure_5/figure_5.png showing comprehensive temporal dynamics analysis
 """
 
 import pandas as pd
@@ -44,6 +44,7 @@ from shared_utils import baisic_plot_fuctnions_and_features as bpf
 import re
 from scipy.stats import ttest_1samp
 from scipy.stats import spearmanr
+from PIL import ImageDraw, ImageFont
 
 # plot features are defines in bpf
 bpf.set_plot_properties()
@@ -231,82 +232,197 @@ def norm_values_all_trials(cell_list, val_to_plot):
                         cell_list.loc[combined_mask, val_to_plot] = norm_val
     return cell_list
 
-def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
-                   x_label, cell_type,plt_color,resp_color):
-    pat_num=int(pattern_number.split("_")[-1])
-    num_cells= len(catcell_dist["cell_ID"].unique())
+
+
+def plot_cell_dist(catcell_dist, val_to_plot, fig, axs, pattern_number, y_lim,
+                   x_label, cell_type, plt_color, resp_color):
+    pat_num = int(pattern_number.split("_")[-1])
+    num_cells = len(catcell_dist["cell_ID"].unique())
     pfd = catcell_dist.groupby(by="frame_id")
+
+    # Set a fixed y-axis limit for consistency across all plots
+    axs.set_ylim(y_lim)
+
     for c, pat in pfd:
         if c != pattern_number:
             continue
         else:
-            order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
-            g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
-                            order=order,ax=axs,color=resp_color,
-                            alpha=0.6,size=8, label='cell response')#alpha=0.8,
-            sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
-                          errorbar="se",order=order,capsize=0.08,ax=axs,
-                          color=plt_color, linestyles='dotted',scale = 0.8,
-                         label="average cell response")
-            g.set_title(None)
-            #"""
-            pvalList = []
-            anotp_list = []
+            order = np.array(('pre', 'post_0', 'post_1', 'post_2', 'post_3'), dtype=object)
+            
+            # Scatter plot for cell response
+            sns.stripplot(
+                data=pat, x="pre_post_status", y=f"{val_to_plot}",
+                order=order, ax=axs, color=resp_color,
+                alpha=0.6, size=8, label='cell response'
+            )
+
+            # Point plot for average response
+            sns.pointplot(
+                data=pat, x="pre_post_status", y=f"{val_to_plot}", 
+                errorbar="se", order=order, capsize=0.08, ax=axs,
+                color=plt_color, linestyles='dotted', scale=0.8,
+                label="average cell response"
+            )
+
+            # Calculate p-values for annotations
+            pval_list = []
+            pairs_list = []
             for i in order[1:]:
-                posti ="post{i}"
-                #non parametric, paired and small sample size, hence used Wilcoxon signed-rank test
-                #Wilcoxon signed-rank test
-                posti= spst.wilcoxon(pat[pat["pre_post_status"]=='pre'][f"{val_to_plot}"],pat[pat["pre_post_status"]==i][f"{val_to_plot}"],
-                                     zero_method="wilcox", correction=True)
-                pvalList.append(posti.pvalue)
-                anotp_list.append(("pre",i))
-            annotator = Annotator(axs,anotp_list,data=pat, 
-                                  x="pre_post_status",
-                                  y=f"{val_to_plot}",
-                                  order=order,
-                                 fontsize=10)
-            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
-            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
-            annotator.annotate()
-            #"""
-            axs.axhline(100, ls=':',color="k", alpha=0.4)
-            if pat_num==0:
-                sns.despine(fig=None, ax=axs, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
-                axs.set_ylabel("% change in PSH")
+                result = spst.wilcoxon(
+                    pat[pat["pre_post_status"] == 'pre'][f"{val_to_plot}"],
+                    pat[pat["pre_post_status"] == i][f"{val_to_plot}"],
+                    zero_method="wilcox", correction=True
+                )
+                pval_list.append(result.pvalue)
+                pairs_list.append(("pre", i))
+
+            # Manually add annotations using matplotlib
+            if cell_type=="dep_cells":
+                base_y = 400  # Absolute y-axis position for the first annotation
+                step_y = 50    # Spacing between each annotation
+            else:
+                base_y = 400  # Absolute y-axis position for the first annotation
+                step_y = 40    # Spacing between each annotation                             
+            for idx, (pval, pair) in enumerate(zip(pval_list, pairs_list)):
+                x1, x2 = pair
+                x1_pos = order.tolist().index(x1)
+                x2_pos = order.tolist().index(x2)
+                
+                # Draw the annotation line
+                axs.plot([x1_pos, x2_pos], [base_y + idx * step_y] * 2, color='black', linewidth=1)
+                
+                # Add the p-value text above the line
+                annotation_text = bpf.convert_pvalue_to_asterisks(pval)
+                axs.text(
+                    (x1_pos + x2_pos) / 2, base_y + idx * step_y + 2, 
+                    annotation_text, ha='center', va='bottom', fontsize=10
+                )
+
+            # Draw a horizontal reference line at 100
+            axs.axhline(100, ls=':', color="k", alpha=0.4)
+
+            # Adjust axis labels and ticks
+            if pat_num == 0:
+                sns.despine(ax=axs, top=True, right=True)
+                axs.set_ylabel("% change in\nPSH amplitude")
                 axs.set_xlabel(None)
-                #axs[pat_num].set_yticks([])
-            elif pat_num==1:
-                sns.despine(fig=None, ax=axs, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
+            elif pat_num == 1:
+                sns.despine(ax=axs, top=True, right=True)
                 axs.set_ylabel(None)
                 axs.set_yticklabels([])
-                if cell_type=="dep_cells":
+                if cell_type == "dep_cells":
                     axs.set_xlabel(x_label)
                 else:
                     axs.set_xlabel(None)
-            elif pat_num==2:
-                sns.despine(fig=None, ax=axs, top=True, right=True, 
-                            left=False, bottom=False, offset=None, trim=False)
+            elif pat_num == 2:
+                sns.despine(ax=axs, top=True, right=True)
                 axs.set_xlabel(None)
                 axs.set_ylabel(None)
                 axs.set_yticklabels([])
-            else:
-                pass 
-            g.set(ylim=y_lim)
-            g.set_xticklabels(time_points,rotation=0)
-            if g.get_legend() is not None:
-                    g.get_legend().remove()
-            if cell_type!="dep_cells":
+            
+            axs.set_xticklabels(time_points, rotation=0)
+
+            # Remove legend if present
+            if axs.get_legend() is not None:
+                axs.get_legend().remove()
+
+            if cell_type != "dep_cells":
                 axs.set_xticklabels([])
-            else:
-                pass 
+
+    return axs
 
 
-    ax_pos = axs.get_position()
-    #new_ax_pos = [ax_pos.x0-0.02, ax_pos.y0, ax_pos.width,
-    #              ax_pos.height]
-    #axs.set_position(new_ax_pos)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#def plot_cell_dist(catcell_dist,val_to_plot,fig,axs,pattern_number,y_lim,
+#                   x_label, cell_type,plt_color,resp_color):
+#    pat_num=int(pattern_number.split("_")[-1])
+#    num_cells= len(catcell_dist["cell_ID"].unique())
+#    pfd = catcell_dist.groupby(by="frame_id")
+#    for c, pat in pfd:
+#        if c != pattern_number:
+#            continue
+#        else:
+#            order = np.array(('pre','post_0','post_1','post_2','post_3'),dtype=object)
+#            g=sns.stripplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
+#                            order=order,ax=axs,color=resp_color,
+#                            alpha=0.6,size=8, label='cell response')#alpha=0.8,
+#            sns.pointplot(data=pat, x="pre_post_status",y=f"{val_to_plot}",
+#                          errorbar="se",order=order,capsize=0.08,ax=axs,
+#                          color=plt_color, linestyles='dotted',scale = 0.8,
+#                         label="average cell response")
+#            g.set_title(None)
+#            #"""
+#            pvalList = []
+#            anotp_list = []
+#            for i in order[1:]:
+#                posti ="post{i}"
+#                #non parametric, paired and small sample size, hence used Wilcoxon signed-rank test
+#                #Wilcoxon signed-rank test
+#                posti= spst.wilcoxon(pat[pat["pre_post_status"]=='pre'][f"{val_to_plot}"],pat[pat["pre_post_status"]==i][f"{val_to_plot}"],
+#                                     zero_method="wilcox", correction=True)
+#                pvalList.append(posti.pvalue)
+#                anotp_list.append(("pre",i))
+#            annotator = Annotator(axs,anotp_list,data=pat, 
+#                                  x="pre_post_status",
+#                                  y=f"{val_to_plot}",
+#                                  order=order,
+#                                 fontsize=10)
+#            #annotator = Annotator(axs[pat_num],[("pre","post_0"),("pre","post_1"),("pre","post_2"),("pre","post_3")],data=cell, x="pre_post_status",y=f"{col_pl}")
+#            annotator.set_custom_annotations([bpf.convert_pvalue_to_asterisks(a) for a in pvalList])
+#            annotator.annotate()
+#            #"""
+#            axs.axhline(100, ls=':',color="k", alpha=0.4)
+#            if pat_num==0:
+#                sns.despine(fig=None, ax=axs, top=True, right=True, 
+#                            left=False, bottom=False, offset=None, trim=False)
+#                axs.set_ylabel("% change in PSH")
+#                axs.set_xlabel(None)
+#                #axs[pat_num].set_yticks([])
+#            elif pat_num==1:
+#                sns.despine(fig=None, ax=axs, top=True, right=True, 
+#                            left=False, bottom=False, offset=None, trim=False)
+#                axs.set_ylabel(None)
+#                axs.set_yticklabels([])
+#            elif pat_num==2:
+#                sns.despine(fig=None, ax=axs, top=True, right=True, 
+#                            left=False, bottom=False, offset=None, trim=False)
+#                axs.set_xlabel(None)
+#                axs.set_ylabel(None)
+#                axs.set_yticklabels([])
+#            else:
+#                pass 
+#            g.set(ylim=y_lim)
+#            g.set_xticklabels(time_points,rotation=0)
+#            if g.get_legend() is not None:
+#                    g.get_legend().remove()
+#            if cell_type!="dep_cells":
+#                axs.set_xticklabels([])
+#            else:
+#                pass 
+#
+#
+#    ax_pos = axs.get_position()
+#    #new_ax_pos = [ax_pos.x0-0.02, ax_pos.y0, ax_pos.width,
+#    #              ax_pos.height]
+#    #axs.set_position(new_ax_pos)
 
 def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
                                                 fig,axs1,axs2,axs3,cell_type):
@@ -314,12 +430,12 @@ def plot_cell_category_classified_EPSP_features(esp_feat_cells_df,val_to_plot,
     if cell_type=="pot_cells":
         strp_color = bpf.CB_color_cycle[0]
         line_color = bpf.CB_color_cycle[5]
-        y_lim = (-25,1300)
+        y_lim = (-25,600)
         x_label = None
     elif cell_type=="dep_cells":
         strp_color = bpf.CB_color_cycle[1]
         line_color = bpf.CB_color_cycle[5]
-        y_lim = (-25,1300)
+        y_lim = (-25,1000)
         x_label = "time points (mins)"
     else:
         print("uncagerised cell")
@@ -481,7 +597,7 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     axs_lr.spines[['right', 'top']].set_visible(False)
     axs_lr.set_xticklabels(x_ticklabels)
     #axs_lr.set_xticklabels([])#x_ticklabels)
-    #axs_lr.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
+    #    #axs_lr.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
 
     # Customize axes for non-learners
     axs_nl.set_ylim(-50, 500)
@@ -493,158 +609,6 @@ def plot_point_plasticity_dist(cell_features_all_trials, sc_data_dict, fig,
     #axs_nl.set_yticklabels([])
     #axs_nl.legend(loc='upper center', bbox_to_anchor=(0.5, 1), frameon=False, ncol=4)
 
-
-
-
-def plot_peak_comp_pre_post(sc_data_dict,fig,axs):
-    order = ["pre", "post_3"]
-    learners = sc_data_dict["ap_cells"]["cell_ID"].unique
-    learners_df = sc_data_dict["ap_cells"]
-    #learners_df= norm_values(learners_df,"max_trace")
-    learners_df = learners_df[learners_df["pre_post_status"].isin(["pre",
-                                                                   "post_3"])]
-    pat_df_learners = learners_df[learners_df["frame_id"].isin(["pattern_0",
-                                                                "pattern_1",
-                                                                "pattern_2"])]
-    non_learners = sc_data_dict["an_cells"]["cell_ID"].unique
-    non_learners_df = sc_data_dict["an_cells"]
-    #non_learners_df= norm_values(non_learners_df,"max_trace")
-    non_learners_df = non_learners_df[non_learners_df["pre_post_status"].isin(["pre", "post_3"])]
-    pat_df_non_learners = non_learners_df[non_learners_df["frame_id"].isin(["pattern_0", "pattern_1",
-                                                      "pattern_2"])]
-
-    # Add a column to distinguish between learners and non-learners
-    pat_df_learners['group'] = 'learners'
-    pat_df_non_learners['group'] = 'non_learners'
-    all_cell_df = pd.concat([pat_df_learners,pat_df_non_learners])
-    lrn_grp = all_cell_df.groupby(by="group")
-    for lrn,lrn_data in lrn_grp:
-        if lrn=="learners":
-            color=bpf.CB_color_cycle[0]
-            labl="lr"
-        else:
-            color=bpf.CB_color_cycle[1]
-            labl="n_lr"
-        pat_grp = lrn_data.groupby(by="frame_id")
-        for pat,pat_data in pat_grp:
-            if pat=="pattern_0":
-                alpha=0.5
-                marker="^"
-                label = f"trained"#_{labl}"
-            elif pat=="pattern_1":
-                alpha=0.5
-                marker="."
-                label = f"overlapping"#_{labl}"
-            elif pat=="pattern_2":
-                alpha=0.5
-                marker="+"
-                label = f"untrained"#_{labl}"
-            x= pat_data[pat_data["pre_post_status"]=="pre"]["min_trace"]
-            y= pat_data[pat_data["pre_post_status"]=="post_3"]["min_trace"]
-            axs.scatter(x,y,color=color,alpha=alpha,marker=marker,label=label)
-    axs.axline([0, 0], [1, 1],alpha=0.5,color='k',linestyle=":")
-    axs.set_aspect("equal")
-    axs.set_ylim(-5,5)
-    axs.set_xlim(-5,5)
-    axs.spines[['right', 'top']].set_visible(False)
-    axs.set_ylabel("PSH post\n30 min(mV)")
-    axs.set_xlabel("PSH pre (mV)")
-    axs.legend(loc='upper center', bbox_to_anchor=(1.25, 1.05),frameon=False, 
-                  ncol=1)
-
-#def plot_peak_perc_comp(sc_data_dict, fig, axs_learners, axs_non_learners):
-#    order = ["pre", "post_3"]
-#    pattern_info = {
-#        "pattern_0": {"marker": "^", "label": "trained"},
-#        "pattern_1": {"marker": ".", "label": "overlapping"},
-#        "pattern_2": {"marker": "+", "label": "non-overlapping"}
-#    }
-#    
-#    # Get data for learners and non-learners
-#    learners_df = sc_data_dict["ap_cells"]
-#    non_learners_df = sc_data_dict["an_cells"]
-#    
-#    learners_df = learners_df[learners_df["pre_post_status"].isin(order)]
-#    non_learners_df = non_learners_df[non_learners_df["pre_post_status"].isin(order)]
-#    
-#    pat_df_learners = learners_df[learners_df["frame_id"].isin(pattern_info.keys())].assign(group='learners')
-#    pat_df_non_learners = non_learners_df[non_learners_df["frame_id"].isin(pattern_info.keys())].assign(group='non_learners')
-#    
-#    # Combine and normalize data
-#    all_cell_df = pd.concat([pat_df_learners, pat_df_non_learners], ignore_index=True)
-#    norm_df = del_values(all_cell_df, "min_trace")
-#
-#    # Group data and plot
-#    for (lrn, pat), pat_data in all_cell_df.groupby(["group", "frame_id"]):
-#        color = bpf.CB_color_cycle[0] if lrn == "learners" else bpf.CB_color_cycle[1]
-#        ax = axs_learners if lrn == "learners" else axs_non_learners
-#        
-#        # Extract x and y data
-#        #x = pat_data[pat_data["pre_post_status"] == "pre"]["min_trace"]
-#        x = pat_data[pat_data["pre_post_status"] == "pre"]["max_trace"]
-#        y = norm_df[(norm_df["group"] == lrn) & 
-#                    (norm_df["frame_id"] == pat) & 
-#                    (norm_df["pre_post_status"] == "post_3")]["min_trace"]
-#        
-#        if x.empty or y.empty:
-#            print(f"No data for {lrn} - {pat}.")
-#            continue
-#        
-#        # Perform Spearman correlation test
-#        corr_coeff, p_value = spearmanr(x, y)
-#        
-#        # Scatter plot
-#        if pat== "pattern_0":
-#            ax.scatter(x, y, color=color, alpha=0.9, 
-#                       marker=pattern_info[pat]["marker"],
-#                       facecolors='none',
-#                       label=pattern_info[pat]["label"])
-#        else:
-#            ax.scatter(x, y, color=color, alpha=0.9, 
-#                       marker=pattern_info[pat]["marker"], 
-#                       label=pattern_info[pat]["label"])
-#
-#
-#
-#
-#
-#
-#
-#        #if pat=="pattern_0":
-#        #    # Display correlation coefficient and p-value on the plot
-#        #    ax.text(0.05, -0.4, f"trained\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
-#        #            transform=ax.transAxes, fontsize=10, 
-#        #            verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
-#        #if pat=="pattern_1":
-#        #    # Display correlation coefficient and p-value on the plot                       
-#        #    ax.text(0.05, -0.6, f"overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
-#        #            transform=ax.transAxes, fontsize=10, 
-#        #            verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
-#        #if pat=="pattern_2":
-#        #    # Display correlation coefficient and p-value on the plot
-#        #    ax.text(0.05, -0.8, f"non-overlapping\nSpearman r={corr_coeff:.2f} p={p_value:.3f}", 
-#        #            transform=ax.transAxes, fontsize=10, 
-#        #            verticalalignment='top', bbox=dict(facecolor='white', alpha=0.5))
-#
-#
-#        # Customize axes
-#        #ax.set_ylim(-2, 0.5)
-#        #ax.set_xlim(-2, 0.5)
-#        ax.set_ylim(-2, 0.5)
-#        ax.set_xlim(0, 8)
-#
-#        ax.spines[['right', 'top']].set_visible(False)
-#        ax.set_xlabel("EPSP amplitude\npre (mV)")
-#        
-#        if lrn == "learners":
-#            ax.set_ylabel("chang in PSH\npost-training (mV)")
-#        else:
-#            ax.set_yticklabels([])
-#        
-#        # Legend customization
-#        ax.legend(loc='center', bbox_to_anchor=(0.6, 1.3),
-#                  handletextpad=0.05,
-#                  frameon=True,ncol=1)
 
 
 
@@ -930,7 +894,8 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     axs_illu = fig.add_subplot(gs[0:2,1:3])
     plot_image(psh_illust,axs_illu,0,0,1.5)
     move_axis([axs_illu],0.1,0.035,1)
-    bpf.add_subplot_label(axs_illu, 'A', xpos=0.05, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_illu.text(0.05,1.1,'A',transform=axs_illu.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     
     #plot patterns
     axs_pat_1 = fig.add_subplot(gs[0:1,1:2])
@@ -948,10 +913,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    b_axes = axs_ex_list
-    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_ex_list,"B",xpos=-0.1, ypos=1.1)
 
 
     axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -963,15 +925,14 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    c_axes = axs_in_list
-    c_labels = bpf.generate_letter_roman_labels('C', len(c_axes))
-    bpf.add_subplot_labels_from_list(c_axes, c_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_in_list,"C",xpos=0.1, ypos=0.9)
 
     axs_bar = fig.add_subplot(gs[12:14,0:2])
     plot_response_summary_bar(sc_data_dict,fig,axs_bar)
     move_axis([axs_bar],0,-0.03,1)
-    bpf.add_subplot_label(axs_bar, 'D', xpos=-0.1, ypos=1, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_bar.text(-0.1,1,'D',transform=axs_bar.transAxes,    
+                 fontsize=16, fontweight='bold', ha='center',
+                 va='center')
 #    #comment here
 #    axs_comp_per = fig.add_subplot(gs[18:20,0:3])
 #    plot_peak_perc_comp(sc_data_dict,fig,axs_comp_per) 
@@ -1021,10 +982,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
                     axs_non_learners_pat_non_overlapping
                     ]
     move_axis(axs_scatr_list,0,-0.04,1)
-    e_axes = axs_scatr_list
-    e_labels = bpf.generate_letter_roman_labels('E', len(e_axes))
-    bpf.add_subplot_labels_from_list(e_axes, e_labels, 
-                                base_params={'xpos': -0.2, 'ypos': 1.25, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_scatr_list,"E", xpos=-0.2, ypos=1.25)
 
 
 
@@ -1075,7 +1033,7 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_5_fnorm.png"
+    outpath = f"{outdir}/figure_5.png"
     #outpath = f"{outdir}/figure_5.svg"
     #outpath = f"{outdir}/figure_5.pdf"
     plt.savefig(outpath,bbox_inches='tight')
@@ -1127,7 +1085,7 @@ def main():
     cell_stat_path = Path(args.cellstat_path)
     all_trial_df_path = Path(args.alltrial_path)
     globoutdir = Path(args.outdir_path)
-    globoutdir= globoutdir/'Figure_5_fnorm'
+    globoutdir= globoutdir/'Figure_5'
     globoutdir.mkdir(exist_ok=True, parents=True)
     print(f"pkl path : {pklpath}")
     plot_figure_5(pklpath,PSH_illustration_path,

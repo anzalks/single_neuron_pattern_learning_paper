@@ -9,12 +9,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import PIL as pillow
 from PIL import Image, ImageDraw, ImageFont 
-import os
 
-# Global subplot label control
-# Check environment variable first, then default to True
-_env_labels = os.environ.get('SUBPLOT_LABELS_ENABLED', 'True')
-SUBPLOT_LABELS_ENABLED = _env_labels.lower() in ('true', '1', 'yes', 'on')
 
 pre_color = "000000" #pre_color black 
 post_color = "#377eb8" #post_color blue 
@@ -440,7 +435,7 @@ def create_grid_points_with_text(
 
 def add_subplot_label(ax, label_text, xpos=-0.1, ypos=1.1, fontsize=16, 
                      fontweight='bold', ha='center', va='center', 
-                     transform_type='transAxes', force_show=False, **kwargs):
+                     transform_type='transAxes', **kwargs):
     """
     Universal subplot labeling function that provides consistent labeling
     across all figures while preserving exact positioning and formatting.
@@ -471,33 +466,23 @@ def add_subplot_label(ax, label_text, xpos=-0.1, ypos=1.1, fontsize=16,
         Vertical alignment
     transform_type : str, default='transAxes'
         Transform type ('transAxes' or 'transData')
-    force_show : bool, default=False
-        If True, show label regardless of global SUBPLOT_LABELS_ENABLED setting
     **kwargs : dict
         Additional matplotlib text parameters
     
     Returns:
     --------
-    matplotlib.text.Text or None
-        The created text object if labels are enabled, None otherwise
+    matplotlib.text.Text
+        The created text object
     
     Example Usage:
     --------------
-    # Replace: bpf.add_subplot_label(ax, 'A', xpos=0.05, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
+    # Replace: ax.text(0.05, 1.1, 'A', transform=ax.transAxes, fontsize=16, fontweight='bold')
     # With: add_subplot_label(ax, 'A', xpos=0.05, ypos=1.1)
     
     # Replace: label_axis([ax1, ax2], "H") 
     # With: add_subplot_label(ax1, 'Hi', xpos=-0.1, ypos=1.1)
     #       add_subplot_label(ax2, 'Hii', xpos=-0.1, ypos=1.1)
-    
-    # Control visibility globally:
-    # bpf.set_subplot_labels_enabled(False)  # Turn off all labels
-    # bpf.set_subplot_labels_enabled(True)   # Turn on all labels
     """
-    # Check global flag unless force_show is True
-    if not force_show and not SUBPLOT_LABELS_ENABLED:
-        return None
-    
     # Set transform based on transform_type
     if transform_type == 'transAxes':
         transform = ax.transAxes
@@ -519,7 +504,7 @@ def add_subplot_label(ax, label_text, xpos=-0.1, ypos=1.1, fontsize=16,
 
 
 def add_subplot_labels_from_list(axes_list, labels_list, base_params=None, 
-                                individual_params=None, force_show=False):
+                                individual_params=None):
     """
     Apply labels to a list of axes with consistent or individual parameters.
     
@@ -536,20 +521,15 @@ def add_subplot_labels_from_list(axes_list, labels_list, base_params=None,
         Base parameters applied to all labels (xpos, ypos, fontsize, etc.)
     individual_params : list of dict, optional
         Individual parameters for each label (overrides base_params)
-    force_show : bool, default=False
-        If True, show labels regardless of global SUBPLOT_LABELS_ENABLED setting
     
     Returns:
     --------
     list
-        List of created text objects (may contain None values if labels disabled)
+        List of created text objects
     
     Example Usage:
     --------------
-    # Replace: h_axes = axs_mini_list
-    h_labels = bpf.generate_letter_roman_labels('H', len(h_axes))
-    bpf.add_subplot_labels_from_list(h_axes, h_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
+    # Replace: label_axis(axs_mini_list, "H")
     # With: add_subplot_labels_from_list(axs_mini_list, ['Hi', 'Hii'], 
     #                                   base_params={'xpos': -0.1, 'ypos': 1.1})
     """
@@ -566,9 +546,6 @@ def add_subplot_labels_from_list(axes_list, labels_list, base_params=None,
         params = {**base_params}
         if i < len(individual_params):
             params.update(individual_params[i])
-        
-        # Add force_show parameter to the params
-        params['force_show'] = force_show
         
         text_obj = add_subplot_label(ax, label, **params)
         text_objects.append(text_obj)
@@ -635,66 +612,4 @@ def generate_letter_roman_labels(letter, count):
     ['Hi', 'Hii', 'Hiii']
     """
     return [f"{letter}{int_to_roman(i+1)}" for i in range(count)]
-
-
-def set_subplot_labels_enabled(enabled):
-    """
-    Set global flag to enable or disable all subplot labels.
-    
-    Parameters:
-    -----------
-    enabled : bool
-        True to enable labels, False to disable labels
-    
-    Example Usage:
-    --------------
-    # Turn off all subplot labels
-    bpf.set_subplot_labels_enabled(False)
-    
-    # Turn on all subplot labels  
-    bpf.set_subplot_labels_enabled(True)
-    """
-    global SUBPLOT_LABELS_ENABLED
-    SUBPLOT_LABELS_ENABLED = enabled
-    print(f"✓ Subplot labels {'ENABLED' if enabled else 'DISABLED'} globally")
-
-
-def get_subplot_labels_enabled():
-    """
-    Get current state of global subplot labels flag.
-    
-    Returns:
-    --------
-    bool
-        Current state of SUBPLOT_LABELS_ENABLED
-    
-    Example Usage:
-    --------------
-    if bpf.get_subplot_labels_enabled():
-        print("Labels are currently enabled")
-    else:
-        print("Labels are currently disabled")
-    """
-    return SUBPLOT_LABELS_ENABLED
-
-
-def toggle_subplot_labels():
-    """
-    Toggle the global subplot labels flag between enabled and disabled.
-    
-    Returns:
-    --------
-    bool
-        New state after toggling
-    
-    Example Usage:
-    --------------
-    # Toggle labels on/off
-    new_state = bpf.toggle_subplot_labels()
-    print(f"Labels are now {'ON' if new_state else 'OFF'}")
-    """
-    global SUBPLOT_LABELS_ENABLED
-    SUBPLOT_LABELS_ENABLED = not SUBPLOT_LABELS_ENABLED
-    print(f"✓ Subplot labels toggled to {'ENABLED' if SUBPLOT_LABELS_ENABLED else 'DISABLED'}")
-    return SUBPLOT_LABELS_ENABLED
 

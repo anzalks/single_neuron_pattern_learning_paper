@@ -36,7 +36,6 @@ import sys
 # Add the shared_utils directory to sys.path to import custom modules
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared_utils'))
 import baisic_plot_fuctnions_and_features as bpf
-from shared_utils import baisic_plot_fuctnions_and_features as bpf
 
 # Set project plotting standards
 bpf.set_plot_properties()
@@ -55,8 +54,9 @@ def label_panels(axs_list, fontsize=16, fontweight='bold', xpos=-0.15, ypos=1.05
     panel_labels = ['A', 'B', 'C']
     for i, ax in enumerate(axs_list[:3]):  # Only label first 3 panels
         if i < len(panel_labels):
-            bpf.add_subplot_label(ax, panel_labels[i], xpos=xpos, ypos=ypos, 
-                                 fontsize=fontsize, fontweight=fontweight)
+            ax.text(xpos, ypos, panel_labels[i], 
+                   transform=ax.transAxes, fontsize=fontsize, 
+                   fontweight=fontweight, ha='center', va='center')
 
 def load_sensitisation_data(filename):
     """

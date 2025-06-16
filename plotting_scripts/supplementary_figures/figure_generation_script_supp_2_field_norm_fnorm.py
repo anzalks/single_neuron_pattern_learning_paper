@@ -531,7 +531,10 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"A", xpos=-0.1, ypos=1.1)
+    a_axes = axs_ex_list
+    a_labels = bpf.generate_letter_roman_labels('A', len(a_axes))
+    bpf.add_subplot_labels_from_list(a_axes, a_labels, 
+                                base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
 
 
     axs_in_pat1 = fig.add_subplot(gs[7:12,0:3])
@@ -543,7 +546,10 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"B", xpos=0.075, ypos=0.95)
+    b_axes = axs_in_list
+    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
+    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
+                                base_params={'xpos': 0.075, 'ypos': 0.95, 'fontsize': 16, 'fontweight': 'bold'})
 
 
     #plot distribution epsp for learners and non-leaners
@@ -556,7 +562,10 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "pot_cells"
                                                )
     axs_ex_list = [axs_ex_pat1,axs_ex_pat2,axs_ex_pat3]
-    label_axis(axs_ex_list,"C", xpos=-0.05, ypos=1.1)
+    c_axes = axs_ex_list
+    c_labels = bpf.generate_letter_roman_labels('C', len(c_axes))
+    bpf.add_subplot_labels_from_list(c_axes, c_labels, 
+                                base_params={'xpos': -0.05, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
                                                                              
                                                                              
     axs_in_pat1 = fig.add_subplot(gs[18:23,0:3])
@@ -568,7 +577,10 @@ def plot_figure_4(extracted_feature_pickle_file_path,
                                                 "dep_cells"
                                                )
     axs_in_list = [axs_in_pat1,axs_in_pat2,axs_in_pat3]
-    label_axis(axs_in_list,"D", xpos=0.075, ypos=0.95)
+    d_axes = axs_in_list
+    d_labels = bpf.generate_letter_roman_labels('D', len(d_axes))
+    bpf.add_subplot_labels_from_list(d_axes, d_labels, 
+                                base_params={'xpos': 0.075, 'ypos': 0.95, 'fontsize': 16, 'fontweight': 'bold'})
 
 
 
@@ -628,7 +640,11 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     #                axs_non_learners_pat_non_overlapping
     #                ]
     #move_axis(axs_scatr_list,0,-0.04,1)
-    #label_axis(axs_scatr_list,"D", xpos=-0.2, ypos=1.25)
+    #d_axes = axs_scatr_list
+    # Note: D labels already applied above at line 580, removing duplicate labeling
+    #d_labels = bpf.generate_letter_roman_labels('D', len(d_axes))
+    #bpf.add_subplot_labels_from_list(d_axes, d_labels, 
+    #                            base_params={'xpos': -0.2, 'ypos': 1.25, 'fontsize': 16, 'fontweight': 'bold'})
 
 
 

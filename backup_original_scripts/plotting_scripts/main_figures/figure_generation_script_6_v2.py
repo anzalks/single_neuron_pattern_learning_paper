@@ -1174,7 +1174,8 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     #plot sumamtion illustration
     axs_illu = fig.add_subplot(gs[0:3,1:5])
     plot_image(sum_illust,axs_illu,-0.125,0,2)
-    bpf.add_subplot_label(axs_illu, 'A', xpos=0.05, ypos=0.925, fontsize=16, fontweight='bold', ha='center', va='center')
+    axs_illu.text(0.05,0.925,'A',transform=axs_illu.transAxes,
+                 fontsize=16, fontweight='bold', ha='center', va='center')
     #plot patterns
     axs_pat_1 = fig.add_subplot(gs[3:4,0:1])
     axs_pat_2 = fig.add_subplot(gs[3:4,2:3])
@@ -1194,10 +1195,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
                                          sc_data_dict,"learners",
                               fig,axs_ex_sm1,axs_ex_sm2,axs_ex_sm3,axs_ex_sm3_)
     axs_ex_sm_l_list = [axs_ex_sm1,axs_ex_sm2,axs_ex_sm3]
-    b_axes = axs_ex_sm_l_list
-    b_labels = bpf.generate_letter_roman_labels('B', len(b_axes))
-    bpf.add_subplot_labels_from_list(b_axes, b_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.08, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_ex_sm_l_list, "B", xpos=-0.1, ypos=1.08)
     #axs_ex_sm2.set_title("learners")
     axs_ex_sm2.set_xlabel(None)
     axs_ex_sm4 = fig.add_subplot(gs[6:8,0:2])
@@ -1212,10 +1210,7 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     
     axs_ex_sm_nl_list= [axs_ex_sm4,axs_ex_sm5,axs_ex_sm6]
     move_axis(axs_ex_sm_nl_list,xoffset=0,yoffset=-0.01,pltscale=1) 
-    c_axes = axs_ex_sm_nl_list
-    c_labels = bpf.generate_letter_roman_labels('C', len(c_axes))
-    bpf.add_subplot_labels_from_list(c_axes, c_labels, 
-                                base_params={'xpos': -0.1, 'ypos': 1.08, 'fontsize': 16, 'fontweight': 'bold'})
+    label_axis(axs_ex_sm_nl_list,"C", xpos=-0.1, ypos=1.08)
 
 
 
