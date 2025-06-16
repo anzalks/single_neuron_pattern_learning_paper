@@ -1158,10 +1158,21 @@ def plot_figure_3(extracted_feature_pickle_file_path,
     bpf.add_subplot_label(axs_trn, 'F', xpos=-0.1, ypos=1.1, fontsize=16, fontweight='bold', ha='center', va='center')
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_3_fnorm.png"
+    # Using unified saving system - supports multiple formats via command line flags
+
+    bpf.save_figure_smart(fig, outdir, "figure_3_fnorm")
+
+    
+
+    # Legacy code (commented out - now handled by unified system):
+
+    #outpath = f"{outdir}/figure_3_fnorm.png"
+
     #outpath = f"{outdir}/figure_3.svg"
+
     #outpath = f"{outdir}/figure_3.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
+
+    #plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
     plt.close()

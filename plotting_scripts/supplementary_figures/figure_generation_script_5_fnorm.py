@@ -1075,10 +1075,21 @@ def plot_figure_5(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_5_fnorm.png"
+    # Using unified saving system - supports multiple formats via command line flags
+
+    bpf.save_figure_smart(fig, outdir, "figure_5_fnorm")
+
+    
+
+    # Legacy code (commented out - now handled by unified system):
+
+    #outpath = f"{outdir}/figure_5_fnorm.png"
+
     #outpath = f"{outdir}/figure_5.svg"
+
     #outpath = f"{outdir}/figure_5.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
+
+    #plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
     plt.close()

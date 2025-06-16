@@ -489,13 +489,16 @@ def plot_figure_2_with_stats(extracted_feature_pickle_file_path,
     else:
         filename = f"figure_2_fnorm_{stat_method}.png"
     
-    outpath = f"{outdir}/{filename}"
-    plt.savefig(outpath,bbox_inches='tight')
+    # Using unified saving system - supports multiple formats via command line flags
+    bpf.save_figure_smart(fig, outdir, filename.replace('.png', ''))
+    
+    # Legacy code (commented out - now handled by unified system):
+    #outpath = f"{outdir}/{filename}"
+    #plt.savefig(outpath,bbox_inches='tight')
+    print(f"Saved Figure 2 fnorm with {stat_method} test: {outdir}/{filename}")
     plt.show(block=False)
     plt.pause(1)
     plt.close()
-    
-    print(f"Saved Figure 2 fnorm with {stat_method} test: {outpath}")
 
 
 def plot_figure_2_fnorm_all_versions(extracted_feature_pickle_file_path,

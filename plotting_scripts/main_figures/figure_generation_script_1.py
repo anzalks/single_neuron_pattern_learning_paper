@@ -1114,10 +1114,16 @@ def plot_figure_1(pickle_file_path,
     bpf.add_subplot_label(axs_stat_dist, 'F', xpos=-0.2, ypos=1, fontsize=16, fontweight='bold')
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_1.png"
+    
+    # Using unified saving system - supports multiple formats via command line flags
+    bpf.save_figure_smart(fig, outdir, "figure_1")
+    
+    # Legacy code (commented out - now handled by unified system):
+    #outpath = f"{outdir}/figure_1.png"
     #outpath = f"{outdir}/figure_1.svg"
     #outpath = f"{outdir}/figure_1.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
+    #plt.savefig(outpath,bbox_inches='tight')
+    
     plt.show(block=False)
     plt.pause(1)
     plt.close()

@@ -126,6 +126,18 @@ def main():
     parser.add_argument('--no_labels', action='store_true', 
                        help='Alias for --alpha_labels_off (disable all subplot labels)')
     
+    # Figure format control
+    parser.add_argument('--format', choices=['png', 'pdf', 'svg', 'eps'], 
+                       default='png', help='Output format for all figures (default: png)')
+    parser.add_argument('--multi_format', nargs='+', choices=['png', 'pdf', 'svg', 'eps'],
+                       help='Save figures in multiple formats (e.g., --multi_format png pdf svg)')
+    parser.add_argument('--dpi', type=int, default=300, 
+                       help='DPI for figure output (default: 300)')
+    parser.add_argument('--high_quality', action='store_true',
+                       help='Use high quality settings (DPI=600, optimized for publication)')
+    parser.add_argument('--transparent', action='store_true',
+                       help='Save figures with transparent background')
+    
     args = parser.parse_args()
     
     # Handle subplot labels control
@@ -139,6 +151,30 @@ def main():
     else:
         # Default behavior - labels enabled
         os.environ['SUBPLOT_LABELS_ENABLED'] = 'True'
+    
+    # Handle figure format control
+    if args.multi_format:
+        # Multiple formats requested
+        os.environ['FIGURE_FORMATS'] = ','.join(args.multi_format)
+        print(f"📊 Figure formats: {', '.join(args.multi_format).upper()}")
+    else:
+        # Single format
+        os.environ['FIGURE_FORMAT'] = args.format
+        print(f"📊 Figure format: {args.format.upper()}")
+    
+    # Handle quality settings
+    if args.high_quality:
+        os.environ['FIGURE_DPI'] = '600'
+        print("🎯 High quality mode: DPI=600")
+    else:
+        os.environ['FIGURE_DPI'] = str(args.dpi)
+        print(f"🎯 Figure DPI: {args.dpi}")
+    
+    if args.transparent:
+        os.environ['FIGURE_TRANSPARENT'] = 'True'
+        print("🔍 Transparent background enabled")
+    else:
+        os.environ['FIGURE_TRANSPARENT'] = 'False'
     
     # Load configuration
     try:

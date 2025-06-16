@@ -698,3 +698,221 @@ def toggle_subplot_labels():
     print(f"✓ Subplot labels toggled to {'ENABLED' if SUBPLOT_LABELS_ENABLED else 'DISABLED'}")
     return SUBPLOT_LABELS_ENABLED
 
+# Global figure saving control
+# Check environment variable first, then default to 'png'
+_env_format = os.environ.get('FIGURE_FORMAT', 'png')
+FIGURE_FORMAT = _env_format.lower()
+
+# Check for multiple formats
+_env_formats = os.environ.get('FIGURE_FORMATS', '')
+FIGURE_FORMATS = [fmt.strip().lower() for fmt in _env_formats.split(',') if fmt.strip()] if _env_formats else []
+
+# Check for DPI setting
+_env_dpi = os.environ.get('FIGURE_DPI', '300')
+FIGURE_DPI = int(_env_dpi) if _env_dpi.isdigit() else 300
+
+# Check for transparency setting
+_env_transparent = os.environ.get('FIGURE_TRANSPARENT', 'False')
+FIGURE_TRANSPARENT = _env_transparent.lower() in ('true', '1', 'yes', 'on')
+
+# Quality settings for different formats (dynamically updated from environment)
+def _get_base_quality_settings():
+    """Get base quality settings with current environment values."""
+    return {
+        'dpi': FIGURE_DPI,
+        'bbox_inches': 'tight',
+        'pad_inches': 0.1,
+        'facecolor': 'white' if not FIGURE_TRANSPARENT else 'none',
+        'edgecolor': 'none',
+        'transparent': FIGURE_TRANSPARENT
+    }
+
+FIGURE_QUALITY_SETTINGS = {
+    'png': _get_base_quality_settings(),
+    'pdf': _get_base_quality_settings(),
+    'svg': _get_base_quality_settings(),
+    'eps': _get_base_quality_settings()
+}
+
+def set_figure_format(format_type):
+    """
+    Set the global figure format for all plots.
+    
+    Parameters:
+    - format_type (str): The format to save figures in ('png', 'pdf', 'svg', 'eps')
+    """
+    global FIGURE_FORMAT
+    if format_type.lower() in FIGURE_QUALITY_SETTINGS:
+        FIGURE_FORMAT = format_type.lower()
+        print(f"Figure format set to: {FIGURE_FORMAT.upper()}")
+    else:
+        print(f"Warning: Unsupported format '{format_type}'. Using default 'png'.")
+        FIGURE_FORMAT = 'png'
+
+def get_figure_format():
+    """
+    Get the current global figure format.
+    
+    Returns:
+    - str: Current figure format
+    """
+    return FIGURE_FORMAT
+
+def save_figure_smart(fig, output_dir, filename, create_dir=True, verbose=True):
+    """
+    Smart figure saving that automatically handles global format settings.
+    Uses FIGURE_FORMATS if set, otherwise uses FIGURE_FORMAT.
+    
+    Parameters:
+    - fig: matplotlib figure object
+    - output_dir (str): Directory to save the figure
+    - filename (str): Base filename (without extension)
+    - create_dir (bool): Create output directory if it doesn't exist
+    - verbose (bool): Print save confirmations
+    
+    Returns:
+    - list: List of full paths of saved files
+    """
+    if FIGURE_FORMATS:
+        # Multiple formats requested
+        return save_figure_multiple_formats(fig, output_dir, filename, 
+                                          formats=FIGURE_FORMATS,
+                                          create_dir=create_dir, verbose=verbose)
+    else:
+        # Single format
+        saved_path = save_figure(fig, output_dir, filename, 
+                               format_override=FIGURE_FORMAT,
+                               create_dir=create_dir, verbose=verbose)
+        return [saved_path]
+
+def save_figure(fig, output_dir, filename, format_override=None, quality_override=None, 
+                create_dir=True, verbose=True):
+    """
+    Unified figure saving function with consistent quality settings.
+    
+    Parameters:
+    - fig: matplotlib figure object
+    - output_dir (str): Directory to save the figure
+    - filename (str): Base filename (without extension)
+    - format_override (str): Override global format for this save
+    - quality_override (dict): Override quality settings for this save
+    - create_dir (bool): Create output directory if it doesn't exist
+    - verbose (bool): Print save confirmation
+    
+    Returns:
+    - str: Full path of saved file
+    """
+    # Determine format to use
+    format_to_use = format_override.lower() if format_override else FIGURE_FORMAT
+    
+    # Ensure format is supported
+    if format_to_use not in FIGURE_QUALITY_SETTINGS:
+        print(f"Warning: Unsupported format '{format_to_use}'. Using 'png'.")
+        format_to_use = 'png'
+    
+    # Create output directory if needed
+    if create_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+        if verbose:
+            print(f"Created directory: {output_dir}")
+    
+    # Build full output path
+    full_filename = f"{filename}.{format_to_use}"
+    output_path = os.path.join(output_dir, full_filename)
+    
+    # Get quality settings (refresh from environment)
+    quality_settings = _get_base_quality_settings().copy()
+    if quality_override:
+        quality_settings.update(quality_override)
+    
+    # Save the figure
+    fig.savefig(output_path, format=format_to_use, **quality_settings)
+    
+    if verbose:
+        print(f"Figure saved: {output_path}")
+    
+    return output_path
+
+def save_figure_multiple_formats(fig, output_dir, filename, formats=['png'], 
+                                quality_override=None, create_dir=True, verbose=True):
+    """
+    Save figure in multiple formats simultaneously.
+    
+    Parameters:
+    - fig: matplotlib figure object
+    - output_dir (str): Directory to save the figure
+    - filename (str): Base filename (without extension)
+    - formats (list): List of formats to save ('png', 'pdf', 'svg', 'eps')
+    - quality_override (dict): Override quality settings for all saves
+    - create_dir (bool): Create output directory if it doesn't exist
+    - verbose (bool): Print save confirmations
+    
+    Returns:
+    - list: List of full paths of saved files
+    """
+    saved_files = []
+    
+    for fmt in formats:
+        try:
+            saved_path = save_figure(fig, output_dir, filename, 
+                                   format_override=fmt, 
+                                   quality_override=quality_override,
+                                   create_dir=create_dir, 
+                                   verbose=verbose)
+            saved_files.append(saved_path)
+        except Exception as e:
+            print(f"Error saving {fmt} format: {e}")
+    
+    return saved_files
+
+def get_figure_quality_settings(format_type=None):
+    """
+    Get quality settings for a specific format.
+    
+    Parameters:
+    - format_type (str): Format to get settings for (defaults to current global format)
+    
+    Returns:
+    - dict: Quality settings for the format
+    """
+    format_to_use = format_type.lower() if format_type else FIGURE_FORMAT
+    return FIGURE_QUALITY_SETTINGS.get(format_to_use, FIGURE_QUALITY_SETTINGS['png']).copy()
+
+def update_figure_quality_settings(format_type, **kwargs):
+    """
+    Update quality settings for a specific format.
+    
+    Parameters:
+    - format_type (str): Format to update settings for
+    - **kwargs: Quality settings to update
+    """
+    if format_type.lower() in FIGURE_QUALITY_SETTINGS:
+        FIGURE_QUALITY_SETTINGS[format_type.lower()].update(kwargs)
+        print(f"Updated {format_type.upper()} quality settings: {kwargs}")
+    else:
+        print(f"Warning: Unknown format '{format_type}'")
+
+# Convenience function for backward compatibility
+def save_plot(fig, outpath, **kwargs):
+    """
+    Backward compatibility function for existing scripts.
+    Automatically detects format from file extension.
+    
+    Parameters:
+    - fig: matplotlib figure object
+    - outpath (str): Full output path including extension
+    - **kwargs: Additional arguments passed to savefig
+    """
+    # Extract directory, filename, and extension
+    output_dir = os.path.dirname(outpath)
+    full_filename = os.path.basename(outpath)
+    filename, ext = os.path.splitext(full_filename)
+    
+    # Remove leading dot from extension
+    format_detected = ext.lstrip('.').lower() if ext else 'png'
+    
+    # Use the unified save function
+    return save_figure(fig, output_dir, filename, 
+                      format_override=format_detected, 
+                      create_dir=True, verbose=True)
+

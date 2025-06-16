@@ -693,10 +693,21 @@ def plot_figure_4(extracted_feature_pickle_file_path,
     
 
     plt.tight_layout()
-    outpath = f"{outdir}/supplimentary_figure_2_field_norm_fnorm.png"
+    # Using unified saving system - supports multiple formats via command line flags
+
+    bpf.save_figure_smart(fig, outdir, "supplimentary_figure_2_field_norm_fnorm")
+
+    
+
+    # Legacy code (commented out - now handled by unified system):
+
+    #outpath = f"{outdir}/supplimentary_figure_2_field_norm_fnorm.png"
+
     #outpath = f"{outdir}/figure_4.svg"
+
     #outpath = f"{outdir}/figure_4.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
+
+    #plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
     plt.close()

@@ -1532,9 +1532,13 @@ def plot_figure_2_with_stats(extracted_feature_pickle_file_path,
     else:
         filename = "figure_2.png"
     
-    outpath = f"{outdir}/{filename}"
-    plt.savefig(outpath,bbox_inches='tight')
-    print(f"Saved: {outpath}")
+    # Using unified saving system - supports multiple formats via command line flags
+    bpf.save_figure_smart(fig, outdir, filename.replace('.png', ''))
+    
+    # Legacy code (commented out - now handled by unified system):
+    #outpath = f"{outdir}/{filename}"
+    #plt.savefig(outpath,bbox_inches='tight')
+    print(f"Saved figure to: {outdir}/{filename}")
     plt.show(block=False)
     plt.pause(1)
     plt.close()

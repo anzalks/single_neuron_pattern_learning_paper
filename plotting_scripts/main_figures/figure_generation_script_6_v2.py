@@ -1228,10 +1228,21 @@ def plot_figure_6(extracted_feature_pickle_file_path,
     #
 
     plt.tight_layout()
-    outpath = f"{outdir}/figure_6_with_stats.png"
+    # Using unified saving system - supports multiple formats via command line flags
+
+    bpf.save_figure_smart(fig, outdir, "figure_6_with_stats")
+
+    
+
+    # Legacy code (commented out - now handled by unified system):
+
+    #outpath = f"{outdir}/figure_6_with_stats.png"
+
     #outpath = f"{outdir}/figure_6.svg"
+
     #outpath = f"{outdir}/figure_6_with_stats.pdf"
-    plt.savefig(outpath,bbox_inches='tight')
+
+    #plt.savefig(outpath,bbox_inches='tight')
     plt.show(block=False)
     plt.pause(1)
     plt.close()
