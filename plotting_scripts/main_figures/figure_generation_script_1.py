@@ -578,8 +578,89 @@ def plot_bar_distribution(ax, data, color, label, show_ylabel=True, remove_ytick
         return 0, None
 
 
-def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field): 
-                     #axs_cell_t, axs_field_t):
+def plot_violin_distribution(ax, data, color, label, show_ylabel=True, remove_ytick_labels=False):
+    """
+    Plot vertical violin distribution to match the exact layout shown in the user's figure.
+    The violin extends horizontally from a central vertical axis, with data values on the y-axis.
+    """
+    if len(data) > 1:
+        # Calculate the mean and standard deviation
+        mean_val = data.mean()
+        std_val = data.std()
+        
+        # Create vertical violin plot - default orientation (vert=True)
+        violin_parts = ax.violinplot([data], positions=[0], vert=True, 
+                                   showmeans=True, showmedians=True, widths=0.8)
+        
+        # Style the violin plot
+        for pc in violin_parts['bodies']:
+            pc.set_facecolor(color)
+            pc.set_alpha(0.7)
+            pc.set_edgecolor('black')
+            pc.set_linewidth(1)
+        
+        # Style the statistical lines
+        if 'cmeans' in violin_parts:
+            violin_parts['cmeans'].set_color('red')
+            violin_parts['cmeans'].set_linewidth(2)
+        if 'cmedians' in violin_parts:
+            violin_parts['cmedians'].set_color('blue')
+            violin_parts['cmedians'].set_linewidth(1.5)
+        if 'cmaxes' in violin_parts:
+            violin_parts['cmaxes'].set_color('black')
+            violin_parts['cmaxes'].set_linewidth(1)
+        if 'cmins' in violin_parts:
+            violin_parts['cmins'].set_color('black')
+            violin_parts['cmins'].set_linewidth(1)
+        if 'cbars' in violin_parts:
+            violin_parts['cbars'].set_color('black')
+            violin_parts['cbars'].set_linewidth(1)
+        
+        # Add text to show the standard deviation
+        ax.text(
+            0.3, max(data) * 0.9, 
+            f"σ = {std_val:.2f}", 
+            color='red', 
+            fontsize=10,
+            va='center',
+            ha='left'
+        )
+        
+        # Set labels and formatting
+        ax.set_xlabel(f'Normalized\n{label}')
+        ax.set_xticks([0])
+        ax.set_xticklabels([''])
+        
+        if show_ylabel:
+            ax.set_ylabel('Distribution')
+        else:
+            ax.set_ylabel('')
+            
+        if remove_ytick_labels:
+            ax.set_yticklabels([])
+        
+        # Remove spines for clean look
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        
+        # Set x-axis limits to center the violin
+        ax.set_xlim(-0.5, 0.5)
+        
+        return max(data), min(data)
+    else:
+        ax.text(0, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
+        return 0, None
+
+def plot_trace_stats(feature_extracted_df, fig, ax_single): 
+    """
+    Plot a single vertical violin plot comparing EPSP and LFP distributions on one axis (Panel E).
+    
+    Parameters:
+    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
+    - fig (plt.Figure): Figure object.
+    - ax_single (plt.Axes): Single axis for the combined violin plot.
+    """
     required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
                      'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
     if not all(col in feature_extracted_df.columns for col in required_cols):
@@ -596,286 +677,121 @@ def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
     merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
     merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
     
-    # Plot bar distributions using the updated bar distribution function
-    max_count_cell, bins_cell = plot_bar_distribution(
-        axs_cell, 
-        merged_df['max_trace'], 
-        color='black', 
-        label='EPSP', 
-        show_ylabel=True
-    )
+    # Create a DataFrame for plotting both EPSP and LFP on the same plot
+    data_to_plot = pd.DataFrame({
+        'Normalized': np.concatenate([merged_df['max_trace'].dropna(), merged_df['min_field'].dropna()]),
+        'Category': ['EPSP'] * len(merged_df['max_trace'].dropna()) + ['LFP'] * len(merged_df['min_field'].dropna())
+    })
     
-    max_count_field, bins_field = plot_bar_distribution(
-        axs_field, 
-        merged_df['min_field'], 
-        color='black', 
-        label='LFP', 
-        show_ylabel=False, 
-        remove_ytick_labels=True
-    )
+    # Create clean violin plot without error bars, quartiles, or extrema - just like the reference figure
+    violin_parts = ax_single.violinplot([merged_df['max_trace'].dropna(), merged_df['min_field'].dropna()], 
+                                       positions=[0, 1], vert=True, showmeans=False, showmedians=False, 
+                                       showextrema=False, widths=0.6)
     
-    #max_count_cell_t, bins_cell_t = plot_bar_distribution(
-    #    axs_cell_t, 
-    #    merged_df['max_trace_t'], 
-    #    color='black', 
-    #    label='EPSP (t)', 
-    #    show_ylabel=True
-    #)
-    #
-    #max_count_field_t, bins_field_t = plot_bar_distribution(
-    #    axs_field_t, 
-    #    merged_df['min_field_t'], 
-    #    color='black', 
-    #    label='LFP (t)', 
-    #    show_ylabel=False, 
-    #    remove_ytick_labels=True
-    #)
+    # Style the violin plot with gray/black tones to match the figure
+    colors = ['gray', 'black']  # Gray for EPSP, black for LFP
+    for i, pc in enumerate(violin_parts['bodies']):
+        pc.set_facecolor(colors[i])
+        pc.set_alpha(0.8)
+        pc.set_edgecolor('black')
+        pc.set_linewidth(1)
     
-    if bins_cell is not None and bins_field is not None:
-        combined_xlim_cell = (min(bins_cell.min(), bins_field.min()), max(bins_cell.max(), bins_field.max()))
-        axs_cell.set_xlim(combined_xlim_cell)
-        axs_field.set_xlim(combined_xlim_cell)
+    # Add mean and SD as dotted lines that respect violin boundaries
+    mean_epsp = merged_df['max_trace'].dropna().mean()
+    std_epsp = merged_df['max_trace'].dropna().std()
+    mean_lfp = merged_df['min_field'].dropna().mean()
+    std_lfp = merged_df['min_field'].dropna().std()
     
-    #if bins_cell_t is not None and bins_field_t is not None:
-    #    combined_xlim_cell_t = (min(bins_cell_t.min(), bins_field_t.min()), max(bins_cell_t.max(), bins_field_t.max()))
-    #    axs_cell_t.set_xlim(combined_xlim_cell_t)
-    #    axs_field_t.set_xlim(combined_xlim_cell_t)
-
-    max_count_1 = max(max_count_cell, max_count_field)
-    axs_cell.set_ylim(0, max_count_1 * 1.01)
-    axs_field.set_ylim(0, max_count_1 * 1.01)
+    # Get the violin shapes to calculate proper line lengths
+    epsp_data = merged_df['max_trace'].dropna()
+    lfp_data = merged_df['min_field'].dropna()
     
-    #max_count_2 = max(max_count_cell_t, max_count_field_t)
-    #axs_cell_t.set_ylim(0, max_count_2 * 1.01)
-    #axs_field_t.set_ylim(0, max_count_2 * 1.01)
+    # Calculate violin widths at mean and SD positions using kernel density
+    from scipy.stats import gaussian_kde
+    
+    # For EPSP violin (position 0)
+    kde_epsp = gaussian_kde(epsp_data)
+    
+    # Calculate relative widths at mean and SD positions
+    width_at_mean_epsp = kde_epsp(mean_epsp)[0]
+    width_at_sd_high_epsp = kde_epsp(mean_epsp + std_epsp)[0] if (mean_epsp + std_epsp) <= epsp_data.max() else 0
+    width_at_sd_low_epsp = kde_epsp(mean_epsp - std_epsp)[0] if (mean_epsp - std_epsp) >= epsp_data.min() else 0
+    
+    # Normalize widths (violin default width is 0.6, so max extension is 0.3 on each side)
+    max_width_epsp = kde_epsp(epsp_data).max()
+    norm_width_mean_epsp = (width_at_mean_epsp / max_width_epsp) * 0.25
+    norm_width_sd_high_epsp = (width_at_sd_high_epsp / max_width_epsp) * 0.25 if width_at_sd_high_epsp > 0 else 0
+    norm_width_sd_low_epsp = (width_at_sd_low_epsp / max_width_epsp) * 0.25 if width_at_sd_low_epsp > 0 else 0
+    
+    # For LFP violin (position 1)
+    kde_lfp = gaussian_kde(lfp_data)
+    
+    width_at_mean_lfp = kde_lfp(mean_lfp)[0]
+    width_at_sd_high_lfp = kde_lfp(mean_lfp + std_lfp)[0] if (mean_lfp + std_lfp) <= lfp_data.max() else 0
+    width_at_sd_low_lfp = kde_lfp(mean_lfp - std_lfp)[0] if (mean_lfp - std_lfp) >= lfp_data.min() else 0
+    
+    max_width_lfp = kde_lfp(lfp_data).max()
+    norm_width_mean_lfp = (width_at_mean_lfp / max_width_lfp) * 0.25
+    norm_width_sd_high_lfp = (width_at_sd_high_lfp / max_width_lfp) * 0.25 if width_at_sd_high_lfp > 0 else 0
+    norm_width_sd_low_lfp = (width_at_sd_low_lfp / max_width_lfp) * 0.25 if width_at_sd_low_lfp > 0 else 0
+    
+    # Add dotted lines that respect violin boundaries
+    # Mean lines
+    ax_single.hlines(mean_epsp, 0 - norm_width_mean_epsp, 0 + norm_width_mean_epsp, colors='black', linestyles='dotted', linewidth=1.5)
+    ax_single.hlines(mean_lfp, 1 - norm_width_mean_lfp, 1 + norm_width_mean_lfp, colors='black', linestyles='dotted', linewidth=1.5)
+    
+    # SD lines (only draw if within data range)
+    if norm_width_sd_high_epsp > 0:
+        ax_single.hlines(mean_epsp + std_epsp, 0 - norm_width_sd_high_epsp, 0 + norm_width_sd_high_epsp, colors='black', linestyles='dotted', linewidth=1)
+    if norm_width_sd_low_epsp > 0:
+        ax_single.hlines(mean_epsp - std_epsp, 0 - norm_width_sd_low_epsp, 0 + norm_width_sd_low_epsp, colors='black', linestyles='dotted', linewidth=1)
+    if norm_width_sd_high_lfp > 0:
+        ax_single.hlines(mean_lfp + std_lfp, 1 - norm_width_sd_high_lfp, 1 + norm_width_sd_high_lfp, colors='black', linestyles='dotted', linewidth=1)
+    if norm_width_sd_low_lfp > 0:
+        ax_single.hlines(mean_lfp - std_lfp, 1 - norm_width_sd_low_lfp, 1 + norm_width_sd_low_lfp, colors='black', linestyles='dotted', linewidth=1)
+    
+    # Set labels and formatting to match the figure
+    ax_single.set_ylabel('Normalized\nmean')
+    ax_single.set_xticks([0, 1])
+    ax_single.set_xticklabels(['EPSP', 'LFP'])
+    ax_single.set_xlabel('')  # Remove x-axis label to match figure
+    
+    # Remove spines for clean look
+    ax_single.spines['top'].set_visible(False)
+    ax_single.spines['right'].set_visible(False)
+    
+    # Set y-axis limits to match the figure (0 to 3)
+    ax_single.set_ylim(0, 3)
+    
+    # Add Levene's test statistical annotation with line for panel E
+    from scipy.stats import levene
+    stat, p_value = levene(merged_df['max_trace'].dropna(), merged_df['min_field'].dropna())
+    
+    # Convert p-value to asterisks and add annotation
+    annotation = bpf.convert_pvalue_to_asterisks(p_value)
+    
+    # Add statistical annotation line between the violins
+    y_max = 2.7
+    ax_single.plot([0, 0, 1, 1], [y_max-0.1, y_max, y_max, y_max-0.1], 'k-', linewidth=1)
+    
+    # Add significance stars in black
+    ax_single.text(0.5, y_max + 0.1, annotation, 
+                   fontsize=14, ha='center', va='bottom', 
+                   color='black', fontweight='bold')
 
-##everything works 
-#def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field,
-#                     axs_cell_t, axs_field_t):
-#    """
-#    Plot bar distributions of `max_trace`, `min_field`, `max_trace_t`, and `min_field_t`
-#    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
-#    
-#    Parameters:
-#    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
-#    - fig (plt.Figure): Figure object.
-#    - axs_cell (plt.Axes): Axis for `max_trace` plot.
-#    - axs_field (plt.Axes): Axis for `min_field` plot.
-#    - axs_cell_t (plt.Axes): Axis for `max_trace_t` plot.
-#    - axs_field_t (plt.Axes): Axis for `min_field_t` plot.
-#    """
-#    
-#    # Check if required columns exist in the DataFrame
-#    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 
-#                     'max_trace', 'min_field', 'max_trace_t', 'min_field_t']
-#    if not all(col in feature_extracted_df.columns for col in required_cols):
-#        raise ValueError("Input DataFrame is missing required columns.")
-#    
-#    # Step 1: Filter data for 'pre' status
-#    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
-#    
-#    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
-#    mean_combined_df = filtered_df[
-#        filtered_df['trial_no'].isin([0, 1, 2])
-#    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field', 'max_trace_t', 'min_field_t']].mean().reset_index()
-#    
-#    # Step 3: Merge the combined mean back to the original filtered data
-#    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
-#    
-#    # Step 4: Normalize the columns using the combined mean
-#    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
-#    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
-#    merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
-#    merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
-#    
-#    # Helper function to plot bar distributions without y-axis normalization
-#    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
-#        if len(data) > 1:
-#            # Plot the histogram as a bar plot (without normalizing the counts)
-#            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
-#            ax.set_xlabel(f'Normalized\n{label}')
-#            
-#            if show_ylabel:
-#                ax.set_ylabel('Count')
-#            if remove_ytick_labels:
-#                ax.set_yticklabels([])  # Remove only the y-axis tick labels
-#            
-#            ax.spines['top'].set_visible(False)
-#            ax.spines['right'].set_visible(False)
-#            return n.max(), bins  # Return the maximum count and bins for x-axis scaling
-#        else:
-#            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
-#            return 0, None
-#
-#    # Step 5: Plot bar distributions for each feature on their respective axes
-#    max_count_cell, bins_cell = plot_bar_distribution(
-#        axs_cell, 
-#        merged_df['max_trace'], 
-#        color='black', 
-#        label='EPSP', 
-#        title='EPSP', 
-#        show_ylabel=True
-#    )
-#    
-#    max_count_field, bins_field = plot_bar_distribution(
-#        axs_field, 
-#        merged_df['min_field'], 
-#        color='black', 
-#        label='LFP', 
-#        title='LFP', 
-#        show_ylabel=False, 
-#        remove_ytick_labels=True
-#    )
-#    
-#    max_count_cell_t, bins_cell_t = plot_bar_distribution(
-#        axs_cell_t, 
-#        merged_df['max_trace_t'], 
-#        color='black', 
-#        label='EPSP (t)', 
-#        title='EPSP (t)', 
-#        show_ylabel=True
-#    )
-#    
-#    max_count_field_t, bins_field_t = plot_bar_distribution(
-#        axs_field_t, 
-#        merged_df['min_field_t'], 
-#        color='black', 
-#        label='LFP (t)', 
-#        title='LFP (t)', 
-#        show_ylabel=False, 
-#        remove_ytick_labels=True
-#    )
-#    
-#    # Step 6: Set the same x-axis limits for `max_trace` and `min_field`
-#    if bins_cell is not None and bins_field is not None:
-#        combined_xlim_cell = (
-#            min(bins_cell.min(), bins_field.min()), 
-#            max(bins_cell.max(), bins_field.max())
-#        )
-#        axs_cell.set_xlim(combined_xlim_cell)
-#        axs_field.set_xlim(combined_xlim_cell)
-#    
-#    ## Step 7: Set the same x-axis limits for `max_trace_t` and `min_field_t`
-#    if bins_cell_t is not None and bins_field_t is not None:
-#        combined_xlim_cell_t = (
-#            min(bins_cell_t.min(), bins_field_t.min()), 
-#            max(bins_cell_t.max(), bins_field_t.max())
-#        )
-#        axs_cell_t.set_xlim(combined_xlim_cell_t)
-#        axs_field_t.set_xlim(combined_xlim_cell_t)
-#    
-#    # Step 8: Set the same y-axis limits for each pair of plots
-#    max_count_1 = max(max_count_cell, max_count_field)
-#    axs_cell.set_ylim(0, max_count_1 * 1.01)
-#    axs_field.set_ylim(0, max_count_1 * 1.01)
-#    
-#    max_count_2 = max(max_count_cell_t, max_count_field_t)
-#    axs_cell_t.set_ylim(0, max_count_2 * 1.01)
-#    axs_field_t.set_ylim(0, max_count_2 * 1.01)
-
-
-##everything works but plots only EPSP and field amplitudes
-#def plot_trace_stats(feature_extracted_df, fig, axs_cell, axs_field):
-#    """
-#    Plot bar distributions of `max_trace` and `min_field`
-#    after normalizing their mean using the combined mean of trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`.
-#    
-#    Parameters:
-#    - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
-#    - fig (plt.Figure): Figure object.
-#    - axs_cell (plt.Axes): Axis for `max_trace` plot.
-#    - axs_field (plt.Axes): Axis for `min_field` plot.
-#    """
-#    
-#    # Check if required columns exist in the DataFrame
-#    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
-#    if not all(col in feature_extracted_df.columns for col in required_cols):
-#        raise ValueError("Input DataFrame is missing required columns.")
-#    
-#    # Step 1: Filter data for 'pre' status
-#    filtered_df = feature_extracted_df[feature_extracted_df['pre_post_status'] == 'pre']
-#    
-#    # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
-#    mean_combined_df = filtered_df[
-#        filtered_df['trial_no'].isin([0, 1, 2])
-#    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
-#    
-#    # Step 3: Merge the combined mean back to the original filtered data
-#    merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
-#    
-#    # Step 4: Normalize `max_trace` and `min_field` using the combined mean
-#    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
-#    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
-#    
-#    # Helper function to plot bar distributions without y-axis normalization
-#    def plot_bar_distribution(ax, data, color, label, title, show_ylabel=True, remove_ytick_labels=False):
-#        if len(data) > 1:
-#            # Plot the histogram as a bar plot (without normalizing the counts)
-#            n, bins, patches = ax.hist(data, bins=25, color=color, alpha=0.7, edgecolor='black')
-#            ax.set_xlabel(f'Normalized\n{label}')
-#            
-#            if show_ylabel:
-#                ax.set_ylabel('Count')
-#            if remove_ytick_labels:
-#                ax.set_yticklabels([])  # Remove only the y-axis tick labels
-#            
-#            ax.spines['top'].set_visible(False)
-#            ax.spines['right'].set_visible(False)
-#            #ax.set_title(title)
-#            
-#            return n.max()  # Return the maximum count for y-axis scaling
-#        else:
-#            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', fontsize=10)
-#            return 0
-#
-#    # Step 5: Plot bar distribution for `max_trace` on axs_cell with title "EPSP"
-#    max_count_cell = plot_bar_distribution(
-#        axs_cell, 
-#        merged_df['max_trace'], 
-#        color='black', 
-#        label='EPSP', 
-#        title='EPSP', 
-#        show_ylabel=True
-#    )
-#    
-#    # Step 6: Plot bar distribution for `min_field` on axs_field with title "LFP" and no y-tick labels
-#    max_count_field = plot_bar_distribution(
-#        axs_field, 
-#        merged_df['min_field'], 
-#        color='black', 
-#        label='LFP', 
-#        title='LFP', 
-#        show_ylabel=False, 
-#        remove_ytick_labels=True
-#    )
-#    
-#    # Step 7: Set the same x-axis limits for both plots
-#    combined_xlim = (
-#        min(axs_cell.get_xlim()[0], axs_field.get_xlim()[0]), 
-#        max(axs_cell.get_xlim()[1], axs_field.get_xlim()[1])
-#    )
-#    axs_cell.set_xlim(combined_xlim)
-#    axs_field.set_xlim(combined_xlim)
-#    
-#    # Step 8: Set the same y-axis limits for both plots
-#    max_count = max(max_count_cell, max_count_field)
-#    axs_cell.set_ylim(0, max_count * 1.01)
-#    axs_field.set_ylim(0, max_count * 1.01)
-
-
-def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax):
+def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax_left, ax_right):
     """
-    Plot bar distributions of `max_trace` and `min_field` on a single axis,
-    and display the p-value from Levene's test for equality of variances.
+    Plot bar plots (histograms) of peak timing data (`max_trace_t` and `min_field_t`) on separate axes (Fi and Fii).
     
     Parameters:
     - feature_extracted_df (pd.DataFrame): Input DataFrame containing features.
     - fig (plt.Figure): Figure object.
-    - ax (plt.Axes): Axis for the combined plot.
+    - ax_left (plt.Axes): Axis for the EPSP timing histogram (Fi).
+    - ax_right (plt.Axes): Axis for the LFP timing histogram (Fii).
     """
     
     # Check if required columns exist in the DataFrame
-    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace', 'min_field']
+    required_cols = ['pre_post_status', 'trial_no', 'cell_ID', 'frame_id', 'max_trace_t', 'min_field_t']
     if not all(col in feature_extracted_df.columns for col in required_cols):
         raise ValueError("Input DataFrame is missing required columns.")
     
@@ -885,61 +801,60 @@ def plot_trace_stats_with_pvalue(feature_extracted_df, fig, ax):
     # Step 2: Calculate the mean across trials 0, 1, 2 for each grouped `cell_ID` and `frame_id`
     mean_combined_df = filtered_df[
         filtered_df['trial_no'].isin([0, 1, 2])
-    ].groupby(['cell_ID', 'frame_id'])[['max_trace', 'min_field']].mean().reset_index()
+    ].groupby(['cell_ID', 'frame_id'])[['max_trace_t', 'min_field_t']].mean().reset_index()
     
     # Step 3: Merge the combined mean back to the original filtered data
     merged_df = filtered_df.merge(mean_combined_df, on=['cell_ID', 'frame_id'], suffixes=('', '_mean'))
     
-    # Step 4: Normalize `max_trace` and `min_field` using the combined mean
-    merged_df['max_trace'] = merged_df['max_trace'] / merged_df['max_trace_mean']
-    merged_df['min_field'] = merged_df['min_field'] / merged_df['min_field_mean']
+    # Step 4: Normalize timing data using the combined mean
+    merged_df['max_trace_t'] = merged_df['max_trace_t'] / merged_df['max_trace_t_mean']
+    merged_df['min_field_t'] = merged_df['min_field_t'] / merged_df['min_field_t_mean']
     
-    # Step 5: Create a DataFrame for plotting
-    data_to_plot = pd.DataFrame({
-        'Normalised Mean': np.concatenate([merged_df['max_trace'].dropna(), merged_df['min_field'].dropna()]),
-        'Category': ['EPSP'] * len(merged_df['max_trace'].dropna()) + ['LFP'] * len(merged_df['min_field'].dropna())
-    })
+    # Step 5: Create bar plots with gray bars and red SD overlays to match the figure
+    # Left plot (Fi) - EPSP timing
+    data_left = merged_df['max_trace_t'].dropna()
+    mean_left = data_left.mean()
+    std_left = data_left.std()
     
-    # Step 6: Perform Levene's test to compare variances
-    stat, p_value = levene(merged_df['max_trace'].dropna(), merged_df['min_field'].dropna())
-    pval_list = [p_value]  # Create a list for annotation
+    n_left, bins_left, patches_left = ax_left.hist(data_left, bins=25, color='darkgray', alpha=0.8, edgecolor='black')
+    # Add SD indication with red shaded area
+    ax_left.fill_betweenx(y=[0, n_left.max()], x1=mean_left - std_left, x2=mean_left + std_left, 
+                         color='red', alpha=0.3)
+    # Add sigma text
+    ax_left.text(mean_left + std_left, n_left.max() * 0.9, f"σ = {std_left:.2f}", 
+                color='red', fontsize=10, va='center')
     
-    # Convert p-value to asterisks using your custom function
-    annotations = [bpf.convert_pvalue_to_asterisks(p) for p in pval_list]
+    ax_left.set_xlabel('time (ms)\n(EPSP)')
+    ax_left.set_ylabel('Count')
+    ax_left.spines['top'].set_visible(False)
+    ax_left.spines['right'].set_visible(False)
     
-    # Step 7: Create the box plot on a single axis
-    sns.boxplot(
-        data=data_to_plot, 
-        x='Category', 
-        y='Normalised Mean', 
-        ax=ax, 
-        boxprops=dict(facecolor='grey', edgecolor='darkgrey'),
-        medianprops=dict(color='black'),
-        whiskerprops=dict(color='darkgrey'),
-        capprops=dict(color='darkgrey'),
-        flierprops=dict(markerfacecolor='black', marker='o', 
-                        markersize=3, linestyle='none',alpha=0.4)
-    )
+    # Right plot (Fii) - LFP timing  
+    data_right = merged_df['min_field_t'].dropna()
+    mean_right = data_right.mean()
+    std_right = data_right.std()
     
-    # Remove right and top spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    n_right, bins_right, patches_right = ax_right.hist(data_right, bins=25, color='darkgray', alpha=0.8, edgecolor='black')
+    # Add SD indication with red shaded area
+    ax_right.fill_betweenx(y=[0, n_right.max()], x1=mean_right - std_right, x2=mean_right + std_right, 
+                          color='red', alpha=0.3)
+    # Add sigma text
+    ax_right.text(mean_right + std_right, n_right.max() * 0.9, f"σ = {std_right:.2f}", 
+                 color='red', fontsize=10, va='center')
     
-    # Add y-axis label
-    ax.set_ylabel('Normalised\nmean')
+    ax_right.set_xlabel('time (ms)\n(LFP)')
+    ax_right.set_ylabel('')
+    ax_right.set_yticklabels([])
+    ax_right.spines['top'].set_visible(False)
+    ax_right.spines['right'].set_visible(False)
     
-    # Set x-axis label to "Variance" and remove the title
-    ax.set_xlabel('Variance')
-    ax.set_xticklabels(['EPSP', 'LFP'])
+    # Remove p-value annotations to match the clean figure
+    # (No statistical annotations in Fi and Fii panels)
     
-    # Step 8: Use `statannotations.Annotator` for annotation
-    pairs = [('EPSP', 'LFP')]  # Specify the pairs to annotate
-    annotator = Annotator(ax, pairs, data=data_to_plot, x='Category', y='Normalised Mean')
-    annotator.set_custom_annotations(annotations)
-    annotator.annotate()
-    
-    # Adjust y-limits for better visibility of annotations
-    ax.set_ylim(0, data_to_plot['Normalised Mean'].max() * 1.2)
+    # Set consistent y-axis limits for both bar plots
+    max_count = max(n_left.max(), n_right.max())
+    ax_left.set_ylim(0, max_count * 1.05)
+    ax_right.set_ylim(0, max_count * 1.05)
 
 def plot_figure_1(pickle_file_path,
                   all_trials_path,
@@ -1077,41 +992,31 @@ def plot_figure_1(pickle_file_path,
                                     base_params={'xpos': -0.1, 'ypos': 1.1, 'fontsize': 16, 'fontweight': 'bold'})
 
 
+    # Fix legend positioning and styling to match the figure
     handles, labels = axs_cl2.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
-    axs_cl2.legend(by_label.values(), by_label.keys(), 
-               bbox_to_anchor =(0.8, 1),
-               ncol = 1,title="Voltage trace",
-               loc='upper center',frameon=False)#,loc='lower center'    
+    # Position legend in the top right area to match the figure
+    axs_cl3.legend(by_label.values(), by_label.keys(), 
+               bbox_to_anchor=(1.05, 1),
+               ncol=1, title="Voltage trace",
+               loc='upper left', frameon=True,
+               fancybox=True, shadow=True)    
     
-    axs_cell = fig.add_subplot(gs[6:9,1:3])
-    move_axis([axs_cell],xoffset=-0.05,yoffset=0,pltscale=1)
-    axs_field = fig.add_subplot(gs[6:9,3:5])
-    move_axis([axs_field],xoffset=0.015,yoffset=0,pltscale=1)
+    # Position panel E to match the figure layout (bottom left area)
+    axs_cell = fig.add_subplot(gs[6:8,0:2])
+    move_axis([axs_cell],xoffset=-0.02,yoffset=0,pltscale=1)
 
+    plot_trace_stats(alltrial_Df,fig,axs_cell)
+    bpf.add_subplot_label(axs_cell, 'E', xpos=-0.15, ypos=1.05, fontsize=16, fontweight='bold')
 
-
-
-    #axs_cell = fig.add_subplot(gs[6:9,0:1])
-    #move_axis([axs_cell],xoffset=0,yoffset=0,pltscale=1)
-    #axs_field = fig.add_subplot(gs[6:9,1:2])
-    #move_axis([axs_field],xoffset=0,yoffset=0,pltscale=1)
-    #axs_cell_t =fig.add_subplot(gs[6:9,2:3]) 
-    #axs_field_t=fig.add_subplot(gs[6:9,3:4]) 
-
-
-    plot_trace_stats(alltrial_Df,fig,axs_cell,axs_field)
-                     #axs_cell_t,axs_field_t)
-    e_axes = [axs_cell, axs_field]
-    e_labels = bpf.generate_letter_roman_labels("E", len(e_axes))
-    bpf.add_subplot_labels_from_list(e_axes, e_labels, 
-                                    base_params={'xpos': -0.1, 'ypos': 1, 'fontsize': 16, 'fontweight': 'bold'})
-    #label_axis([axs_cell_t,axs_field_t],"F",xpos=-0.1, ypos=1)
-
-
-    axs_stat_dist = fig.add_subplot(gs[6:9,6:8])   
-    plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_stat_dist)
-    bpf.add_subplot_label(axs_stat_dist, 'F', xpos=-0.2, ypos=1, fontsize=16, fontweight='bold')
+    # Position Fi and Fii panels to match the figure (bottom right area)
+    axs_fi = fig.add_subplot(gs[6:8,3:5])   
+    axs_fii = fig.add_subplot(gs[6:8,6:8])   
+    plot_trace_stats_with_pvalue(alltrial_Df, fig, axs_fi, axs_fii)
+    f_axes = [axs_fi, axs_fii]
+    f_labels = bpf.generate_letter_roman_labels("F", len(f_axes))
+    bpf.add_subplot_labels_from_list(f_axes, f_labels, 
+                                    base_params={'xpos': -0.15, 'ypos': 1.05, 'fontsize': 16, 'fontweight': 'bold'})
 
     plt.tight_layout()
     
@@ -1131,9 +1036,11 @@ def plot_figure_1(pickle_file_path,
 
 
 def main():
-    # Argument parser.
-    description = '''Generates figure 1'''
+    # Argument parser with unified plotting system compatibility
+    description = '''Generates Figure 1 of the pattern learning paper'''
     parser = argparse.ArgumentParser(description=description)
+    
+    # Standard arguments (compatible with unified plotting system)
     parser.add_argument('--pikl-path', '-f'
                         , required = False,default ='./', type=str
                         , help = 'path to the giant pickle file with all cells'
@@ -1151,10 +1058,36 @@ def main():
                         , help = 'path to pickle file with all trials'
                         'all cells data in pickle'
                        )
-
     parser.add_argument('--outdir-path','-o'
                         ,required = False, default ='./', type=str
                         ,help = 'where to save the generated figure image'
+                       )
+    
+    # Additional arguments for unified plotting system compatibility
+    # (These are not used by Figure 1 but ensure compatibility)
+    parser.add_argument('--sortedcell-path', '-s'
+                        , required = False, default=None, type=str
+                        , help = 'path to pickle file with cell sorted data (not used by Figure 1)'
+                       )
+    parser.add_argument('--inR-path', '-r'
+                        , required = False, default=None, type=str
+                        , help = 'path to pickle file with inR data (not used by Figure 1)'
+                       )
+    parser.add_argument('--cellstat-path', '-c'
+                        , required = False, default=None, type=str
+                        , help = 'path to cell statistics file (not used by Figure 1)'
+                       )
+    parser.add_argument('--training-path', '-n'
+                        , required = False, default=None, type=str
+                        , help = 'path to training data file (not used by Figure 1)'
+                       )
+    parser.add_argument('--firingproperties-path', '-q'
+                        , required = False, default=None, type=str
+                        , help = 'path to firing properties file (not used by Figure 1)'
+                       )
+    parser.add_argument('--patillustration-path', '-m'
+                        , required = False, default=None, type=str
+                        , help = 'path to pattern illustration file (not used by Figure 1)'
                        )
     #    parser.parse_args(namespace=args_)
     args = parser.parse_args()

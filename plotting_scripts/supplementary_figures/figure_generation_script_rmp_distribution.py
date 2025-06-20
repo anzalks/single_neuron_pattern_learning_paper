@@ -667,7 +667,7 @@ def create_rmp_distribution_figure(cell_stats_df, sc_data_dict, epsp_data, firin
     # Save figure
     # Using unified saving system - supports multiple formats via command line flags
     bpf.save_figure_smart(fig, outdir, "rmp_distribution")
-    
+
     # Legacy code (commented out - now handled by unified system):
     #outpath = f"{outdir}/rmp_distribution.png"
     #plt.savefig(outpath, bbox_inches='tight', dpi=300)
